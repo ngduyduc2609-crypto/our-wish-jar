@@ -1,27 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Shuffle, Star, Trash2, MapPin } from "lucide-react";
+import { Plus, Shuffle, Star, Trash2, MapPin, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImagePicker } from "@/components/ImagePicker";
 import { StoredImage } from "@/components/StoredImage";
 import { RandomDrawDialog } from "@/components/RandomDraw";
+import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
+import { canManage } from "@/lib/ownership";
 import { deleteRow, fetchFoods, insertRow, pickRandom, updateRow, type Food } from "@/lib/db";
 import { PRICE_LEVELS, todayKey } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/food")({
   head: () => ({
@@ -42,12 +37,14 @@ export const Route = createFileRoute("/food")({
 });
 
 function FoodPage() {
-  const { track } = useIdentity();
+  const { me, track } = useIdentity();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"want" | "tried">("want");
+  const [tab, setTab] = useState<"all" | "tried">("all");
   const [drawOpen, setDrawOpen] = useState(false);
   const [drawn, setDrawn] = useState<Food | null>(null);
   const [ratingTarget, setRatingTarget] = useState<Food | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Food | null>(null);
 
   const { data: foods = [] } = useQuery({ queryKey: ["foods"], queryFn: fetchFoods });
 
@@ -58,12 +55,11 @@ function FoodPage() {
     void qc.invalidateQueries({ queryKey: ["presence"] });
   };
 
-  const wantList = useMemo(() => foods.filter((f) => !f.tried), [foods]);
   const triedList = useMemo(() => foods.filter((f) => f.tried), [foods]);
-  const visible = tab === "want" ? wantList : triedList;
+  const visible = tab === "all" ? foods : triedList;
 
   function draw() {
-    setDrawn(pickRandom(wantList, drawn ?? undefined));
+    setDrawn(pickRandom(foods, drawn ?? undefined));
     setDrawOpen(true);
   }
 
@@ -77,69 +73,106 @@ function FoodPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between gap-3">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+        <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold">Ăn gì đây ta</h1>
           <p className="text-sm text-muted-foreground">
-            {wantList.length} món muốn thử · {triedList.length} món đã thử
+            {foods.length} món trong danh sách · {triedList.length} món đã thử
           </p>
         </div>
-        <Button className="rounded-full" onClick={draw} disabled={!wantList.length}>
+        <Button className="shrink-0 rounded-full" onClick={draw} disabled={!foods.length}>
           <Shuffle className="size-4" /> Quay
         </Button>
       </div>
 
       <div className="flex gap-2">
-        <Chip active={tab === "want"} onClick={() => setTab("want")}>
-          Muốn thử
+        <Chip active={tab === "all"} onClick={() => setTab("all")}>
+          Tất cả
         </Chip>
         <Chip active={tab === "tried"} onClick={() => setTab("tried")}>
           Đã thử
         </Chip>
       </div>
 
-      <NewFoodDialog onDone={refresh} />
+      <Button
+        className="w-full rounded-2xl"
+        onClick={() => {
+          setEditing(null);
+          setFormOpen(true);
+        }}
+      >
+        <Plus className="size-4" /> Thêm món / quán
+      </Button>
+
+      <FoodDialog open={formOpen} onOpenChange={setFormOpen} food={editing} onDone={refresh} />
 
       <div className="grid gap-3">
-        {visible.map((food) => (
-          <article key={food.id} className="paper overflow-hidden rounded-3xl">
-            {food.image_url && <StoredImage path={food.image_url} alt={food.name} className="h-40 w-full" />}
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-display text-lg font-semibold">{food.name}</h2>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                    {food.place && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="size-3" /> {food.place}
+        {visible.map((food) => {
+          const mine = canManage(me, food.added_by);
+          return (
+            <article key={food.id} className="paper overflow-hidden rounded-3xl">
+              {food.image_url && (
+                <StoredImage
+                  path={food.image_url}
+                  position={food.image_pos}
+                  alt={food.name}
+                  className="h-40 w-full"
+                />
+              )}
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="font-display text-lg font-semibold">{food.name}</h2>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                      {food.place && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="size-3" /> {food.place}
+                        </span>
+                      )}
+                      <span>
+                        · {PRICE_LEVELS.find((p) => p.value === food.price_level)?.label ?? "₫₫"}
                       </span>
-                    )}
-                    <span>· {PRICE_LEVELS.find((p) => p.value === food.price_level)?.label ?? "₫₫"}</span>
-                    {food.rating ? <span>· {"⭐".repeat(food.rating)}</span> : null}
-                  </p>
-                  {food.note && <p className="mt-1 text-sm text-muted-foreground">{food.note}</p>}
+                      {food.rating ? <span>· {"⭐".repeat(food.rating)}</span> : null}
+                      {food.tried && <span>· đã thử</span>}
+                    </p>
+                    {food.note && <p className="mt-1 text-sm text-muted-foreground">{food.note}</p>}
+                  </div>
+                  {mine && (
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <button
+                        type="button"
+                        aria-label="Sửa món"
+                        onClick={() => {
+                          setEditing(food);
+                          setFormOpen(true);
+                        }}
+                        className="rounded-full border border-border p-2 text-muted-foreground"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Xoá món"
+                        onClick={() => remove.mutate(food)}
+                        className="rounded-full border border-border p-2 text-muted-foreground"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  aria-label="Xoá món"
-                  onClick={() => remove.mutate(food)}
-                  className="rounded-full border border-border p-2 text-muted-foreground"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              </div>
-              {!food.tried && (
                 <Button
                   variant="secondary"
                   className="mt-3 w-full rounded-2xl"
                   onClick={() => setRatingTarget(food)}
                 >
-                  <Star className="size-4" /> Đã ăn rồi, lưu kỷ niệm
+                  <Star className="size-4" />{" "}
+                  {food.tried ? "Ăn lại, lưu kỷ niệm mới" : "Đã ăn rồi, lưu kỷ niệm"}
                 </Button>
-              )}
-            </div>
-          </article>
-        ))}
+              </div>
+            </article>
+          );
+        })}
         {visible.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
             Chưa có món nào. Thêm món muốn thử nhé 🍜
@@ -160,7 +193,7 @@ function FoodPage() {
               <p className="mt-1 text-sm text-muted-foreground">{drawn.place ?? "Chưa ghi quán"}</p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Chưa có món nào chưa thử</p>
+            <p className="text-sm text-muted-foreground">Danh sách món đang trống</p>
           )
         }
       >
@@ -172,7 +205,7 @@ function FoodPage() {
               setRatingTarget(drawn);
             }}
           >
-            Đã ăn món này rồi
+            Ăn món này rồi, lưu kỷ niệm
           </Button>
         )}
       </RandomDrawDialog>
@@ -182,81 +215,77 @@ function FoodPage() {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  children,
+function FoodDialog({
+  open,
+  onOpenChange,
+  food,
+  onDone,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  food: Food | null;
+  onDone: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-muted-foreground",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function NewFoodDialog({ onDone }: { onDone: () => void }) {
   const { me, track } = useIdentity();
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [place, setPlace] = useState("");
   const [address, setAddress] = useState("");
   const [price, setPrice] = useState(2);
   const [note, setNote] = useState("");
   const [image, setImage] = useState<string | null>(null);
+  const [imagePos, setImagePos] = useState("50% 50%");
+
+  useEffect(() => {
+    if (!open) return;
+    setName(food?.name ?? "");
+    setPlace(food?.place ?? "");
+    setAddress(food?.address ?? "");
+    setPrice(food?.price_level ?? 2);
+    setNote(food?.note ?? "");
+    setImage(food?.image_url ?? null);
+    setImagePos(food?.image_pos ?? "50% 50%");
+  }, [open, food]);
 
   const save = useMutation({
     mutationFn: async () => {
-      await insertRow("foods", {
+      const values = {
         name: name.trim(),
         place: place.trim() || null,
         address: address.trim() || null,
         price_level: price,
         note: note.trim() || null,
         image_url: image,
-        added_by: me?.id ?? null,
-      });
-      track("thêm món ăn", name.trim());
+        image_pos: imagePos,
+      };
+      if (food) {
+        await updateRow("foods", food.id, values);
+        track("sửa món ăn", values.name);
+      } else {
+        await insertRow("foods", { ...values, added_by: me?.id ?? null });
+        track("thêm món ăn", values.name);
+      }
     },
     onSuccess: () => {
-      setName("");
-      setPlace("");
-      setAddress("");
-      setNote("");
-      setImage(null);
-      setOpen(false);
+      onOpenChange(false);
       onDone();
-      toast.success("Đã thêm vào danh sách ăn uống 🍽️");
+      toast.success(food ? "Đã cập nhật 🍽️" : "Đã thêm vào danh sách ăn uống 🍽️");
     },
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full rounded-2xl">
-          <Plus className="size-4" /> Thêm món / quán
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85svh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-display">Món mới muốn thử</DialogTitle>
+          <DialogTitle className="font-display">{food ? "Sửa món" : "Món mới"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Tên món / quán</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bún chả Hương Liên" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Bún chả Hương Liên"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Quán</Label>
@@ -280,13 +309,18 @@ function NewFoodDialog({ onDone }: { onDone: () => void }) {
             <Label>Ghi chú</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
-          <ImagePicker value={image} onChange={setImage} />
+          <ImagePicker
+            value={image}
+            onChange={setImage}
+            position={imagePos}
+            onPositionChange={setImagePos}
+          />
           <Button
             className="w-full rounded-2xl"
             disabled={!name.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            Lưu lại
+            {food ? "Lưu thay đổi" : "Lưu lại"}
           </Button>
         </div>
       </DialogContent>
@@ -307,6 +341,7 @@ function TriedDialog({
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState("");
   const [image, setImage] = useState<string | null>(null);
+  const [imagePos, setImagePos] = useState("50% 50%");
 
   const save = useMutation({
     mutationFn: async () => {
@@ -316,11 +351,13 @@ function TriedDialog({
         tried_at: new Date().toISOString(),
         rating,
         image_url: image ?? food.image_url,
+        image_pos: image ? imagePos : (food.image_pos ?? "50% 50%"),
       });
       await insertRow("memories", {
         title: food.name,
         note: note.trim() || food.note,
         image_url: image ?? food.image_url,
+        image_pos: image ? imagePos : (food.image_pos ?? "50% 50%"),
         happened_on: todayKey(),
         rating,
         source_type: "food",
@@ -332,6 +369,7 @@ function TriedDialog({
     onSuccess: () => {
       setNote("");
       setImage(null);
+      setImagePos("50% 50%");
       setRating(5);
       onClose();
       onDone();
@@ -341,7 +379,7 @@ function TriedDialog({
 
   return (
     <Dialog open={!!food} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
+      <DialogContent className="max-h-[85svh] overflow-y-auto rounded-3xl">
         <DialogHeader>
           <DialogTitle className="font-display">{food?.name}</DialogTitle>
         </DialogHeader>
@@ -360,8 +398,17 @@ function TriedDialog({
             <Label>Cảm nhận</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           </div>
-          <ImagePicker value={image} onChange={setImage} />
-          <Button className="w-full rounded-2xl" disabled={save.isPending} onClick={() => save.mutate()}>
+          <ImagePicker
+            value={image}
+            onChange={setImage}
+            position={imagePos}
+            onPositionChange={setImagePos}
+          />
+          <Button
+            className="w-full rounded-2xl"
+            disabled={save.isPending}
+            onClick={() => save.mutate()}
+          >
             Lưu thành kỷ niệm
           </Button>
         </div>
