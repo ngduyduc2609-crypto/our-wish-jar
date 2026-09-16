@@ -9,6 +9,8 @@ export type Member = {
   user_id: string | null;
 };
 
+export type ImageAsset = { path: string; position: string };
+
 export type Wish = {
   id: string;
   title: string;
@@ -20,6 +22,7 @@ export type Wish = {
   completed: boolean;
   completed_at: string | null;
   created_at: string;
+  images: ImageAsset[];
 };
 
 export type WishReaction = {
@@ -52,6 +55,7 @@ export type Food = {
   tried_at: string | null;
   added_by: string | null;
   created_at: string;
+  images: ImageAsset[];
 };
 
 export type Activity = {
@@ -68,6 +72,7 @@ export type Activity = {
   done_at: string | null;
   added_by: string | null;
   created_at: string;
+  images: ImageAsset[];
 };
 
 export type Memory = {
@@ -83,6 +88,7 @@ export type Memory = {
   source_id: string | null;
   created_by: string | null;
   created_at: string;
+  images: ImageAsset[];
 };
 
 export type LogEntry = {
@@ -188,6 +194,11 @@ export async function signedUrl(path: string) {
   const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60 * 24);
   if (error) throw error;
   return data.signedUrl;
+}
+
+export function imageAssets(images: ImageAsset[] | null | undefined, legacyPath?: string | null, legacyPosition?: string | null) {
+  if (Array.isArray(images) && images.length > 0) return images;
+  return legacyPath ? [{ path: legacyPath, position: legacyPosition ?? "50% 50%" }] : [];
 }
 
 /** Số ngày liên tiếp gần nhất mà CẢ HAI người đều có hoạt động. */
