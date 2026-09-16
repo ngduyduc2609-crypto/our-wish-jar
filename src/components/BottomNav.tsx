@@ -7,7 +7,6 @@ const items = [
   { to: "/food", label: "Ăn gì", icon: UtensilsCrossed },
   { to: "/activities", label: "Làm gì", icon: MapPinned },
   { to: "/memories", label: "Kỷ niệm", icon: Heart },
-  { to: "/stats", label: "Thống kê", icon: BarChart3 },
 ] as const;
 
 export function BottomNav() {
