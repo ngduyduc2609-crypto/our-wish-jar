@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { IdentityProvider, useIdentity } from "../lib/identity";
+import { IdentityProvider, useIdentity } from "@/lib/identity";
 import { IdentityBar, IdentityGate } from "../components/IdentityBar";
 import { BottomNav } from "../components/BottomNav";
 import { Toaster } from "../components/ui/sonner";
