@@ -6,6 +6,7 @@ export type Member = {
   name: string;
   emoji: string;
   color: string;
+  user_id: string | null;
 };
 
 export type Wish = {
