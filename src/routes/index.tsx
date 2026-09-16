@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shuffle, Sparkles, UtensilsCrossed, MapPinned, Flame } from "lucide-react";
+import { Heart, Shuffle, Sparkles, Flame } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RandomDrawDialog } from "@/components/RandomDraw";
@@ -9,15 +9,10 @@ import { StoredImage } from "@/components/StoredImage";
 import { useIdentity } from "@/lib/identity";
 import {
   computeStreak,
-  fetchActivities,
-  fetchFoods,
-  fetchLog,
   fetchMemories,
   fetchPresence,
   fetchWishes,
   pickRandom,
-  type Activity,
-  type Food,
   type Wish,
 } from "@/lib/db";
 import { WISH_CATEGORIES, daysTogether, formatDate, labelOf } from "@/lib/constants";
@@ -42,22 +37,14 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-type Draw =
-  | { kind: "wish"; item: Wish | null }
-  | { kind: "food"; item: Food | null }
-  | { kind: "activity"; item: Activity | null };
-
 function HomePage() {
   const { members } = useIdentity();
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });
-  const { data: foods = [] } = useQuery({ queryKey: ["foods"], queryFn: fetchFoods });
-  const { data: activities = [] } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
   const { data: memories = [] } = useQuery({ queryKey: ["memories"], queryFn: fetchMemories });
-  const { data: log = [] } = useQuery({ queryKey: ["log"], queryFn: fetchLog });
   const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
 
   const [drawOpen, setDrawOpen] = useState(false);
-  const [draw, setDraw] = useState<Draw | null>(null);
+  const [draw, setDraw] = useState<Wish | null>(null);
 
   const days = daysTogether();
   const streak = computeStreak(presence, members.length || 2);
@@ -65,30 +52,9 @@ function HomePage() {
   const completed = wishes.length - pending.length;
 
   function drawWish() {
-    setDraw({ kind: "wish", item: pickRandom(pending) });
+    setDraw(pickRandom(pending));
     setDrawOpen(true);
   }
-  function drawFood() {
-    setDraw({ kind: "food", item: pickRandom(foods) });
-    setDrawOpen(true);
-  }
-  function drawActivity() {
-    setDraw({ kind: "activity", item: pickRandom(activities) });
-    setDrawOpen(true);
-  }
-
-  function redraw() {
-    if (draw?.kind === "food") drawFood();
-    else if (draw?.kind === "activity") drawActivity();
-    else drawWish();
-  }
-
-  const drawMeta =
-    draw?.kind === "food"
-      ? { title: "Hôm nay ăn gì?", emoji: "🍜" }
-      : draw?.kind === "activity"
-        ? { title: "Hôm nay làm gì?", emoji: "🎡" }
-        : { title: "Điều ước hôm nay", emoji: "🫙" };
 
   return (
     <div className="space-y-4">
@@ -98,9 +64,36 @@ function HomePage() {
         <p className="text-sm text-muted-foreground">ngày, kể từ 22/12/2025 💗</p>
       </section>
 
-      <section className="paper rounded-3xl p-5 text-center">
-        <p className="text-5xl">🫙</p>
-        <h2 className="mt-1 font-display text-xl font-bold">Lọ điều ước</h2>
+      <section className="paper overflow-hidden rounded-3xl px-5 pb-5 pt-4 text-center">
+        <div className="relative mx-auto h-64 max-w-sm" aria-label="Lọ chứa những điều ước đang chờ">
+          <Heart className="absolute left-7 top-8 size-4 fill-blush text-primary/40" aria-hidden="true" />
+          <Heart className="absolute right-8 top-14 size-5 fill-blush text-primary/50" aria-hidden="true" />
+          <Sparkles className="absolute right-5 top-2 size-4 text-honey" aria-hidden="true" />
+          <div className="absolute left-1/2 top-2 z-20 h-8 w-36 -translate-x-1/2 rounded-xl border border-border bg-honey shadow-sm" />
+          <div className="absolute inset-x-5 bottom-0 top-7 overflow-hidden rounded-b-[3.5rem] rounded-t-3xl border-2 border-primary/20 bg-card/65 shadow-inner backdrop-blur-sm">
+            <div className="absolute left-4 top-5 h-32 w-3 rounded-full bg-background/70" />
+            <div className="absolute inset-x-5 bottom-5 flex flex-wrap-reverse items-end justify-center gap-2">
+              {pending.slice(0, 8).map((wish, index) => (
+                <div
+                  key={wish.id}
+                  className={`max-w-28 rotate-1 rounded-md border border-border px-2 py-1.5 text-[10px] font-medium leading-snug shadow-sm ${
+                    index % 3 === 0
+                      ? "bg-blush"
+                      : index % 3 === 1
+                        ? "-rotate-2 bg-honey"
+                        : "rotate-2 bg-sage"
+                  }`}
+                >
+                  <span className="line-clamp-2">{wish.title}</span>
+                </div>
+              ))}
+              {pending.length === 0 && (
+                <p className="mb-10 text-sm text-muted-foreground">Lọ đang chờ điều ước mới 💗</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <h2 className="mt-2 font-display text-xl font-bold">Lọ điều ước</h2>
         <p className="text-sm text-muted-foreground">
           {pending.length} điều ước đang chờ · {completed} đã thành hiện thực
         </p>
@@ -108,29 +101,6 @@ function HomePage() {
           <Sparkles className="size-4" /> Rút một điều ước
         </Button>
       </section>
-
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={drawFood}
-          disabled={!foods.length}
-          className="paper rounded-3xl p-4 text-left disabled:opacity-60"
-        >
-          <UtensilsCrossed className="size-5 text-primary" />
-          <p className="mt-2 font-display font-semibold">Hôm nay ăn gì?</p>
-          <p className="text-xs text-muted-foreground">{foods.length} món trong danh sách</p>
-        </button>
-        <button
-          type="button"
-          onClick={drawActivity}
-          disabled={!activities.length}
-          className="paper rounded-3xl p-4 text-left disabled:opacity-60"
-        >
-          <MapPinned className="size-5 text-primary" />
-          <p className="mt-2 font-display font-semibold">Hôm nay làm gì?</p>
-          <p className="text-xs text-muted-foreground">{activities.length} ý tưởng</p>
-        </button>
-      </div>
 
       <section className="paper flex items-center gap-4 rounded-3xl p-4">
         <div className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary">
@@ -183,45 +153,18 @@ function HomePage() {
         )}
       </section>
 
-      <section className="space-y-2">
-        <h2 className="font-display text-lg font-bold">Hai đứa vừa làm gì</h2>
-        <div className="paper space-y-2 rounded-3xl p-4">
-          {log.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground">Chưa có hoạt động nào</p>
-          )}
-          {log.slice(0, 8).map((entry) => (
-            <div key={entry.id} className="flex items-baseline justify-between gap-3 text-sm">
-              <p className="min-w-0">
-                <span className="font-medium">
-                  {members.find((m) => m.id === entry.member_id)?.name ?? "Ai đó"}
-                </span>{" "}
-                <span className="text-muted-foreground">{entry.action}</span>{" "}
-                {entry.subject && <span className="text-muted-foreground">“{entry.subject}”</span>}
-              </p>
-              <span className="shrink-0 text-[11px] text-muted-foreground">
-                {formatDate(entry.created_at)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <RandomDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
-        title={drawMeta.title}
-        emoji={drawMeta.emoji}
-        onDrawAgain={redraw}
+        title="Điều ước hôm nay"
+        emoji="🫙"
+        onDrawAgain={drawWish}
         result={
-          draw?.item ? (
+          draw ? (
             <div>
-              <p className="font-display text-xl font-bold">
-                {"title" in draw.item ? draw.item.title : draw.item.name}
-              </p>
+              <p className="font-display text-xl font-bold">{draw.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {draw.kind === "wish"
-                  ? labelOf(WISH_CATEGORIES, (draw.item as Wish).category).label
-                  : ((draw.item as Food | Activity).place ?? "Chưa ghi địa điểm")}
+                {labelOf(WISH_CATEGORIES, draw.category).label}
               </p>
             </div>
           ) : (
@@ -230,7 +173,7 @@ function HomePage() {
         }
       >
         <Link
-          to={draw?.kind === "food" ? "/food" : draw?.kind === "activity" ? "/activities" : "/wishes"}
+          to="/wishes"
           onClick={() => setDrawOpen(false)}
         >
           <Button variant="outline" className="rounded-full">
