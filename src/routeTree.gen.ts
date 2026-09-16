@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as FoodRouteImport } from './routes/food'
+import { Route as MemoriesRouteImport } from './routes/memories'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as WishesRouteImport } from './routes/wishes'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +31,16 @@ const FoodRoute = FoodRouteImport.update({
   path: '/food',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MemoriesRoute = MemoriesRouteImport.update({
+  id: '/memories',
+  path: '/memories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WishesRoute = WishesRouteImport.update({
   id: '/wishes',
   path: '/wishes',
@@ -39,12 +51,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/food': typeof FoodRoute
+  '/memories': typeof MemoriesRoute
+  '/stats': typeof StatsRoute
   '/wishes': typeof WishesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/food': typeof FoodRoute
+  '/memories': typeof MemoriesRoute
+  '/stats': typeof StatsRoute
   '/wishes': typeof WishesRoute
 }
 export interface FileRoutesById {
@@ -52,20 +68,31 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/food': typeof FoodRoute
+  '/memories': typeof MemoriesRoute
+  '/stats': typeof StatsRoute
   '/wishes': typeof WishesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/activities' | '/food' | '/wishes'
+  fullPaths: '/' | '/activities' | '/food' | '/memories' | '/stats' | '/wishes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/activities' | '/food' | '/wishes'
-  id: '__root__' | '/' | '/activities' | '/food' | '/wishes'
+  to: '/' | '/activities' | '/food' | '/memories' | '/stats' | '/wishes'
+  id:
+    | '__root__'
+    | '/'
+    | '/activities'
+    | '/food'
+    | '/memories'
+    | '/stats'
+    | '/wishes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitiesRoute: typeof ActivitiesRoute
   FoodRoute: typeof FoodRoute
+  MemoriesRoute: typeof MemoriesRoute
+  StatsRoute: typeof StatsRoute
   WishesRoute: typeof WishesRoute
 }
 
@@ -92,6 +119,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoodRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/memories': {
+      id: '/memories'
+      path: '/memories'
+      fullPath: '/memories'
+      preLoaderRoute: typeof MemoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wishes': {
       id: '/wishes'
       path: '/wishes'
@@ -106,6 +147,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
   FoodRoute: FoodRoute,
+  MemoriesRoute: MemoriesRoute,
+  StatsRoute: StatsRoute,
   WishesRoute: WishesRoute,
 }
 export const routeTree = rootRouteImport
