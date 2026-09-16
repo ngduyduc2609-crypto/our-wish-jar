@@ -141,7 +141,7 @@ function AppLayout() {
 
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+      <div className="flex min-h-[100svh] items-center justify-center text-sm text-muted-foreground">
         Đang mở lọ điều ước...
       </div>
     );
@@ -150,15 +150,19 @@ function AppLayout() {
   if (!me) return <IdentityGate />;
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-[100svh]">
       <IdentityBar />
-      <main className="mx-auto max-w-2xl px-4 py-5">
+      <main
+        className="mx-auto max-w-2xl px-4 pt-5"
+        style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
+      >
         <Outlet />
       </main>
       <BottomNav />
     </div>
   );
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
