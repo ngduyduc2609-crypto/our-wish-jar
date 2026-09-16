@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Shuffle, Sparkles, Flame } from "lucide-react";
+import { Heart, Shuffle, Sparkles, Flame, BarChart3, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RandomDrawDialog } from "@/components/RandomDraw";
@@ -13,6 +13,7 @@ import {
   fetchPresence,
   fetchWishes,
   pickRandom,
+  imageAssets,
   type Wish,
 } from "@/lib/db";
 import { WISH_CATEGORIES, daysTogether, formatDate, labelOf } from "@/lib/constants";
@@ -64,27 +65,29 @@ function HomePage() {
         <p className="text-sm text-muted-foreground">ngày, kể từ 22/12/2025 💗</p>
       </section>
 
-      <section className="paper overflow-hidden rounded-3xl px-5 pb-5 pt-4 text-center">
-        <div className="relative mx-auto h-64 max-w-sm" aria-label="Lọ chứa những điều ước đang chờ">
-          <Heart className="absolute left-7 top-8 size-4 fill-blush text-primary/40" aria-hidden="true" />
-          <Heart className="absolute right-8 top-14 size-5 fill-blush text-primary/50" aria-hidden="true" />
-          <Sparkles className="absolute right-5 top-2 size-4 text-honey" aria-hidden="true" />
-          <div className="absolute left-1/2 top-2 z-20 h-8 w-36 -translate-x-1/2 rounded-xl border border-border bg-honey shadow-sm" />
-          <div className="absolute inset-x-5 bottom-0 top-7 overflow-hidden rounded-b-[3.5rem] rounded-t-3xl border-2 border-primary/20 bg-card/65 shadow-inner backdrop-blur-sm">
-            <div className="absolute left-4 top-5 h-32 w-3 rounded-full bg-background/70" />
+       <section className="paper overflow-hidden rounded-3xl px-5 pb-5 pt-4 text-center">
+         <div className="wish-jar relative mx-auto h-64 max-w-sm" aria-label="Lọ chứa những điều ước đang chờ">
+           <Sparkles className="absolute left-6 top-14 size-4 text-sky-400" aria-hidden="true" />
+           <Sparkles className="absolute right-5 top-5 size-5 text-sky-300" aria-hidden="true" />
+           <div className="absolute left-1/2 top-2 z-20 h-8 w-36 -translate-x-1/2 rounded-xl border border-sky-200 bg-gradient-to-b from-sky-100 to-sky-200 shadow-[0_4px_15px_rgba(56,189,248,.28)]" />
+           <div className="wish-jar-glass absolute inset-x-5 bottom-0 top-7 overflow-hidden rounded-b-[3.5rem] rounded-t-3xl border-2 border-sky-200/80 bg-gradient-to-b from-sky-50/80 via-sky-100/55 to-sky-200/65 shadow-inner backdrop-blur-sm">
+             <div className="absolute left-4 top-5 h-32 w-3 rounded-full bg-white/70" />
+             <div className="absolute inset-x-8 bottom-2 h-6 rounded-full bg-sky-300/25 blur-md" />
             <div className="absolute inset-x-5 bottom-5 flex flex-wrap-reverse items-end justify-center gap-2">
               {pending.slice(0, 8).map((wish, index) => (
                 <div
                   key={wish.id}
-                  className={`max-w-28 rotate-1 rounded-md border border-border px-2 py-1.5 text-[10px] font-medium leading-snug shadow-sm ${
+                   style={{ animationDelay: `${index * -0.7}s` }}
+                   className={`wish-note max-w-28 rounded-md border border-white/80 px-2 py-1.5 text-[10px] font-medium leading-snug shadow-sm ${
                     index % 3 === 0
-                      ? "bg-blush"
+                       ? "bg-pink-100"
                       : index % 3 === 1
-                        ? "-rotate-2 bg-honey"
-                        : "rotate-2 bg-sage"
+                         ? "bg-amber-100"
+                         : "bg-sky-100"
                   }`}
                 >
-                  <span className="line-clamp-2">{wish.title}</span>
+                   <span aria-hidden="true">{labelOf(WISH_CATEGORIES, wish.category).emoji} </span>
+                   <span className="line-clamp-2 inline">{wish.title}</span>
                 </div>
               ))}
               {pending.length === 0 && (
@@ -129,13 +132,15 @@ function HomePage() {
           </p>
         ) : (
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
-            {memories.slice(0, 6).map((memory) => (
+            {memories.slice(0, 6).map((memory) => {
+              const cover = imageAssets(memory.images, memory.image_url, memory.image_pos)[0];
+              return (
               <article key={memory.id} className="paper w-40 shrink-0 overflow-hidden rounded-3xl">
-                {memory.image_url ? (
+                {cover ? (
                   <StoredImage
-                    path={memory.image_url}
+                    path={cover.path}
                     alt={memory.title}
-                    position={memory.image_pos}
+                    position={cover.position}
                     className="h-24 w-full"
                   />
                 ) : (
@@ -148,10 +153,21 @@ function HomePage() {
                   </p>
                 </div>
               </article>
-            ))}
+            );})}
           </div>
         )}
       </section>
+
+      <Link to="/stats" className="paper flex items-center gap-3 rounded-3xl p-4 transition-colors hover:bg-accent">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-primary">
+          <BarChart3 className="size-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display font-semibold">Thống kê chúng mình</span>
+          <span className="block text-xs text-muted-foreground">Nhìn lại hành trình và các cột mốc</span>
+        </span>
+        <ChevronRight className="size-5 text-muted-foreground" />
+      </Link>
 
       <RandomDrawDialog
         open={drawOpen}

@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ImagePicker } from "@/components/ImagePicker";
-import { StoredImage } from "@/components/StoredImage";
+import { MultiImagePicker } from "@/components/MultiImagePicker";
+import { ImageGallery } from "@/components/ImageGallery";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
@@ -19,9 +19,11 @@ import {
   deleteRow,
   fetchActivities,
   insertRow,
+  imageAssets,
   pickRandom,
   updateRow,
   type Activity,
+  type ImageAsset,
 } from "@/lib/db";
 import { ACTIVITY_CATEGORIES, ACTIVITY_TAGS, labelOf, todayKey } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -92,6 +94,7 @@ function ActivitiesPage() {
           source_type: "activity",
           source_id: activity.id,
           created_by: me?.id ?? null,
+          images: imageAssets(activity.images, activity.image_url, activity.image_pos),
         });
       }
       track(activity.done ? "mở lại hoạt động" : "hoàn thành hoạt động", activity.name);
@@ -152,14 +155,7 @@ function ActivitiesPage() {
           const mine = canManage(me, activity.added_by);
           return (
             <article key={activity.id} className="paper overflow-hidden rounded-3xl">
-              {activity.image_url && (
-                <StoredImage
-                  path={activity.image_url}
-                  alt={activity.name}
-                  position={activity.image_pos}
-                  className="h-40 w-full"
-                />
-              )}
+              <ImageGallery images={imageAssets(activity.images, activity.image_url, activity.image_pos)} alt={activity.name} className="h-40" />
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -299,8 +295,7 @@ function ActivityDialog({
   const [place, setPlace] = useState("");
   const [note, setNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [image, setImage] = useState<string | null>(null);
-  const [imagePos, setImagePos] = useState("50% 50%");
+  const [images, setImages] = useState<ImageAsset[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -309,8 +304,7 @@ function ActivityDialog({
     setPlace(activity?.place ?? "");
     setNote(activity?.note ?? "");
     setTags(activity?.tags ?? []);
-    setImage(activity?.image_url ?? null);
-    setImagePos(activity?.image_pos ?? "50% 50%");
+    setImages(imageAssets(activity?.images, activity?.image_url, activity?.image_pos));
   }, [open, activity]);
 
   const save = useMutation({
@@ -321,8 +315,9 @@ function ActivityDialog({
         place: place.trim() || null,
         note: note.trim() || null,
         tags,
-        image_url: image,
-        image_pos: imagePos,
+        images,
+        image_url: images[0]?.path ?? null,
+        image_pos: images[0]?.position ?? "50% 50%",
       };
       if (activity) {
         await updateRow("activities", activity.id, values);
@@ -398,12 +393,7 @@ function ActivityDialog({
             <Label>Ghi chú</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
-          <ImagePicker
-            value={image}
-            onChange={setImage}
-            position={imagePos}
-            onPositionChange={setImagePos}
-          />
+          <MultiImagePicker value={images} onChange={setImages} />
           <Button
             className="w-full rounded-2xl"
             disabled={!name.trim() || save.isPending}

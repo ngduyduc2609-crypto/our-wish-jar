@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Sparkles, UtensilsCrossed, MapPinned, Heart, BarChart3 } from "lucide-react";
+import { Home, Sparkles, UtensilsCrossed, MapPinned, Heart } from "lucide-react";
 
 const items = [
   { to: "/", label: "Nhà", icon: Home },

@@ -24,6 +24,7 @@ export type Database = {
           id: string
           image_pos: string
           image_url: string | null
+          images: Json
           name: string
           note: string | null
           place: string | null
@@ -38,6 +39,7 @@ export type Database = {
           id?: string
           image_pos?: string
           image_url?: string | null
+          images?: Json
           name: string
           note?: string | null
           place?: string | null
@@ -52,6 +54,7 @@ export type Database = {
           id?: string
           image_pos?: string
           image_url?: string | null
+          images?: Json
           name?: string
           note?: string | null
           place?: string | null
@@ -133,6 +136,7 @@ export type Database = {
           id: string
           image_pos: string
           image_url: string | null
+          images: Json
           name: string
           note: string | null
           place: string | null
@@ -148,6 +152,7 @@ export type Database = {
           id?: string
           image_pos?: string
           image_url?: string | null
+          images?: Json
           name: string
           note?: string | null
           place?: string | null
@@ -163,6 +168,7 @@ export type Database = {
           id?: string
           image_pos?: string
           image_url?: string | null
+          images?: Json
           name?: string
           note?: string | null
           place?: string | null
@@ -216,6 +222,7 @@ export type Database = {
           id: string
           image_pos: string
           image_url: string | null
+          images: Json
           note: string | null
           rating: number | null
           source_id: string | null
@@ -229,6 +236,7 @@ export type Database = {
           id?: string
           image_pos?: string
           image_url?: string | null
+          images?: Json
           note?: string | null
           rating?: number | null
           source_id?: string | null
@@ -242,6 +250,7 @@ export type Database = {
           id?: string
           image_pos?: string
           image_url?: string | null
+          images?: Json
           note?: string | null
           rating?: number | null
           source_id?: string | null
@@ -345,6 +354,7 @@ export type Database = {
           deadline: string | null
           difficulty: string
           id: string
+          images: Json
           note: string | null
           proposed_by: string | null
           title: string
@@ -357,6 +367,7 @@ export type Database = {
           deadline?: string | null
           difficulty?: string
           id?: string
+          images?: Json
           note?: string | null
           proposed_by?: string | null
           title: string
@@ -369,6 +380,7 @@ export type Database = {
           deadline?: string | null
           difficulty?: string
           id?: string
+          images?: Json
           note?: string | null
           proposed_by?: string | null
           title?: string

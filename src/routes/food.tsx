@@ -9,13 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ImagePicker } from "@/components/ImagePicker";
-import { StoredImage } from "@/components/StoredImage";
+import { MultiImagePicker } from "@/components/MultiImagePicker";
+import { ImageGallery } from "@/components/ImageGallery";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
-import { deleteRow, fetchFoods, insertRow, pickRandom, updateRow, type Food } from "@/lib/db";
+import { deleteRow, fetchFoods, imageAssets, insertRow, pickRandom, updateRow, type Food, type ImageAsset } from "@/lib/db";
 import { PRICE_LEVELS, todayKey } from "@/lib/constants";
 
 export const Route = createFileRoute("/food")({
@@ -111,14 +111,7 @@ function FoodPage() {
           const mine = canManage(me, food.added_by);
           return (
             <article key={food.id} className="paper overflow-hidden rounded-3xl">
-              {food.image_url && (
-                <StoredImage
-                  path={food.image_url}
-                  position={food.image_pos}
-                  alt={food.name}
-                  className="h-40 w-full"
-                />
-              )}
+              <ImageGallery images={imageAssets(food.images, food.image_url, food.image_pos)} alt={food.name} className="h-40" />
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -232,8 +225,7 @@ function FoodDialog({
   const [address, setAddress] = useState("");
   const [price, setPrice] = useState(2);
   const [note, setNote] = useState("");
-  const [image, setImage] = useState<string | null>(null);
-  const [imagePos, setImagePos] = useState("50% 50%");
+  const [images, setImages] = useState<ImageAsset[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -242,8 +234,7 @@ function FoodDialog({
     setAddress(food?.address ?? "");
     setPrice(food?.price_level ?? 2);
     setNote(food?.note ?? "");
-    setImage(food?.image_url ?? null);
-    setImagePos(food?.image_pos ?? "50% 50%");
+    setImages(imageAssets(food?.images, food?.image_url, food?.image_pos));
   }, [open, food]);
 
   const save = useMutation({
@@ -254,8 +245,9 @@ function FoodDialog({
         address: address.trim() || null,
         price_level: price,
         note: note.trim() || null,
-        image_url: image,
-        image_pos: imagePos,
+        images,
+        image_url: images[0]?.path ?? null,
+        image_pos: images[0]?.position ?? "50% 50%",
       };
       if (food) {
         await updateRow("foods", food.id, values);
@@ -309,12 +301,7 @@ function FoodDialog({
             <Label>Ghi chú</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
-          <ImagePicker
-            value={image}
-            onChange={setImage}
-            position={imagePos}
-            onPositionChange={setImagePos}
-          />
+          <MultiImagePicker value={images} onChange={setImages} />
           <Button
             className="w-full rounded-2xl"
             disabled={!name.trim() || save.isPending}
@@ -340,24 +327,26 @@ function TriedDialog({
   const { me, track } = useIdentity();
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState("");
-  const [image, setImage] = useState<string | null>(null);
-  const [imagePos, setImagePos] = useState("50% 50%");
+  const [images, setImages] = useState<ImageAsset[]>([]);
 
   const save = useMutation({
     mutationFn: async () => {
       if (!food) return;
+      const finalImages = images.length ? images : imageAssets(food.images, food.image_url, food.image_pos);
       await updateRow("foods", food.id, {
         tried: true,
         tried_at: new Date().toISOString(),
         rating,
-        image_url: image ?? food.image_url,
-        image_pos: image ? imagePos : (food.image_pos ?? "50% 50%"),
+        images: finalImages,
+        image_url: finalImages[0]?.path ?? null,
+        image_pos: finalImages[0]?.position ?? "50% 50%",
       });
       await insertRow("memories", {
         title: food.name,
         note: note.trim() || food.note,
-        image_url: image ?? food.image_url,
-        image_pos: image ? imagePos : (food.image_pos ?? "50% 50%"),
+        images: finalImages,
+        image_url: finalImages[0]?.path ?? null,
+        image_pos: finalImages[0]?.position ?? "50% 50%",
         happened_on: todayKey(),
         rating,
         source_type: "food",
@@ -368,8 +357,7 @@ function TriedDialog({
     },
     onSuccess: () => {
       setNote("");
-      setImage(null);
-      setImagePos("50% 50%");
+      setImages([]);
       setRating(5);
       onClose();
       onDone();
@@ -398,12 +386,7 @@ function TriedDialog({
             <Label>Cảm nhận</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           </div>
-          <ImagePicker
-            value={image}
-            onChange={setImage}
-            position={imagePos}
-            onPositionChange={setImagePos}
-          />
+          <MultiImagePicker value={images} onChange={setImages} />
           <Button
             className="w-full rounded-2xl"
             disabled={save.isPending}

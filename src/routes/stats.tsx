@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import {
@@ -52,9 +53,14 @@ function StatsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Thống kê</h1>
-        <p className="text-sm text-muted-foreground">Nhìn lại hành trình của hai đứa</p>
+      <div className="flex items-center gap-2">
+        <Link to="/" aria-label="Quay lại trang Nhà" className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-card text-foreground">
+          <ChevronLeft className="size-5" />
+        </Link>
+        <div>
+          <h1 className="font-display text-2xl font-bold">Thống kê</h1>
+          <p className="text-sm text-muted-foreground">Nhìn lại hành trình của hai đứa</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
