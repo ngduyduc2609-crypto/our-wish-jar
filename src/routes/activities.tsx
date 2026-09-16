@@ -1,24 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Shuffle, Trash2, MapPin, Check } from "lucide-react";
+import { Plus, Shuffle, Trash2, MapPin, Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImagePicker } from "@/components/ImagePicker";
 import { StoredImage } from "@/components/StoredImage";
 import { RandomDrawDialog } from "@/components/RandomDraw";
+import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
+import { canManage } from "@/lib/ownership";
 import {
   deleteRow,
   fetchActivities,
@@ -51,10 +47,12 @@ export const Route = createFileRoute("/activities")({
 function ActivitiesPage() {
   const { me, track } = useIdentity();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"todo" | "done">("todo");
+  const [tab, setTab] = useState<"all" | "done">("all");
   const [filter, setFilter] = useState<string | null>(null);
   const [drawOpen, setDrawOpen] = useState(false);
   const [drawn, setDrawn] = useState<Activity | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Activity | null>(null);
 
   const { data: activities = [] } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
 
@@ -65,13 +63,12 @@ function ActivitiesPage() {
     void qc.invalidateQueries({ queryKey: ["presence"] });
   };
 
-  const todo = useMemo(() => activities.filter((a) => !a.done), [activities]);
   const done = useMemo(() => activities.filter((a) => a.done), [activities]);
-  const visible = tab === "todo" ? todo : done;
+  const visible = tab === "all" ? activities : done;
 
   const pool = useMemo(
-    () => todo.filter((a) => !filter || a.tags.includes(filter)),
-    [todo, filter],
+    () => activities.filter((a) => !filter || a.tags.includes(filter)),
+    [activities, filter],
   );
 
   function draw() {
@@ -90,6 +87,7 @@ function ActivitiesPage() {
           title: activity.name,
           note: activity.note,
           image_url: activity.image_url,
+          image_pos: activity.image_pos ?? "50% 50%",
           happened_on: todayKey(),
           source_type: "activity",
           source_id: activity.id,
@@ -110,7 +108,7 @@ function ActivitiesPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Làm gì hôm nay</h1>
           <p className="text-sm text-muted-foreground">
-            {todo.length} ý tưởng chờ · {done.length} đã làm
+            {activities.length} ý tưởng · {done.length} đã làm
           </p>
         </div>
         <Button className="rounded-full" onClick={draw} disabled={!pool.length}>
@@ -130,23 +128,37 @@ function ActivitiesPage() {
       </div>
 
       <div className="flex gap-2">
-        <Chip active={tab === "todo"} onClick={() => setTab("todo")}>
-          Muốn làm
+        <Chip active={tab === "all"} onClick={() => setTab("all")}>
+          Tất cả
         </Chip>
         <Chip active={tab === "done"} onClick={() => setTab("done")}>
           Đã làm
         </Chip>
       </div>
 
-      <NewActivityDialog onDone={refresh} />
+      <Button
+        className="w-full rounded-2xl"
+        onClick={() => {
+          setEditing(null);
+          setDialogOpen(true);
+        }}
+      >
+        <Plus className="size-4" /> Thêm hoạt động
+      </Button>
 
       <div className="grid gap-3">
         {visible.map((activity) => {
           const category = labelOf(ACTIVITY_CATEGORIES, activity.category);
+          const mine = canManage(me, activity.added_by);
           return (
             <article key={activity.id} className="paper overflow-hidden rounded-3xl">
               {activity.image_url && (
-                <StoredImage path={activity.image_url} alt={activity.name} className="h-40 w-full" />
+                <StoredImage
+                  path={activity.image_url}
+                  alt={activity.name}
+                  position={activity.image_pos}
+                  className="h-40 w-full"
+                />
               )}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -188,18 +200,33 @@ function ActivitiesPage() {
                     >
                       <Check className="size-4" />
                     </button>
-                    <button
-                      type="button"
-                      aria-label="Xoá hoạt động"
-                      onClick={async () => {
-                        await deleteRow("activities", activity.id);
-                        track("xoá hoạt động", activity.name);
-                        refresh();
-                      }}
-                      className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                    {mine && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label="Sửa hoạt động"
+                          onClick={() => {
+                            setEditing(activity);
+                            setDialogOpen(true);
+                          }}
+                          className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Xoá hoạt động"
+                          onClick={async () => {
+                            await deleteRow("activities", activity.id);
+                            track("xoá hoạt động", activity.name);
+                            refresh();
+                          }}
+                          className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -213,6 +240,13 @@ function ActivitiesPage() {
         )}
       </div>
 
+      <ActivityDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        activity={editing}
+        onDone={refresh}
+      />
+
       <RandomDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
@@ -223,14 +257,16 @@ function ActivitiesPage() {
           drawn ? (
             <div>
               <p className="font-display text-xl font-bold">{drawn.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{drawn.place ?? "Chưa ghi địa điểm"}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {drawn.place ?? "Chưa ghi địa điểm"}
+              </p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Không có hoạt động nào hợp bộ lọc</p>
           )
         }
       >
-        {drawn && (
+        {drawn && !drawn.done && (
           <Button
             className="rounded-full"
             onClick={() => {
@@ -246,87 +282,89 @@ function ActivitiesPage() {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  children,
+function ActivityDialog({
+  open,
+  onOpenChange,
+  activity,
+  onDone,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  activity: Activity | null;
+  onDone: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-muted-foreground",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function NewActivityDialog({ onDone }: { onDone: () => void }) {
   const { me, track } = useIdentity();
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>("cafe");
   const [place, setPlace] = useState("");
   const [note, setNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [image, setImage] = useState<string | null>(null);
+  const [imagePos, setImagePos] = useState("50% 50%");
+
+  useEffect(() => {
+    if (!open) return;
+    setName(activity?.name ?? "");
+    setCategory(activity?.category ?? "cafe");
+    setPlace(activity?.place ?? "");
+    setNote(activity?.note ?? "");
+    setTags(activity?.tags ?? []);
+    setImage(activity?.image_url ?? null);
+    setImagePos(activity?.image_pos ?? "50% 50%");
+  }, [open, activity]);
 
   const save = useMutation({
     mutationFn: async () => {
-      await insertRow("activities", {
+      const values = {
         name: name.trim(),
         category,
         place: place.trim() || null,
         note: note.trim() || null,
         tags,
         image_url: image,
-        added_by: me?.id ?? null,
-      });
-      track("thêm hoạt động", name.trim());
+        image_pos: imagePos,
+      };
+      if (activity) {
+        await updateRow("activities", activity.id, values);
+        track("sửa hoạt động", values.name);
+      } else {
+        await insertRow("activities", { ...values, added_by: me?.id ?? null });
+        track("thêm hoạt động", values.name);
+      }
     },
     onSuccess: () => {
-      setName("");
-      setPlace("");
-      setNote("");
-      setTags([]);
-      setImage(null);
-      setOpen(false);
+      onOpenChange(false);
       onDone();
-      toast.success("Đã thêm hoạt động 🎈");
+      toast.success(activity ? "Đã cập nhật 🎈" : "Đã thêm hoạt động 🎈");
     },
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full rounded-2xl">
-          <Plus className="size-4" /> Thêm hoạt động
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-display">Hoạt động mới</DialogTitle>
+          <DialogTitle className="font-display">
+            {activity ? "Sửa hoạt động" : "Hoạt động mới"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Tên hoạt động</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Cafe sách cuối tuần" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Cafe sách cuối tuần"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Nhóm</Label>
             <div className="flex flex-wrap gap-2">
               {ACTIVITY_CATEGORIES.map((c) => (
-                <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
+                <Chip
+                  key={c.value}
+                  active={category === c.value}
+                  onClick={() => setCategory(c.value)}
+                >
                   {c.emoji} {c.label}
                 </Chip>
               ))}
@@ -341,7 +379,9 @@ function NewActivityDialog({ onDone }: { onDone: () => void }) {
                   active={tags.includes(t.value)}
                   onClick={() =>
                     setTags((prev) =>
-                      prev.includes(t.value) ? prev.filter((x) => x !== t.value) : [...prev, t.value],
+                      prev.includes(t.value)
+                        ? prev.filter((x) => x !== t.value)
+                        : [...prev, t.value],
                     )
                   }
                 >
@@ -358,13 +398,18 @@ function NewActivityDialog({ onDone }: { onDone: () => void }) {
             <Label>Ghi chú</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
-          <ImagePicker value={image} onChange={setImage} />
+          <ImagePicker
+            value={image}
+            onChange={setImage}
+            position={imagePos}
+            onPositionChange={setImagePos}
+          />
           <Button
             className="w-full rounded-2xl"
             disabled={!name.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            Lưu lại
+            {activity ? "Lưu thay đổi" : "Lưu lại"}
           </Button>
         </div>
       </DialogContent>

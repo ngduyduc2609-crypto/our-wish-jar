@@ -54,7 +54,7 @@ export function ImagePicker({
             <StoredImage
               path={value}
               alt="Ảnh đã chọn"
-              position={position}
+              position={position ?? null}
               className="h-40 w-full"
             />
             <button
