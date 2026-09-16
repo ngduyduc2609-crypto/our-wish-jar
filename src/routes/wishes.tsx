@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, MessageCircle, Check, Trash2, Shuffle } from "lucide-react";
+import { Plus, MessageCircle, Check, Trash2, Shuffle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/Chip";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { useIdentity } from "@/lib/identity";
+import { canManage } from "@/lib/ownership";
 import {
   deleteRow,
   fetchComments,
@@ -64,6 +65,8 @@ function WishesPage() {
   const [showDone, setShowDone] = useState(false);
   const [drawOpen, setDrawOpen] = useState(false);
   const [drawn, setDrawn] = useState<Wish | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Wish | null>(null);
 
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });
   const { data: reactions = [] } = useQuery({ queryKey: ["reactions"], queryFn: fetchReactions });
@@ -120,14 +123,19 @@ function WishesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between gap-3">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+        <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold">Lọ điều ước</h1>
           <p className="text-sm text-muted-foreground">
             {pending.length} điều còn chờ · {wishes.length - pending.length} đã xong
           </p>
         </div>
-        <Button variant="secondary" className="rounded-full" onClick={draw} disabled={!pending.length}>
+        <Button
+          variant="secondary"
+          className="shrink-0 rounded-full"
+          onClick={draw}
+          disabled={!pending.length}
+        >
           <Shuffle className="size-4" /> Rút
         </Button>
       </div>
@@ -152,7 +160,22 @@ function WishesPage() {
         </Chip>
       </div>
 
-      <NewWishDialog onDone={refresh} />
+      <Button
+        className="w-full rounded-2xl"
+        onClick={() => {
+          setEditing(null);
+          setFormOpen(true);
+        }}
+      >
+        <Plus className="size-4" /> Thêm điều ước
+      </Button>
+
+      <WishDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        wish={editing}
+        onDone={refresh}
+      />
 
       <div className="space-y-3">
         {visible.map((wish) => (
@@ -161,10 +184,12 @@ function WishesPage() {
             wish={wish}
             reactions={reactions.filter((r) => r.wish_id === wish.id)}
             comments={comments.filter((c) => c.wish_id === wish.id)}
-            memberName={(id: string | null) =>
-              members.find((m) => m.id === id)?.name ?? "Ai đó"
-            }
+            memberName={(id: string | null) => members.find((m) => m.id === id)?.name ?? "Ai đó"}
             onChanged={refresh}
+            onEdit={() => {
+              setEditing(wish);
+              setFormOpen(true);
+            }}
             onToggleComplete={() => completeWish.mutate(wish)}
           />
         ))}
@@ -199,77 +224,73 @@ function WishesPage() {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  children,
+function WishDialog({
+  open,
+  onOpenChange,
+  wish,
+  onDone,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  wish: Wish | null;
+  onDone: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-muted-foreground",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function NewWishDialog({ onDone }: { onDone: () => void }) {
   const { me, track } = useIdentity();
-  const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
   const [category, setCategory] = useState<string>("experience");
   const [difficulty, setDifficulty] = useState<string>("medium");
   const [deadline, setDeadline] = useState("");
 
+  useEffect(() => {
+    if (!open) return;
+    setTitle(wish?.title ?? "");
+    setNote(wish?.note ?? "");
+    setCategory(wish?.category ?? "experience");
+    setDifficulty(wish?.difficulty ?? "medium");
+    setDeadline(wish?.deadline ?? "");
+  }, [open, wish]);
+
   const save = useMutation({
     mutationFn: async () => {
-      await insertRow("wishes", {
+      const values = {
         title: title.trim(),
         note: note.trim() || null,
         category,
         difficulty,
         deadline: deadline || null,
-        proposed_by: me?.id ?? null,
-      });
-      track("thêm điều ước", title.trim());
+      };
+      if (wish) {
+        await updateRow("wishes", wish.id, values);
+        track("sửa điều ước", values.title);
+      } else {
+        await insertRow("wishes", { ...values, proposed_by: me?.id ?? null });
+        track("thêm điều ước", values.title);
+      }
     },
     onSuccess: () => {
-      setTitle("");
-      setNote("");
-      setDeadline("");
-      setOpen(false);
+      onOpenChange(false);
       onDone();
-      toast.success("Đã bỏ vào lọ điều ước 🫙");
+      toast.success(wish ? "Đã cập nhật điều ước ✨" : "Đã bỏ vào lọ điều ước 🫙");
     },
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full rounded-2xl">
-          <Plus className="size-4" /> Thêm điều ước
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85svh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-display">Điều ước mới</DialogTitle>
+          <DialogTitle className="font-display">
+            {wish ? "Sửa điều ước" : "Điều ước mới"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Mình muốn...</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Đi Đà Lạt ngắm thông" />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Đi Đà Lạt ngắm thông"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Ghi chú</Label>
@@ -279,7 +300,11 @@ function NewWishDialog({ onDone }: { onDone: () => void }) {
             <Label>Nhóm</Label>
             <div className="flex flex-wrap gap-2">
               {WISH_CATEGORIES.map((c) => (
-                <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
+                <Chip
+                  key={c.value}
+                  active={category === c.value}
+                  onClick={() => setCategory(c.value)}
+                >
                   {c.emoji} {c.label}
                 </Chip>
               ))}
@@ -289,7 +314,11 @@ function NewWishDialog({ onDone }: { onDone: () => void }) {
             <Label>Độ khó</Label>
             <div className="flex flex-wrap gap-2">
               {DIFFICULTIES.map((d) => (
-                <Chip key={d.value} active={difficulty === d.value} onClick={() => setDifficulty(d.value)}>
+                <Chip
+                  key={d.value}
+                  active={difficulty === d.value}
+                  onClick={() => setDifficulty(d.value)}
+                >
                   {d.emoji} {d.label}
                 </Chip>
               ))}
@@ -304,7 +333,7 @@ function NewWishDialog({ onDone }: { onDone: () => void }) {
             disabled={!title.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            Bỏ vào lọ
+            {wish ? "Lưu thay đổi" : "Bỏ vào lọ"}
           </Button>
         </div>
       </DialogContent>
@@ -318,6 +347,7 @@ function WishCard({
   comments,
   memberName,
   onChanged,
+  onEdit,
   onToggleComplete,
 }: {
   wish: Wish;
@@ -325,6 +355,7 @@ function WishCard({
   comments: { id: string; member_id: string; content: string; created_at: string }[];
   memberName: (id: string | null) => string;
   onChanged: () => void;
+  onEdit: () => void;
   onToggleComplete: () => void;
 }) {
   const { me, track } = useIdentity();
@@ -332,6 +363,7 @@ function WishCard({
   const [draft, setDraft] = useState("");
   const category = labelOf(WISH_CATEGORIES, wish.category);
   const difficulty = labelOf(DIFFICULTIES, wish.difficulty);
+  const mine = canManage(me, wish.proposed_by);
 
   async function react(emoji: string) {
     if (!me) return;
@@ -367,10 +399,17 @@ function WishCard({
             <Badge variant="secondary" className="rounded-full">
               {category.emoji} {category.label}
             </Badge>
-            <span>{difficulty.emoji} {difficulty.label}</span>
+            <span>
+              {difficulty.emoji} {difficulty.label}
+            </span>
             {wish.deadline && <span>· trước {formatDate(wish.deadline)}</span>}
           </div>
-          <h2 className={cn("mt-1.5 font-display text-lg font-semibold", wish.completed && "line-through opacity-60")}>
+          <h2
+            className={cn(
+              "mt-1.5 font-display text-lg font-semibold",
+              wish.completed && "line-through opacity-60",
+            )}
+          >
             {wish.title}
           </h2>
           {wish.note && <p className="mt-1 text-sm text-muted-foreground">{wish.note}</p>}
@@ -394,7 +433,7 @@ function WishCard({
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {REACTIONS.map((emoji) => {
           const list = reactions.filter((r) => r.emoji === emoji);
-          const mine = me ? list.some((r) => r.member_id === me.id) : false;
+          const reacted = me ? list.some((r) => r.member_id === me.id) : false;
           return (
             <button
               key={emoji}
@@ -402,7 +441,7 @@ function WishCard({
               onClick={() => void react(emoji)}
               className={cn(
                 "rounded-full border px-2.5 py-1 text-xs transition-colors",
-                mine ? "border-primary bg-accent" : "border-border bg-card",
+                reacted ? "border-primary bg-accent" : "border-border bg-card",
               )}
             >
               {emoji} {list.length > 0 && list.length}
@@ -416,14 +455,26 @@ function WishCard({
         >
           <MessageCircle className="size-3.5" /> {comments.length}
         </button>
-        <button
-          type="button"
-          onClick={() => void remove()}
-          aria-label="Xoá điều ước"
-          className="rounded-full border border-border px-2 py-1 text-muted-foreground"
-        >
-          <Trash2 className="size-3.5" />
-        </button>
+        {mine && (
+          <>
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-label="Sửa điều ước"
+              className="rounded-full border border-border px-2 py-1 text-muted-foreground"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void remove()}
+              aria-label="Xoá điều ước"
+              className="rounded-full border border-border px-2 py-1 text-muted-foreground"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </>
+        )}
       </div>
 
       {openComments && (
@@ -441,7 +492,11 @@ function WishCard({
               placeholder="Nhắn gì đó..."
               className="rounded-2xl"
             />
-            <Button className="rounded-2xl" onClick={() => void sendComment()} disabled={!draft.trim()}>
+            <Button
+              className="rounded-2xl"
+              onClick={() => void sendComment()}
+              disabled={!draft.trim()}
+            >
               Gửi
             </Button>
           </div>

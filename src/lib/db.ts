@@ -44,6 +44,8 @@ export type Food = {
   price_level: number;
   rating: number | null;
   image_url: string | null;
+  image_pos: string | null;
+
   note: string | null;
   tried: boolean;
   tried_at: string | null;
@@ -59,6 +61,8 @@ export type Activity = {
   place: string | null;
   note: string | null;
   image_url: string | null;
+  image_pos: string | null;
+
   done: boolean;
   done_at: string | null;
   added_by: string | null;
@@ -70,6 +74,8 @@ export type Memory = {
   title: string;
   note: string | null;
   image_url: string | null;
+  image_pos: string | null;
+
   happened_on: string;
   rating: number | null;
   source_type: string;
