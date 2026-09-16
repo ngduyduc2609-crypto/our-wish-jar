@@ -188,6 +188,7 @@ export type Database = {
           emoji: string
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           color?: string
@@ -195,6 +196,7 @@ export type Database = {
           emoji?: string
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           color?: string
@@ -202,6 +204,7 @@ export type Database = {
           emoji?: string
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -385,7 +388,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_member: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
