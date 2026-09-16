@@ -22,6 +22,7 @@ export type Database = {
           done: boolean
           done_at: string | null
           id: string
+          image_pos: string
           image_url: string | null
           name: string
           note: string | null
@@ -35,6 +36,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           id?: string
+          image_pos?: string
           image_url?: string | null
           name: string
           note?: string | null
@@ -48,6 +50,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           id?: string
+          image_pos?: string
           image_url?: string | null
           name?: string
           note?: string | null
@@ -128,6 +131,7 @@ export type Database = {
           address: string | null
           created_at: string
           id: string
+          image_pos: string
           image_url: string | null
           name: string
           note: string | null
@@ -142,6 +146,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
+          image_pos?: string
           image_url?: string | null
           name: string
           note?: string | null
@@ -156,6 +161,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
+          image_pos?: string
           image_url?: string | null
           name?: string
           note?: string | null
@@ -205,6 +211,7 @@ export type Database = {
           created_by: string | null
           happened_on: string
           id: string
+          image_pos: string
           image_url: string | null
           note: string | null
           rating: number | null
@@ -217,6 +224,7 @@ export type Database = {
           created_by?: string | null
           happened_on?: string
           id?: string
+          image_pos?: string
           image_url?: string | null
           note?: string | null
           rating?: number | null
@@ -229,6 +237,7 @@ export type Database = {
           created_by?: string | null
           happened_on?: string
           id?: string
+          image_pos?: string
           image_url?: string | null
           note?: string | null
           rating?: number | null

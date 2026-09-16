@@ -1,0 +1,3 @@
+ALTER TABLE public.foods ADD COLUMN IF NOT EXISTS image_pos text NOT NULL DEFAULT '50% 50%';
+ALTER TABLE public.activities ADD COLUMN IF NOT EXISTS image_pos text NOT NULL DEFAULT '50% 50%';
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS image_pos text NOT NULL DEFAULT '50% 50%';
