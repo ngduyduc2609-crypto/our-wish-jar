@@ -1,8 +1,17 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { ChevronDown, LogOut } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether } from "@/lib/constants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function IdentityBar() {
   const { me, signOut } = useIdentity();
@@ -19,18 +28,22 @@ export function IdentityBar() {
             Thu Thủy &amp; Duy Đức · ngày thứ {daysTogether()}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground">
-            {me?.emoji} {me?.name.split(" ").slice(-1)[0]}
-          </span>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground"
-          >
-            Thoát
-          </button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label="Mở menu tài khoản">
+              <span>{me?.emoji}</span>
+              <span>{me?.name.split(" ").slice(-1)[0]}</span>
+              <ChevronDown className="size-3.5 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44 rounded-xl">
+            <DropdownMenuLabel className="font-normal text-muted-foreground">{me?.name}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => void signOut()}>
+              <LogOut /> Đăng xuất
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

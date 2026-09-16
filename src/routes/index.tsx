@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Shuffle, Sparkles, Flame } from "lucide-react";
+import { Heart, Shuffle, Sparkles, Flame, BarChart3, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RandomDrawDialog } from "@/components/RandomDraw";
@@ -13,6 +13,7 @@ import {
   fetchPresence,
   fetchWishes,
   pickRandom,
+  imageAssets,
   type Wish,
 } from "@/lib/db";
 import { WISH_CATEGORIES, daysTogether, formatDate, labelOf } from "@/lib/constants";
@@ -129,13 +130,15 @@ function HomePage() {
           </p>
         ) : (
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
-            {memories.slice(0, 6).map((memory) => (
+            {memories.slice(0, 6).map((memory) => {
+              const cover = imageAssets(memory.images, memory.image_url, memory.image_pos)[0];
+              return (
               <article key={memory.id} className="paper w-40 shrink-0 overflow-hidden rounded-3xl">
-                {memory.image_url ? (
+                {cover ? (
                   <StoredImage
-                    path={memory.image_url}
+                    path={cover.path}
                     alt={memory.title}
-                    position={memory.image_pos}
+                    position={cover.position}
                     className="h-24 w-full"
                   />
                 ) : (
@@ -148,10 +151,21 @@ function HomePage() {
                   </p>
                 </div>
               </article>
-            ))}
+            );})}
           </div>
         )}
       </section>
+
+      <Link to="/stats" className="paper flex items-center gap-3 rounded-3xl p-4 transition-colors hover:bg-accent">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-primary">
+          <BarChart3 className="size-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display font-semibold">Thống kê chúng mình</span>
+          <span className="block text-xs text-muted-foreground">Nhìn lại hành trình và các cột mốc</span>
+        </span>
+        <ChevronRight className="size-5 text-muted-foreground" />
+      </Link>
 
       <RandomDrawDialog
         open={drawOpen}
