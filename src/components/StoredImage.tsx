@@ -6,10 +6,12 @@ export function StoredImage({
   path,
   alt,
   className,
+  position,
 }: {
   path?: string | null;
   alt: string;
   className?: string;
+  position?: string | null;
 }) {
   const { data } = useQuery({
     queryKey: ["signed-url", path],
@@ -20,5 +22,13 @@ export function StoredImage({
 
   if (!path) return null;
   if (!data) return <div className={cn("animate-pulse bg-muted", className)} />;
-  return <img src={data} alt={alt} loading="lazy" className={cn("object-cover", className)} />;
+  return (
+    <img
+      src={data}
+      alt={alt}
+      loading="lazy"
+      style={{ objectPosition: position || "50% 50%" }}
+      className={cn("object-cover", className)}
+    />
+  );
 }

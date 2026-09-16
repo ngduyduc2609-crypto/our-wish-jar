@@ -6,7 +6,10 @@ export function IdentityBar() {
   const { members, me, setMe } = useIdentity();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
+    <header
+      className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
           <p className="truncate font-display text-base font-semibold">Wish Jar 🫙</p>
@@ -40,7 +43,7 @@ export function IdentityGate() {
   const { members, setMe } = useIdentity();
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6">
+    <div className="flex min-h-[100svh] items-center justify-center px-6">
       <div className="paper w-full max-w-sm rounded-3xl p-7 text-center">
         <p className="text-4xl">🫙</p>
         <h1 className="mt-3 font-display text-2xl font-bold">Wish List của chúng mình</h1>
