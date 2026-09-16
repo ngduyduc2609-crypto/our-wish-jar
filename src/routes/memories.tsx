@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ImagePicker } from "@/components/ImagePicker";
-import { StoredImage } from "@/components/StoredImage";
+import { MultiImagePicker } from "@/components/MultiImagePicker";
+import { ImageGallery } from "@/components/ImageGallery";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
-import { deleteRow, fetchMemories, insertRow, updateRow, type Memory } from "@/lib/db";
+import { deleteRow, fetchMemories, imageAssets, insertRow, updateRow, type Memory, type ImageAsset } from "@/lib/db";
 import { formatDate, todayKey } from "@/lib/constants";
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -116,14 +116,7 @@ function MemoriesPage() {
                   </div>
                 )}
               </div>
-              {memory.image_url && (
-                <StoredImage
-                  path={memory.image_url}
-                  alt={memory.title}
-                  position={memory.image_pos}
-                  className="mt-3 h-44 w-full rounded-2xl"
-                />
-              )}
+              <ImageGallery images={imageAssets(memory.images, memory.image_url, memory.image_pos)} alt={memory.title} className="mt-3 rounded-2xl" />
             </article>
           );
         })}
@@ -160,8 +153,7 @@ function MemoryDialog({
   const [note, setNote] = useState("");
   const [date, setDate] = useState(todayKey());
   const [rating, setRating] = useState(5);
-  const [image, setImage] = useState<string | null>(null);
-  const [imagePos, setImagePos] = useState("50% 50%");
+  const [images, setImages] = useState<ImageAsset[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -169,8 +161,7 @@ function MemoryDialog({
     setNote(memory?.note ?? "");
     setDate(memory?.happened_on ?? todayKey());
     setRating(memory?.rating ?? 5);
-    setImage(memory?.image_url ?? null);
-    setImagePos(memory?.image_pos ?? "50% 50%");
+    setImages(imageAssets(memory?.images, memory?.image_url, memory?.image_pos));
   }, [open, memory]);
 
   const save = useMutation({
@@ -180,8 +171,9 @@ function MemoryDialog({
         note: note.trim() || null,
         happened_on: date,
         rating,
-        image_url: image,
-        image_pos: imagePos,
+        images,
+        image_url: images[0]?.path ?? null,
+        image_pos: images[0]?.position ?? "50% 50%",
       };
       if (memory) {
         await updateRow("memories", memory.id, values);
@@ -231,12 +223,7 @@ function MemoryDialog({
             <Label>Cảm nhận</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           </div>
-          <ImagePicker
-            value={image}
-            onChange={setImage}
-            position={imagePos}
-            onPositionChange={setImagePos}
-          />
+          <MultiImagePicker value={images} onChange={setImages} />
           <Button
             className="w-full rounded-2xl"
             disabled={!title.trim() || save.isPending}

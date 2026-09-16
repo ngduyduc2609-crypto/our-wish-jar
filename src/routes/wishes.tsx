@@ -17,6 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Chip } from "@/components/Chip";
 import { RandomDrawDialog } from "@/components/RandomDraw";
+import { MultiImagePicker } from "@/components/MultiImagePicker";
+import { ImageGallery } from "@/components/ImageGallery";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
 import {
@@ -29,6 +31,7 @@ import {
   updateRow,
   pickRandom,
   type Wish,
+  type ImageAsset,
 } from "@/lib/db";
 import {
   DIFFICULTIES,
@@ -111,6 +114,7 @@ function WishesPage() {
           source_type: "wish",
           source_id: wish.id,
           created_by: me?.id ?? null,
+          images: wish.images ?? [],
         });
       }
       track(wish.completed ? "mở lại điều ước" : "hoàn thành điều ước", wish.title);
@@ -241,6 +245,7 @@ function WishDialog({
   const [category, setCategory] = useState<string>("experience");
   const [difficulty, setDifficulty] = useState<string>("medium");
   const [deadline, setDeadline] = useState("");
+  const [images, setImages] = useState<ImageAsset[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -249,6 +254,7 @@ function WishDialog({
     setCategory(wish?.category ?? "experience");
     setDifficulty(wish?.difficulty ?? "medium");
     setDeadline(wish?.deadline ?? "");
+    setImages(wish?.images ?? []);
   }, [open, wish]);
 
   const save = useMutation({
@@ -259,6 +265,7 @@ function WishDialog({
         category,
         difficulty,
         deadline: deadline || null,
+        images,
       };
       if (wish) {
         await updateRow("wishes", wish.id, values);
@@ -328,6 +335,7 @@ function WishDialog({
             <Label>Mong hoàn thành trước</Label>
             <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </div>
+          <MultiImagePicker value={images} onChange={setImages} />
           <Button
             className="w-full rounded-2xl"
             disabled={!title.trim() || save.isPending}
@@ -392,7 +400,9 @@ function WishCard({
   }
 
   return (
-    <article className="paper rounded-3xl p-4">
+    <article className="paper overflow-hidden rounded-3xl">
+      <ImageGallery images={wish.images ?? []} alt={wish.title} />
+      <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -502,6 +512,7 @@ function WishCard({
           </div>
         </div>
       )}
+      </div>
     </article>
   );
 }
