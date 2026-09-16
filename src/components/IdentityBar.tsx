@@ -1,9 +1,11 @@
+import { useState } from "react";
+import { toast } from "sonner";
+
 import { useIdentity } from "@/lib/identity";
-import { cn } from "@/lib/utils";
 import { daysTogether } from "@/lib/constants";
 
 export function IdentityBar() {
-  const { members, me, setMe } = useIdentity();
+  const { me, signOut } = useIdentity();
 
   return (
     <header
@@ -17,22 +19,17 @@ export function IdentityBar() {
             Thu Thủy &amp; Duy Đức · ngày thứ {daysTogether()}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary p-1">
-          {members.map((member) => (
-            <button
-              key={member.id}
-              type="button"
-              onClick={() => setMe(member.id)}
-              className={cn(
-                "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                me?.id === member.id
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "text-secondary-foreground",
-              )}
-            >
-              {member.emoji} {member.name.split(" ").slice(-1)[0]}
-            </button>
-          ))}
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground">
+            {me?.emoji} {me?.name.split(" ").slice(-1)[0]}
+          </span>
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground"
+          >
+            Thoát
+          </button>
         </div>
       </div>
     </header>
@@ -40,30 +37,88 @@ export function IdentityBar() {
 }
 
 export function IdentityGate() {
-  const { members, setMe } = useIdentity();
+  const { members, signedIn, signIn, signOut, claim } = useIdentity();
+  const [busy, setBusy] = useState(false);
+
+  const free = members.filter((m) => !m.user_id);
 
   return (
     <div className="flex min-h-[100svh] items-center justify-center px-6">
       <div className="paper w-full max-w-sm rounded-3xl p-7 text-center">
         <p className="text-4xl">🫙</p>
         <h1 className="mt-3 font-display text-2xl font-bold">Wish List của chúng mình</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Hôm nay bạn là ai nè?</p>
-        <div className="mt-6 space-y-3">
-          {members.map((member) => (
+
+        {!signedIn ? (
+          <>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Đây là nơi riêng của hai đứa mình, đăng nhập để mở lọ nhé.
+            </p>
             <button
-              key={member.id}
               type="button"
-              onClick={() => setMe(member.id)}
-              className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-left text-base font-medium transition-colors hover:bg-accent"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await signIn();
+                } catch {
+                  toast.error("Chưa đăng nhập được, thử lại nhé");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="mt-6 w-full rounded-2xl bg-primary px-4 py-3 text-base font-medium text-primary-foreground shadow disabled:opacity-60"
             >
-              <span className="mr-2 text-xl">{member.emoji}</span>
-              {member.name}
+              Đăng nhập bằng Google
             </button>
-          ))}
-          {members.length === 0 && (
-            <p className="text-sm text-muted-foreground">Đang tải...</p>
-          )}
-        </div>
+          </>
+        ) : free.length > 0 ? (
+          <>
+            <p className="mt-2 text-sm text-muted-foreground">Bạn là ai nè?</p>
+            <div className="mt-6 space-y-3">
+              {free.map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      await claim(member.id);
+                    } catch {
+                      toast.error("Không nhận được chỗ này, thử lại nhé");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-left text-base font-medium transition-colors hover:bg-accent disabled:opacity-60"
+                >
+                  <span className="mr-2 text-xl">{member.emoji}</span>
+                  {member.name}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="mt-5 text-xs text-muted-foreground underline"
+            >
+              Đăng nhập tài khoản khác
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Lọ điều ước này chỉ dành cho Thu Thủy và Duy Đức thôi.
+            </p>
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="mt-6 w-full rounded-2xl border border-border px-4 py-3 text-base font-medium"
+            >
+              Đăng nhập tài khoản khác
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
