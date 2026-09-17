@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, LogOut, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, LogOut, Music, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether } from "@/lib/constants";
@@ -13,11 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { playSound, useSoundEnabled } from "@/lib/sound";
+import { playSound, useMusicEnabled, useSoundEnabled } from "@/lib/sound";
 
 export function IdentityBar() {
   const { me, signOut } = useIdentity();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
+  const [musicEnabled, setMusicEnabled] = useMusicEnabled();
 
   return (
     <header
