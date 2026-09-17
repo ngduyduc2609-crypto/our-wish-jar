@@ -33,6 +33,8 @@ export const Route = createFileRoute("/")({
         content:
           "Lọ điều ước của hai đứa: đếm ngày bên nhau, rút điều ước, món ăn, hoạt động và kỷ niệm.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: HomePage,
@@ -163,7 +165,7 @@ function HomePage() {
           <BarChart3 className="size-5" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-display font-semibold">Thống kê chúng mình</span>
+          <span className="block font-display font-semibold">Dấu ấn</span>
           <span className="block text-xs text-muted-foreground">Nhìn lại hành trình và các cột mốc</span>
         </span>
         <ChevronRight className="size-5 text-muted-foreground" />

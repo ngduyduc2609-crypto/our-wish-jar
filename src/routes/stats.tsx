@@ -16,16 +16,18 @@ import { WISH_CATEGORIES, daysTogether, labelOf } from "@/lib/constants";
 export const Route = createFileRoute("/stats")({
   head: () => ({
     meta: [
-      { title: "Thống kê chúng mình | Wish Jar" },
+      { title: "Dấu ấn | Wish Jar" },
       {
         name: "description",
         content: "Số điều ước, món đã ăn, hoạt động đã làm và các cột mốc ngày bên nhau.",
       },
-      { property: "og:title", content: "Thống kê chúng mình" },
+      { property: "og:title", content: "Dấu ấn" },
       {
         property: "og:description",
         content: "Số điều ước, món đã ăn, hoạt động đã làm và các cột mốc ngày bên nhau.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: StatsPage,
@@ -58,7 +60,7 @@ function StatsPage() {
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <h1 className="font-display text-2xl font-bold">Thống kê</h1>
+          <h1 className="font-display text-2xl font-bold">Dấu ấn</h1>
           <p className="text-sm text-muted-foreground">Nhìn lại hành trình của hai đứa</p>
         </div>
       </div>

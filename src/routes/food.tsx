@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ContentDetailDialog } from "@/components/ContentDetailDialog";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
@@ -31,6 +32,8 @@ export const Route = createFileRoute("/food")({
         property: "og:description",
         content: "Danh sách quán ăn và món muốn thử của Thu Thủy và Duy Đức.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FoodPage,
@@ -45,6 +48,7 @@ function FoodPage() {
   const [ratingTarget, setRatingTarget] = useState<Food | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Food | null>(null);
+  const [viewing, setViewing] = useState<Food | null>(null);
 
   const { data: foods = [] } = useQuery({ queryKey: ["foods"], queryFn: fetchFoods });
 
@@ -110,7 +114,17 @@ function FoodPage() {
         {visible.map((food) => {
           const mine = canManage(me, food.added_by);
           return (
-            <article key={food.id} className="paper overflow-hidden rounded-3xl">
+            <article
+              key={food.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Xem chi tiết ${food.name}`}
+              onClick={() => setViewing(food)}
+              onKeyDown={(event) => {
+                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(food);
+              }}
+              className="paper cursor-pointer overflow-hidden rounded-3xl"
+            >
               <ImageGallery images={imageAssets(food.images, food.image_url, food.image_pos)} alt={food.name} className="h-40" />
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -135,7 +149,8 @@ function FoodPage() {
                       <button
                         type="button"
                         aria-label="Sửa món"
-                        onClick={() => {
+                        onClick={(event) => {
+                          event.stopPropagation();
                           setEditing(food);
                           setFormOpen(true);
                         }}
@@ -146,7 +161,10 @@ function FoodPage() {
                       <button
                         type="button"
                         aria-label="Xoá món"
-                        onClick={() => remove.mutate(food)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          remove.mutate(food);
+                        }}
                         className="rounded-full border border-border p-2 text-muted-foreground"
                       >
                         <Trash2 className="size-3.5" />
@@ -157,7 +175,10 @@ function FoodPage() {
                 <Button
                   variant="secondary"
                   className="mt-3 w-full rounded-2xl"
-                  onClick={() => setRatingTarget(food)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setRatingTarget(food);
+                  }}
                 >
                   <Star className="size-4" />{" "}
                   {food.tried ? "Ăn lại, lưu kỷ niệm mới" : "Đã ăn rồi, lưu kỷ niệm"}
@@ -204,6 +225,21 @@ function FoodPage() {
       </RandomDrawDialog>
 
       <TriedDialog food={ratingTarget} onClose={() => setRatingTarget(null)} onDone={refresh} />
+
+      <ContentDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title={viewing?.name ?? ""}
+        subtitle={viewing?.tried ? "Đã thử" : "Trong danh sách"}
+        images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
+      >
+        {viewing?.place && <p className="flex items-center gap-1.5"><MapPin className="size-4 text-primary" />{viewing.place}</p>}
+        {viewing?.address && <p className="text-muted-foreground">{viewing.address}</p>}
+        {viewing && (
+          <p>{PRICE_LEVELS.find((price) => price.value === viewing.price_level)?.label ?? "₫₫"}{viewing.rating ? ` · ${"⭐".repeat(viewing.rating)}` : ""}</p>
+        )}
+        {viewing?.note && <p className="whitespace-pre-wrap text-muted-foreground">{viewing.note}</p>}
+      </ContentDetailDialog>
     </div>
   );
 }
