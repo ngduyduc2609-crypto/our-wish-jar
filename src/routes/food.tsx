@@ -181,7 +181,7 @@ function FoodPage() {
                   }}
                 >
                   <Star className="size-4" />{" "}
-                  {food.tried ? "Ăn lại, lưu kỷ niệm mới" : "Đã ăn rồi, lưu kỷ niệm"}
+                  {food.tried ? "Cập nhật đánh giá" : "Đã ăn rồi"}
                 </Button>
               </div>
             </article>
@@ -219,7 +219,7 @@ function FoodPage() {
               setRatingTarget(drawn);
             }}
           >
-            Ăn món này rồi, lưu kỷ niệm
+            Đánh dấu đã ăn
           </Button>
         )}
       </RandomDrawDialog>
@@ -255,7 +255,7 @@ function FoodDialog({
   food: Food | null;
   onDone: () => void;
 }) {
-  const { me, track } = useIdentity();
+  const { track } = useIdentity();
   const [name, setName] = useState("");
   const [place, setPlace] = useState("");
   const [address, setAddress] = useState("");
@@ -373,21 +373,10 @@ function TriedDialog({
         tried: true,
         tried_at: new Date().toISOString(),
         rating,
-        images: finalImages,
-        image_url: finalImages[0]?.path ?? null,
-        image_pos: finalImages[0]?.position ?? "50% 50%",
-      });
-      await insertRow("memories", {
-        title: food.name,
         note: note.trim() || food.note,
         images: finalImages,
         image_url: finalImages[0]?.path ?? null,
         image_pos: finalImages[0]?.position ?? "50% 50%",
-        happened_on: todayKey(),
-        rating,
-        source_type: "food",
-        source_id: food.id,
-        created_by: me?.id ?? null,
       });
       track("ăn thử món", food.name);
     },
@@ -397,7 +386,7 @@ function TriedDialog({
       setRating(5);
       onClose();
       onDone();
-      toast.success("Đã lưu thành kỷ niệm 💕");
+      toast.success("Đã lưu đánh giá món ăn 🍜");
     },
   });
 
@@ -428,7 +417,7 @@ function TriedDialog({
             disabled={save.isPending}
             onClick={() => save.mutate()}
           >
-            Lưu thành kỷ niệm
+            Lưu đánh giá
           </Button>
         </div>
       </DialogContent>

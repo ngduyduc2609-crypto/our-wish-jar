@@ -26,7 +26,7 @@ import {
   type Activity,
   type ImageAsset,
 } from "@/lib/db";
-import { ACTIVITY_CATEGORIES, ACTIVITY_TAGS, labelOf, todayKey } from "@/lib/constants";
+import { ACTIVITY_CATEGORIES, ACTIVITY_TAGS, labelOf } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/activities")({
@@ -88,24 +88,11 @@ function ActivitiesPage() {
         done: !activity.done,
         done_at: activity.done ? null : new Date().toISOString(),
       });
-      if (!activity.done) {
-        await insertRow("memories", {
-          title: activity.name,
-          note: activity.note,
-          image_url: activity.image_url,
-          image_pos: activity.image_pos ?? "50% 50%",
-          happened_on: todayKey(),
-          source_type: "activity",
-          source_id: activity.id,
-          created_by: me?.id ?? null,
-          images: imageAssets(activity.images, activity.image_url, activity.image_pos),
-        });
-      }
       track(activity.done ? "mở lại hoạt động" : "hoàn thành hoạt động", activity.name);
     },
     onSuccess: (_d, activity) => {
       refresh();
-      if (!activity.done) toast.success("Thêm một kỷ niệm mới 💞");
+      if (!activity.done) toast.success("Đã đánh dấu hoạt động hoàn thành ✨");
     },
   });
 
@@ -289,7 +276,7 @@ function ActivitiesPage() {
               setDrawOpen(false);
             }}
           >
-            Đã làm rồi, lưu kỷ niệm
+            Đánh dấu đã làm
           </Button>
         )}
       </RandomDrawDialog>

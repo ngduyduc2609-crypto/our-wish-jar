@@ -39,7 +39,6 @@ import {
   WISH_CATEGORIES,
   formatDate,
   labelOf,
-  todayKey,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -81,7 +80,6 @@ function WishesPage() {
     void qc.invalidateQueries({ queryKey: ["comments"] });
     void qc.invalidateQueries({ queryKey: ["log"] });
     void qc.invalidateQueries({ queryKey: ["presence"] });
-    void qc.invalidateQueries({ queryKey: ["memories"] });
   };
 
   const visible = useMemo(
@@ -106,22 +104,11 @@ function WishesPage() {
         completed: !wish.completed,
         completed_at: wish.completed ? null : new Date().toISOString(),
       });
-      if (!wish.completed) {
-        await insertRow("memories", {
-          title: wish.title,
-          note: wish.note,
-          happened_on: todayKey(),
-          source_type: "wish",
-          source_id: wish.id,
-          created_by: me?.id ?? null,
-          images: wish.images ?? [],
-        });
-      }
       track(wish.completed ? "mở lại điều ước" : "hoàn thành điều ước", wish.title);
     },
     onSuccess: (_d, wish) => {
       refresh();
-      toast.success(wish.completed ? "Đã mở lại điều ước" : "Đã thành kỷ niệm rồi 🎉");
+      toast.success(wish.completed ? "Đã mở lại điều ước" : "Điều ước đã hoàn thành 🎉");
     },
   });
 

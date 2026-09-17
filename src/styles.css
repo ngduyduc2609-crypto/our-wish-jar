@@ -165,8 +165,13 @@
 }
 
 @keyframes wish-float {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(-1.5deg); }
-  50% { transform: translate3d(2px, -7px, 0) rotate(1.5deg); }
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); filter: brightness(1); }
+  50% { transform: translate3d(2px, -8px, 0) rotate(1.5deg); filter: brightness(1.07); }
+}
+
+@keyframes wish-note-glow {
+  0%, 100% { box-shadow: 0 3px 8px var(--wish-note-shadow), 0 0 7px var(--wish-note-glow); }
+  50% { box-shadow: 0 5px 12px var(--wish-note-shadow), 0 0 16px var(--wish-note-glow); }
 }
 
 @keyframes jar-glow {
@@ -175,7 +180,42 @@
 }
 
 .wish-jar-glass { animation: jar-glow 3.8s ease-in-out infinite; }
-.wish-note { animation: wish-float 4s ease-in-out infinite; }
+.wish-note { animation: wish-float 4s ease-in-out infinite, wish-note-glow 2.8s ease-in-out infinite; }
+.wish-note-paper {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--wish-note-ink) 18%, transparent);
+  border-radius: 0.35rem 0.2rem 0.45rem 0.25rem;
+  color: var(--wish-note-ink);
+  background-color: var(--wish-note-bg);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 0.8rem, color-mix(in oklab, var(--wish-note-ink) 10%, transparent) 0.85rem);
+  clip-path: polygon(1% 2%, 98% 0, 100% 94%, 96% 100%, 3% 97%, 0 8%);
+}
+.wish-note-paper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, transparent 43%, color-mix(in oklab, var(--wish-note-ink) 8%, transparent) 49%, transparent 55%);
+}
+.wish-note-rose {
+  --wish-note-bg: oklch(0.94 0.05 15);
+  --wish-note-ink: oklch(0.43 0.08 15);
+  --wish-note-glow: oklch(0.78 0.12 15 / 0.55);
+  --wish-note-shadow: oklch(0.5 0.07 15 / 0.2);
+}
+.wish-note-honey {
+  --wish-note-bg: oklch(0.95 0.06 86);
+  --wish-note-ink: oklch(0.43 0.07 70);
+  --wish-note-glow: oklch(0.84 0.13 83 / 0.55);
+  --wish-note-shadow: oklch(0.5 0.07 70 / 0.2);
+}
+.wish-note-sky {
+  --wish-note-bg: oklch(0.94 0.045 230);
+  --wish-note-ink: oklch(0.4 0.08 240);
+  --wish-note-glow: oklch(0.78 0.12 225 / 0.55);
+  --wish-note-shadow: oklch(0.45 0.08 235 / 0.2);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .wish-jar-glass, .wish-note { animation: none; }
