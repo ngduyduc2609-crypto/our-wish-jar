@@ -163,7 +163,7 @@ function HomePage() {
           <BarChart3 className="size-5" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-display font-semibold">Thống kê chúng mình</span>
+          <span className="block font-display font-semibold">Dấu ấn</span>
           <span className="block text-xs text-muted-foreground">Nhìn lại hành trình và các cột mốc</span>
         </span>
         <ChevronRight className="size-5 text-muted-foreground" />

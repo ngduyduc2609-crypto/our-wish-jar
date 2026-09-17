@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ContentDetailDialog } from "@/components/ContentDetailDialog";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
 import { deleteRow, fetchMemories, imageAssets, insertRow, updateRow, type Memory, type ImageAsset } from "@/lib/db";
@@ -47,6 +48,7 @@ function MemoriesPage() {
   const { data: memories = [] } = useQuery({ queryKey: ["memories"], queryFn: fetchMemories });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Memory | null>(null);
+  const [viewing, setViewing] = useState<Memory | null>(null);
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["memories"] });
@@ -74,7 +76,17 @@ function MemoriesPage() {
         {memories.map((memory) => {
           const mine = canManage(me, memory.created_by);
           return (
-            <article key={memory.id} className="paper relative rounded-3xl p-4">
+            <article
+              key={memory.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Xem chi tiết ${memory.title}`}
+              onClick={() => setViewing(memory)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") setViewing(memory);
+              }}
+              className="paper relative cursor-pointer rounded-3xl p-4"
+            >
               <span className="absolute -left-[26px] top-6 size-3 rounded-full bg-primary" />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -93,7 +105,8 @@ function MemoriesPage() {
                     <button
                       type="button"
                       aria-label="Sửa kỷ niệm"
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         setEditing(memory);
                         setDialogOpen(true);
                       }}
@@ -104,7 +117,8 @@ function MemoriesPage() {
                     <button
                       type="button"
                       aria-label="Xoá kỷ niệm"
-                      onClick={async () => {
+                      onClick={async (event) => {
+                        event.stopPropagation();
                         await deleteRow("memories", memory.id);
                         track("xoá kỷ niệm", memory.title);
                         refresh();
@@ -133,6 +147,18 @@ function MemoriesPage() {
         memory={editing}
         onDone={refresh}
       />
+
+      <ContentDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title={viewing?.title ?? ""}
+        subtitle={viewing ? `${formatDate(viewing.happened_on)} · ${SOURCE_LABEL[viewing.source_type] ?? "Tự ghi"}` : undefined}
+        images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
+      >
+        {viewing?.rating ? <p>{"⭐".repeat(viewing.rating)}</p> : null}
+        {viewing?.note && <p className="whitespace-pre-wrap text-muted-foreground">{viewing.note}</p>}
+        {viewing && <p className="text-xs text-muted-foreground">{members.find((member) => member.id === viewing.created_by)?.name ?? "Chúng mình"} lưu lại</p>}
+      </ContentDetailDialog>
     </div>
   );
 }

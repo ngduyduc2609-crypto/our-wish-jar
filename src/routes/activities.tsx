@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ContentDetailDialog } from "@/components/ContentDetailDialog";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
@@ -55,6 +56,7 @@ function ActivitiesPage() {
   const [drawn, setDrawn] = useState<Activity | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Activity | null>(null);
+  const [viewing, setViewing] = useState<Activity | null>(null);
 
   const { data: activities = [] } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
 
@@ -154,7 +156,17 @@ function ActivitiesPage() {
           const category = labelOf(ACTIVITY_CATEGORIES, activity.category);
           const mine = canManage(me, activity.added_by);
           return (
-            <article key={activity.id} className="paper overflow-hidden rounded-3xl">
+            <article
+              key={activity.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Xem chi tiết ${activity.name}`}
+              onClick={() => setViewing(activity)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") setViewing(activity);
+              }}
+              className="paper cursor-pointer overflow-hidden rounded-3xl"
+            >
               <ImageGallery images={imageAssets(activity.images, activity.image_url, activity.image_pos)} alt={activity.name} className="h-40" />
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -186,7 +198,10 @@ function ActivitiesPage() {
                     <button
                       type="button"
                       aria-label="Đánh dấu đã làm"
-                      onClick={() => complete.mutate(activity)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        complete.mutate(activity);
+                      }}
                       className={cn(
                         "grid size-9 place-items-center rounded-full border transition-colors",
                         activity.done
@@ -201,7 +216,8 @@ function ActivitiesPage() {
                         <button
                           type="button"
                           aria-label="Sửa hoạt động"
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setEditing(activity);
                             setDialogOpen(true);
                           }}
@@ -212,7 +228,8 @@ function ActivitiesPage() {
                         <button
                           type="button"
                           aria-label="Xoá hoạt động"
-                          onClick={async () => {
+                          onClick={async (event) => {
+                            event.stopPropagation();
                             await deleteRow("activities", activity.id);
                             track("xoá hoạt động", activity.name);
                             refresh();
@@ -274,6 +291,22 @@ function ActivitiesPage() {
           </Button>
         )}
       </RandomDrawDialog>
+
+      <ContentDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title={viewing?.name ?? ""}
+        subtitle={viewing ? `${labelOf(ACTIVITY_CATEGORIES, viewing.category).emoji} ${labelOf(ACTIVITY_CATEGORIES, viewing.category).label}${viewing.done ? " · Đã làm" : ""}` : undefined}
+        images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
+      >
+        {viewing?.place && <p className="flex items-center gap-1.5"><MapPin className="size-4 text-primary" />{viewing.place}</p>}
+        {viewing && viewing.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {viewing.tags.map((tag) => <span key={tag} className="rounded-full bg-secondary px-2.5 py-1 text-xs text-secondary-foreground">{ACTIVITY_TAGS.find((item) => item.value === tag)?.label ?? tag}</span>)}
+          </div>
+        )}
+        {viewing?.note && <p className="whitespace-pre-wrap text-muted-foreground">{viewing.note}</p>}
+      </ContentDetailDialog>
     </div>
   );
 }
