@@ -4,6 +4,7 @@ import { Images } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StoredImage } from "@/components/StoredImage";
 import type { ImageAsset } from "@/lib/db";
+import { playSound } from "@/lib/sound";
 
 export function ContentDetailDialog({
   open,
@@ -22,10 +23,12 @@ export function ContentDetailDialog({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const galleryRef = useRef<HTMLDivElement>(null);
+  const lastSoundIndex = useRef(0);
 
   useEffect(() => {
     if (!open) return;
     setActiveIndex(0);
+    lastSoundIndex.current = 0;
     galleryRef.current?.scrollTo({ left: 0 });
   }, [open, title]);
 
@@ -42,9 +45,16 @@ export function ContentDetailDialog({
                 aria-label={`Bộ ảnh ${title}`}
                 onScroll={(event) => {
                   const width = event.currentTarget.clientWidth;
-                  if (width > 0) setActiveIndex(Math.round(event.currentTarget.scrollLeft / width));
+                  if (width > 0) {
+                    const nextIndex = Math.round(event.currentTarget.scrollLeft / width);
+                    setActiveIndex(nextIndex);
+                    if (nextIndex !== lastSoundIndex.current) {
+                      lastSoundIndex.current = nextIndex;
+                      playSound("swipe");
+                    }
+                  }
                 }}
-                className="flex aspect-[4/3] snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex h-64 touch-pan-x snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none select-none sm:h-80 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {images.map((image, index) => (
                   <div key={`${image.path}-${index}`} className="h-full min-w-full snap-center snap-always">
@@ -64,7 +74,7 @@ export function ContentDetailDialog({
               )}
             </div>
           ) : (
-            <div className="grid aspect-[4/3] place-items-center text-muted-foreground">
+            <div className="grid h-64 place-items-center text-muted-foreground sm:h-80">
               <div className="text-center">
                 <Images className="mx-auto size-9" />
                 <p className="mt-2 text-sm">Chưa có ảnh</p>

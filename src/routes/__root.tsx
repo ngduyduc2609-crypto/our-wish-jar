@@ -15,6 +15,7 @@ import { IdentityProvider, useIdentity } from "@/lib/identity";
 import { IdentityBar, IdentityGate } from "../components/IdentityBar";
 import { BottomNav } from "../components/BottomNav";
 import { Toaster } from "../components/ui/sonner";
+import { SoundController } from "@/components/SoundController";
 
 function NotFoundComponent() {
   return (
@@ -170,6 +171,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <IdentityProvider>
+        <SoundController />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <AppLayout />
       </IdentityProvider>
