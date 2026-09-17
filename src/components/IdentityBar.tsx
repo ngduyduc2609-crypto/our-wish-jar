@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, LogOut, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, LogOut, Music, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether } from "@/lib/constants";
@@ -13,11 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { playSound, useSoundEnabled } from "@/lib/sound";
+import { playSound, useMusicEnabled, useSoundEnabled } from "@/lib/sound";
 
 export function IdentityBar() {
   const { me, signOut } = useIdentity();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
+  const [musicEnabled, setMusicEnabled] = useMusicEnabled();
 
   return (
     <header
@@ -52,6 +53,15 @@ export function IdentityBar() {
             >
               {soundEnabled ? <Volume2 /> : <VolumeX />}
               Âm thanh
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={musicEnabled}
+              disabled={!soundEnabled}
+              onSelect={(event) => event.preventDefault()}
+              onCheckedChange={(checked) => setMusicEnabled(checked)}
+            >
+              <Music />
+              Nhạc nền
             </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
