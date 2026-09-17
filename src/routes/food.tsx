@@ -17,7 +17,7 @@ import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
 import { deleteRow, fetchFoods, imageAssets, insertRow, pickRandom, updateRow, type Food, type ImageAsset } from "@/lib/db";
-import { PRICE_LEVELS, todayKey } from "@/lib/constants";
+import { PRICE_LEVELS } from "@/lib/constants";
 
 export const Route = createFileRoute("/food")({
   head: () => ({
@@ -255,7 +255,7 @@ function FoodDialog({
   food: Food | null;
   onDone: () => void;
 }) {
-  const { track } = useIdentity();
+  const { me, track } = useIdentity();
   const [name, setName] = useState("");
   const [place, setPlace] = useState("");
   const [address, setAddress] = useState("");
@@ -360,7 +360,7 @@ function TriedDialog({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const { me, track } = useIdentity();
+  const { track } = useIdentity();
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState("");
   const [images, setImages] = useState<ImageAsset[]>([]);
