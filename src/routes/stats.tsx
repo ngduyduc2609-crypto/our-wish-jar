@@ -26,6 +26,8 @@ export const Route = createFileRoute("/stats")({
         property: "og:description",
         content: "Số điều ước, món đã ăn, hoạt động đã làm và các cột mốc ngày bên nhau.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: StatsPage,

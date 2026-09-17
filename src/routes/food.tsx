@@ -32,6 +32,8 @@ export const Route = createFileRoute("/food")({
         property: "og:description",
         content: "Danh sách quán ăn và món muốn thử của Thu Thủy và Duy Đức.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FoodPage,
@@ -119,7 +121,7 @@ function FoodPage() {
               aria-label={`Xem chi tiết ${food.name}`}
               onClick={() => setViewing(food)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") setViewing(food);
+                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(food);
               }}
               className="paper cursor-pointer overflow-hidden rounded-3xl"
             >

@@ -37,6 +37,8 @@ export const Route = createFileRoute("/memories")({
         property: "og:description",
         content: "Dòng thời gian kỷ niệm của Thu Thủy và Duy Đức với ảnh và cảm nhận.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: MemoriesPage,
@@ -83,7 +85,7 @@ function MemoriesPage() {
               aria-label={`Xem chi tiết ${memory.title}`}
               onClick={() => setViewing(memory)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") setViewing(memory);
+                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(memory);
               }}
               className="paper relative cursor-pointer rounded-3xl p-4"
             >

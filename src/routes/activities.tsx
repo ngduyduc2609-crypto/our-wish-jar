@@ -42,6 +42,8 @@ export const Route = createFileRoute("/activities")({
         property: "og:description",
         content: "Địa điểm và hoạt động của Thu Thủy và Duy Đức, quay ngẫu nhiên theo tâm trạng.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ActivitiesPage,
@@ -163,7 +165,7 @@ function ActivitiesPage() {
               aria-label={`Xem chi tiết ${activity.name}`}
               onClick={() => setViewing(activity)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") setViewing(activity);
+                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(activity);
               }}
               className="paper cursor-pointer overflow-hidden rounded-3xl"
             >
