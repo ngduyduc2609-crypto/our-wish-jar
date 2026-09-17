@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether } from "@/lib/constants";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { playSound, useSoundEnabled } from "@/lib/sound";
 
 export function IdentityBar() {
   const { me, signOut } = useIdentity();
+  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
 
   return (
     <header
@@ -38,6 +41,18 @@ export function IdentityBar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44 rounded-xl">
             <DropdownMenuLabel className="font-normal text-muted-foreground">{me?.name}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={soundEnabled}
+              onSelect={(event) => event.preventDefault()}
+              onCheckedChange={(checked) => {
+                setSoundEnabled(checked);
+                if (checked) window.setTimeout(() => playSound("success"), 0);
+              }}
+            >
+              {soundEnabled ? <Volume2 /> : <VolumeX />}
+              Âm thanh
+            </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut /> Đăng xuất

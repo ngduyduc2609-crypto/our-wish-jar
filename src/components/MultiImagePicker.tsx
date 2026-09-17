@@ -5,6 +5,7 @@ import { uploadImage, type ImageAsset } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { StoredImage } from "./StoredImage";
+import { playSound } from "@/lib/sound";
 
 function parseY(position: string) {
   const match = /(-?\d+(?:\.\d+)?)%\s*$/.exec(position);
@@ -14,6 +15,7 @@ function parseY(position: string) {
 export function MultiImagePicker({ value, onChange }: { value: ImageAsset[]; onChange: (images: ImageAsset[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
+  const lastSoundIndex = useRef(0);
   const [busy, setBusy] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -59,9 +61,16 @@ export function MultiImagePicker({ value, onChange }: { value: ImageAsset[]; onC
               aria-label={`Bộ ảnh đã chọn (${value.length} ảnh)`}
               onScroll={(event) => {
                 const width = event.currentTarget.clientWidth;
-                if (width > 0) setActiveIndex(Math.round(event.currentTarget.scrollLeft / width));
+                if (width > 0) {
+                  const nextIndex = Math.round(event.currentTarget.scrollLeft / width);
+                  setActiveIndex(nextIndex);
+                  if (nextIndex !== lastSoundIndex.current) {
+                    lastSoundIndex.current = nextIndex;
+                    playSound("swipe");
+                  }
+                }
               }}
-              className="flex h-44 snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex h-48 touch-pan-x snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {value.map((image, index) => (
                 <div key={`${image.path}-${index}`} className="h-full min-w-full snap-center snap-always">
