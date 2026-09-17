@@ -143,10 +143,10 @@ export function startMusic() {
     const ctx = getContext();
     if (!ctx) return;
     const at = ctx.currentTime + 0.05;
-    const note = MELODY[step % MELODY.length];
+    const note = MELODY[step % MELODY.length]!;
     tone(ctx, note, at, 0.9, 0.5, "sine", musicGain);
     if (step % 4 === 0) {
-      tone(ctx, BASS[(step / 4) % BASS.length], at, 1.6, 0.35, "triangle", musicGain);
+      tone(ctx, BASS[(step / 4) % BASS.length]!, at, 1.6, 0.35, "triangle", musicGain);
     }
     step += 1;
   };
