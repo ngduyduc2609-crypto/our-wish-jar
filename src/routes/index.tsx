@@ -80,12 +80,12 @@ function HomePage() {
                 <div
                   key={wish.id}
                    style={{ animationDelay: `${index * -0.7}s` }}
-                   className={`wish-note max-w-28 rounded-md border border-white/80 px-2 py-1.5 text-[10px] font-medium leading-snug shadow-sm ${
+                    className={`wish-note wish-note-paper max-w-28 px-2.5 py-2 font-display text-[10px] font-semibold leading-snug ${
                     index % 3 === 0
-                       ? "bg-pink-100"
+                        ? "wish-note-rose"
                       : index % 3 === 1
-                         ? "bg-amber-100"
-                         : "bg-sky-100"
+                          ? "wish-note-honey"
+                          : "wish-note-sky"
                   }`}
                 >
                    <span aria-hidden="true">{labelOf(WISH_CATEGORIES, wish.category).emoji} </span>

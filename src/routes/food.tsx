@@ -17,7 +17,7 @@ import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
 import { deleteRow, fetchFoods, imageAssets, insertRow, pickRandom, updateRow, type Food, type ImageAsset } from "@/lib/db";
-import { PRICE_LEVELS, todayKey } from "@/lib/constants";
+import { PRICE_LEVELS } from "@/lib/constants";
 
 export const Route = createFileRoute("/food")({
   head: () => ({
@@ -181,7 +181,7 @@ function FoodPage() {
                   }}
                 >
                   <Star className="size-4" />{" "}
-                  {food.tried ? "Ăn lại, lưu kỷ niệm mới" : "Đã ăn rồi, lưu kỷ niệm"}
+                  {food.tried ? "Cập nhật đánh giá" : "Đã ăn rồi"}
                 </Button>
               </div>
             </article>
@@ -219,7 +219,7 @@ function FoodPage() {
               setRatingTarget(drawn);
             }}
           >
-            Ăn món này rồi, lưu kỷ niệm
+            Đánh dấu đã ăn
           </Button>
         )}
       </RandomDrawDialog>
@@ -360,7 +360,7 @@ function TriedDialog({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const { me, track } = useIdentity();
+  const { track } = useIdentity();
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState("");
   const [images, setImages] = useState<ImageAsset[]>([]);
@@ -373,21 +373,10 @@ function TriedDialog({
         tried: true,
         tried_at: new Date().toISOString(),
         rating,
-        images: finalImages,
-        image_url: finalImages[0]?.path ?? null,
-        image_pos: finalImages[0]?.position ?? "50% 50%",
-      });
-      await insertRow("memories", {
-        title: food.name,
         note: note.trim() || food.note,
         images: finalImages,
         image_url: finalImages[0]?.path ?? null,
         image_pos: finalImages[0]?.position ?? "50% 50%",
-        happened_on: todayKey(),
-        rating,
-        source_type: "food",
-        source_id: food.id,
-        created_by: me?.id ?? null,
       });
       track("ăn thử món", food.name);
     },
@@ -397,7 +386,7 @@ function TriedDialog({
       setRating(5);
       onClose();
       onDone();
-      toast.success("Đã lưu thành kỷ niệm 💕");
+      toast.success("Đã lưu đánh giá món ăn 🍜");
     },
   });
 
@@ -428,7 +417,7 @@ function TriedDialog({
             disabled={save.isPending}
             onClick={() => save.mutate()}
           >
-            Lưu thành kỷ niệm
+            Lưu đánh giá
           </Button>
         </div>
       </DialogContent>
