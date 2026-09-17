@@ -54,6 +54,15 @@ export function IdentityBar() {
               {soundEnabled ? <Volume2 /> : <VolumeX />}
               Âm thanh
             </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={musicEnabled}
+              disabled={!soundEnabled}
+              onSelect={(event) => event.preventDefault()}
+              onCheckedChange={(checked) => setMusicEnabled(checked)}
+            >
+              <Music />
+              Nhạc nền
+            </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut /> Đăng xuất
