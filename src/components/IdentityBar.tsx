@@ -34,9 +34,11 @@ export function IdentityBar() {
             Thu Thủy &amp; Duy Đức · ngày thứ {daysTogether()}
           </p>
         </div>
+        <div className="flex shrink-0 items-center gap-2">
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label="Mở menu tài khoản">
+            <button type="button" className="jelly flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label="Mở menu tài khoản">
               <span>{me?.emoji}</span>
               <span>{me?.name.split(" ").slice(-1)[0]}</span>
               <ChevronDown className="size-3.5 text-muted-foreground" />
