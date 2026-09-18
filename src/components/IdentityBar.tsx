@@ -67,12 +67,26 @@ export function IdentityBar() {
               <Music />
               Nhạc nền
             </DropdownMenuCheckboxItem>
+            <div className="px-2 pb-2 pt-1" onPointerDown={(event) => event.stopPropagation()}>
+              <p className="mb-1 text-[11px] text-muted-foreground">Âm lượng nhạc</p>
+              <input
+                type="range"
+                min={2}
+                max={100}
+                value={Math.round(musicVolume * 100)}
+                disabled={!soundEnabled || !musicEnabled}
+                onChange={(event) => setMusicVolume(Number(event.target.value) / 100)}
+                className="h-1.5 w-full accent-primary disabled:opacity-40"
+                aria-label="Âm lượng nhạc nền"
+              />
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut /> Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </header>
   );
