@@ -13,12 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { playSound, useMusicEnabled, useSoundEnabled } from "@/lib/sound";
+import { playSound, useMusicEnabled, useMusicVolume, useSoundEnabled } from "@/lib/sound";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function IdentityBar() {
   const { me, signOut } = useIdentity();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const [musicEnabled, setMusicEnabled] = useMusicEnabled();
+  const [musicVolume, setMusicVolume] = useMusicVolume();
 
   return (
     <header
@@ -32,9 +34,11 @@ export function IdentityBar() {
             Thu Thủy &amp; Duy Đức · ngày thứ {daysTogether()}
           </p>
         </div>
+        <div className="flex shrink-0 items-center gap-2">
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label="Mở menu tài khoản">
+            <button type="button" className="jelly flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label="Mở menu tài khoản">
               <span>{me?.emoji}</span>
               <span>{me?.name.split(" ").slice(-1)[0]}</span>
               <ChevronDown className="size-3.5 text-muted-foreground" />
@@ -63,12 +67,26 @@ export function IdentityBar() {
               <Music />
               Nhạc nền
             </DropdownMenuCheckboxItem>
+            <div className="px-2 pb-2 pt-1" onPointerDown={(event) => event.stopPropagation()}>
+              <p className="mb-1 text-[11px] text-muted-foreground">Âm lượng nhạc</p>
+              <input
+                type="range"
+                min={2}
+                max={100}
+                value={Math.round(musicVolume * 100)}
+                disabled={!soundEnabled || !musicEnabled}
+                onChange={(event) => setMusicVolume(Number(event.target.value) / 100)}
+                className="h-1.5 w-full accent-primary disabled:opacity-40"
+                aria-label="Âm lượng nhạc nền"
+              />
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut /> Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </header>
   );

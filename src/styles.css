@@ -220,3 +220,63 @@
 @media (prefers-reduced-motion: reduce) {
   .wish-jar-glass, .wish-note { animation: none; }
 }
+
+/* ---------- Hiệu ứng chạm 3D & nảy jelly ---------- */
+@keyframes jelly-pop {
+  0% { transform: scale(0.86, 1.12); }
+  40% { transform: scale(1.08, 0.94); }
+  70% { transform: scale(0.97, 1.03); }
+  100% { transform: scale(1, 1); }
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.88) translateY(4px); }
+  60% { opacity: 1; transform: scale(1.04) translateY(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes idle-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.02); }
+}
+
+button:not(:disabled),
+a[role="button"],
+[role="button"]:not([aria-disabled="true"]) {
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 200ms ease,
+    filter 200ms ease;
+  transform-origin: center;
+}
+
+button:not(:disabled):active,
+a[role="button"]:active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: translateY(2px) scale(0.94);
+  filter: brightness(0.97);
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.jelly:active { animation: jelly-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.pop-in { animation: pop-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.idle-breathe { animation: idle-breathe 2.6s ease-in-out infinite; }
+
+[data-slot="dialog-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="popover-content"],
+[data-slot="tooltip-content"] {
+  animation: pop-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button, .jelly, .pop-in, .idle-breathe,
+  [data-slot="dialog-content"], [data-slot="dropdown-menu-content"],
+  [data-slot="popover-content"], [data-slot="tooltip-content"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
