@@ -13,12 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { playSound, useMusicEnabled, useSoundEnabled } from "@/lib/sound";
+import { playSound, useMusicEnabled, useMusicVolume, useSoundEnabled } from "@/lib/sound";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function IdentityBar() {
   const { me, signOut } = useIdentity();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const [musicEnabled, setMusicEnabled] = useMusicEnabled();
+  const [musicVolume, setMusicVolume] = useMusicVolume();
 
   return (
     <header
