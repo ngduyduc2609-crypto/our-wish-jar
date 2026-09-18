@@ -267,6 +267,51 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_member_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          read_at: string | null
+          recipient_member_id: string
+          subject: string | null
+        }
+        Insert: {
+          actor_member_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          recipient_member_id: string
+          subject?: string | null
+        }
+        Update: {
+          actor_member_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          recipient_member_id?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_member_id_fkey"
+            columns: ["actor_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_member_id_fkey"
+            columns: ["recipient_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wish_comments: {
         Row: {
           content: string
@@ -400,7 +445,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      notify_members: {
+        Args: { _actor: string; _kind: string; _subject: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
