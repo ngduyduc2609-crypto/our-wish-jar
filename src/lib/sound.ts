@@ -18,7 +18,8 @@ export type SoundKind =
   | "close"
   | "delete"
   | "react"
-  | "sparkle";
+  | "sparkle"
+  | "celebrate";
 
 let audioContext: AudioContext | null = null;
 let musicTimer: number | null = null;
@@ -198,6 +199,11 @@ export function playSound(kind: SoundKind) {
       tone(context, freq, now + i * 0.075, 0.18, 0.035 - i * 0.004, "triangle");
     });
     tone(context, 1975.53, now + 0.34, 0.25, 0.012, "sine");
+  } else if (kind === "celebrate") {
+    [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((freq, i) => {
+      tone(context, freq, now + i * 0.065, 0.26, 0.04 - i * 0.004, i % 2 ? "triangle" : "sine");
+    });
+    noise(context, now + 0.32, 0.18, 0.015);
   } else {
     [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
       tone(context, freq, now + i * 0.065, 0.22, 0.038 - i * 0.005, "sine");

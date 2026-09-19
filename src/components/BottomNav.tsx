@@ -20,7 +20,7 @@ export function BottomNav() {
           <Link
             key={to}
             to={to}
-            className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] text-muted-foreground transition-colors"
+            className="nav-bounce flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] text-muted-foreground transition-colors"
             activeOptions={{ exact: to === "/" }}
             activeProps={{ className: "text-primary font-semibold" }}
           >

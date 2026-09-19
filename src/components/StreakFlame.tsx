@@ -12,7 +12,7 @@ const STREAK_LEVELS = [
 export const STREAK_MILESTONES = [10, 30, 100, 365, 500, 1000] as const;
 
 export function streakLevel(days: number) {
-  return STREAK_LEVELS.find((level) => days >= level.min) ?? STREAK_LEVELS[STREAK_LEVELS.length - 1];
+  return STREAK_LEVELS.find((level) => days >= level.min) ?? STREAK_LEVELS[3];
 }
 
 export function StreakFlame({

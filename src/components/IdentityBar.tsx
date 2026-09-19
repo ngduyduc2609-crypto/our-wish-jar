@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronDown, LogOut, Music, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
-import { daysTogether } from "@/lib/constants";
+import { daysTogether, todayKey } from "@/lib/constants";
+import { computeStreak, fetchPresence } from "@/lib/db";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +17,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { playSound, useMusicEnabled, useMusicVolume, useSoundEnabled } from "@/lib/sound";
 import { NotificationBell } from "@/components/NotificationBell";
+import { StreakFlame } from "@/components/StreakFlame";
 
 export function IdentityBar() {
-  const { me, signOut } = useIdentity();
+  const { me, members, signOut } = useIdentity();
+  const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const [musicEnabled, setMusicEnabled] = useMusicEnabled();
   const [musicVolume, setMusicVolume] = useMusicVolume();
+  const streak = computeStreak(presence, members.length || 2);
+  const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
+  const lit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
 
   return (
     <header
@@ -28,11 +35,14 @@ export function IdentityBar() {
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <StreakFlame days={streak.current} lit={lit} compact />
+          <div className="min-w-0">
           <p className="truncate font-display text-base font-semibold">Wish Jar 🫙</p>
           <p className="text-[11px] text-muted-foreground">
             Thu Thủy &amp; Duy Đức · ngày thứ {daysTogether()}
           </p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
         <NotificationBell />

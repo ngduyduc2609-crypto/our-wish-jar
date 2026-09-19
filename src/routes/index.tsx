@@ -16,7 +16,9 @@ import {
   imageAssets,
   type Wish,
 } from "@/lib/db";
-import { WISH_CATEGORIES, daysTogether, formatDate, labelOf } from "@/lib/constants";
+import { WISH_CATEGORIES, daysTogether, formatDate, labelOf, todayKey } from "@/lib/constants";
+import { MilestoneCelebration } from "@/components/MilestoneCelebration";
+import { StreakFlame, STREAK_MILESTONES, streakLevel } from "@/components/StreakFlame";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -53,6 +55,10 @@ function HomePage() {
   const streak = computeStreak(presence, members.length || 2);
   const pending = useMemo(() => wishes.filter((w) => !w.completed), [wishes]);
   const completed = wishes.length - pending.length;
+  const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
+  const streakLit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
+  const nextStreakMilestone = STREAK_MILESTONES.find((milestone) => milestone > streak.current);
+  const flameLevel = streakLevel(streak.current);
 
   function drawWish() {
     setDraw(pickRandom(pending));
@@ -68,19 +74,26 @@ function HomePage() {
       </section>
 
        <section className="paper overflow-hidden rounded-3xl px-5 pb-5 pt-4 text-center">
-         <div className="wish-jar relative mx-auto h-64 max-w-sm" aria-label="Lọ chứa những điều ước đang chờ">
+         <div className="wish-jar relative mx-auto h-72 max-w-sm" aria-label="Lọ chứa những điều ước đang chờ">
            <Sparkles className="absolute left-6 top-14 size-4 text-sky-400" aria-hidden="true" />
            <Sparkles className="absolute right-5 top-5 size-5 text-sky-300" aria-hidden="true" />
            <div className="absolute left-1/2 top-2 z-20 h-8 w-36 -translate-x-1/2 rounded-xl border border-sky-200 bg-gradient-to-b from-sky-100 to-sky-200 shadow-[0_4px_15px_rgba(56,189,248,.28)]" />
            <div className="wish-jar-glass absolute inset-x-5 bottom-0 top-7 overflow-hidden rounded-b-[3.5rem] rounded-t-3xl border-2 border-sky-200/80 bg-gradient-to-b from-sky-50/80 via-sky-100/55 to-sky-200/65 shadow-inner backdrop-blur-sm">
              <div className="absolute left-4 top-5 h-32 w-3 rounded-full bg-white/70" />
              <div className="absolute inset-x-8 bottom-2 h-6 rounded-full bg-sky-300/25 blur-md" />
-            <div className="absolute inset-x-5 bottom-5 flex flex-wrap-reverse items-end justify-center gap-2">
-              {pending.slice(0, 8).map((wish, index) => (
+             <div className="absolute inset-x-3 bottom-3 top-9">
+               {pending.slice(0, 28).map((wish, index) => (
                 <div
                   key={wish.id}
-                   style={{ animationDelay: `${index * -0.7}s` }}
-                    className={`wish-note wish-note-paper max-w-28 px-2.5 py-2 font-display text-[10px] font-semibold leading-snug ${
+                    style={{
+                      animationDelay: `${index * -0.47}s`,
+                      animationDuration: `${4.6 + (index % 6) * 0.55}s`,
+                      left: `${5 + ((index * 29) % 72)}%`,
+                      top: `${8 + ((index * 37) % 70)}%`,
+                      width: `${58 + (index % 4) * 12}px`,
+                      zIndex: 2 + (index % 5),
+                    }}
+                     className={`wish-note wish-note-paper absolute px-2 py-1.5 font-display text-[9px] font-semibold leading-snug ${
                     index % 3 === 0
                         ? "wish-note-rose"
                       : index % 3 === 1
@@ -90,7 +103,7 @@ function HomePage() {
                 >
                    <span aria-hidden="true">{labelOf(WISH_CATEGORIES, wish.category).emoji} </span>
                    <span className="line-clamp-2 inline">{wish.title}</span>
-                </div>
+             </div>
               ))}
               {pending.length === 0 && (
                 <p className="mb-10 text-sm text-muted-foreground">Lọ đang chờ điều ước mới 💗</p>
@@ -107,17 +120,16 @@ function HomePage() {
         </Button>
       </section>
 
-      <section className="paper flex items-center gap-4 rounded-3xl p-4">
-        <div className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary">
-          <Flame className="size-6 text-primary" />
-        </div>
+      <section className="paper section-pop flex items-center gap-4 rounded-3xl p-4">
+        <StreakFlame days={streak.current} lit={streakLit} />
         <div>
           <p className="font-display text-lg font-semibold">
             Chuỗi {streak.current} ngày cùng nhau
           </p>
           <p className="text-xs text-muted-foreground">
-            Kỷ lục {streak.best} ngày · chỉ tăng khi cả hai cùng ghé vào
+            {streakLit ? `Đang cháy · ${flameLevel.name}` : "Hôm nay đang chờ cả hai cùng ghé"} · Kỷ lục {streak.best} ngày
           </p>
+          {nextStreakMilestone ? <p className="mt-1 text-[11px] text-primary">Còn {nextStreakMilestone - streak.current} ngày để nâng cấp ngọn lửa</p> : null}
         </div>
       </section>
 
@@ -199,6 +211,7 @@ function HomePage() {
           </Button>
         </Link>
       </RandomDrawDialog>
+      <MilestoneCelebration daysTogether={days} streak={streak.current} />
     </div>
   );
 }
