@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Shuffle, Sparkles, Flame, BarChart3, ChevronRight } from "lucide-react";
+import { Heart, Shuffle, Sparkles, BarChart3, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RandomDrawDialog } from "@/components/RandomDraw";
