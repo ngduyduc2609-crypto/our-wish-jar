@@ -15,7 +15,7 @@ export function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "jelly chip-pop shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+        "jelly chip-pop control-3d shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
         active
           ? "border-primary bg-primary text-primary-foreground"
           : "border-border bg-card text-muted-foreground",

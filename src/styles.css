@@ -91,6 +91,11 @@
   --sidebar-accent-foreground: oklch(0.36 0.05 25);
   --sidebar-border: oklch(0.89 0.025 68);
   --sidebar-ring: oklch(0.75 0.09 16);
+  --depth-shadow: oklch(0.37 0.045 40 / 0.18);
+  --depth-highlight: oklch(1 0 0 / 0.84);
+  --glass-sky: oklch(0.9 0.055 225 / 0.58);
+  --glass-edge: oklch(0.77 0.085 225 / 0.72);
+  --glass-glow: oklch(0.78 0.12 225 / 0.34);
 }
 
 .dark {
@@ -125,6 +130,11 @@
   --sidebar-accent-foreground: oklch(0.95 0.012 84);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.6 0.08 16);
+  --depth-shadow: oklch(0.08 0.01 40 / 0.5);
+  --depth-highlight: oklch(1 0 0 / 0.1);
+  --glass-sky: oklch(0.42 0.055 225 / 0.48);
+  --glass-edge: oklch(0.66 0.08 225 / 0.58);
+  --glass-glow: oklch(0.68 0.12 225 / 0.3);
 }
 
 @layer base {
@@ -161,13 +171,16 @@
 @utility paper {
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
-  box-shadow: 0 10px 30px -22px oklch(0.4 0.06 30 / 0.55);
+  box-shadow:
+    0 1px 0 var(--depth-highlight) inset,
+    0 5px 0 color-mix(in oklab, var(--color-border) 78%, transparent),
+    0 14px 24px -14px var(--depth-shadow);
 }
 
 @keyframes wish-float {
-  0%, 100% { transform: translate3d(-3px, 2px, 0) rotate(-4deg) scale(0.98); filter: brightness(1); }
-  35% { transform: translate3d(4px, -9px, 0) rotate(2deg) scale(1.03); filter: brightness(1.08); }
-  70% { transform: translate3d(-1px, -4px, 0) rotate(-1deg) scale(1); filter: brightness(1.03); }
+  0%, 100% { transform: translate3d(-1px, 1px, 0) rotate(calc(var(--note-rotate) - 1deg)); }
+  40% { transform: translate3d(2px, -4px, 0) rotate(calc(var(--note-rotate) + 1.5deg)); }
+  72% { transform: translate3d(-1px, -2px, 0) rotate(var(--note-rotate)); }
 }
 
 @keyframes wish-note-glow {
@@ -176,12 +189,41 @@
 }
 
 @keyframes jar-glow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgb(125 211 252 / 0.3)); }
-  50% { filter: drop-shadow(0 0 18px rgb(56 189 248 / 0.48)); }
+  0%, 100% { filter: drop-shadow(0 12px 12px var(--depth-shadow)) drop-shadow(0 0 8px var(--glass-glow)); }
+  50% { filter: drop-shadow(0 14px 14px var(--depth-shadow)) drop-shadow(0 0 18px var(--glass-glow)); }
 }
 
-.wish-jar-glass { animation: jar-glow 3.8s ease-in-out infinite; }
-.wish-note { animation: wish-float 5s ease-in-out infinite, wish-note-glow 2.8s ease-in-out infinite; will-change: transform, filter; }
+.wish-jar-scene { position: relative; width: min(100%, 23rem); height: 20rem; margin-inline: auto; perspective: 900px; }
+.wish-jar-shell {
+  position: absolute;
+  inset: 2.35rem 1.15rem 0.55rem;
+  overflow: hidden;
+  border: 2px solid var(--glass-edge);
+  border-radius: 2.15rem 2.15rem 4.6rem 4.6rem / 1.75rem 1.75rem 3.1rem 3.1rem;
+  background: linear-gradient(105deg, var(--glass-sky), color-mix(in oklab, var(--color-card) 72%, transparent) 45%, var(--glass-sky));
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--glass-edge) 14%, transparent) inset, 0 -14px 28px -20px var(--glass-edge) inset;
+  animation: jar-glow 3.8s ease-in-out infinite;
+  transform: rotateX(1deg);
+}
+.wish-jar-safe-zone { position: absolute; inset: 2.25rem 1.55rem 1.15rem; }
+.wish-jar-lid {
+  position: absolute; z-index: 20; left: 50%; top: 0.8rem; width: 10.5rem; height: 2.6rem; transform: translateX(-50%) rotateX(9deg);
+  border: 1px solid var(--glass-edge); border-radius: 0.8rem; background: linear-gradient(var(--glass-sky), var(--color-secondary));
+  box-shadow: 0 4px 0 var(--glass-edge), 0 10px 18px -10px var(--depth-shadow), 0 1px 0 var(--depth-highlight) inset;
+}
+.wish-jar-lid span { position: absolute; inset: 0.45rem 0.7rem; border-radius: 0.45rem; border: 1px solid color-mix(in oklab, var(--glass-edge) 65%, transparent); }
+.wish-jar-glass-shine { position: absolute; z-index: 30; left: 1.15rem; top: 2.5rem; width: 0.7rem; height: 58%; border-radius: 999px; background: linear-gradient(transparent, var(--depth-highlight), transparent); opacity: 0.8; pointer-events: none; }
+.wish-jar-glass-rim { position: absolute; z-index: 30; inset: 0.45rem 1.2rem auto; height: 1.15rem; border-radius: 999px; border: 1px solid var(--glass-edge); box-shadow: 0 3px 6px var(--depth-shadow) inset; pointer-events: none; }
+.wish-jar-glass-base { position: absolute; z-index: 30; inset: auto 2.75rem 0.55rem; height: 1.05rem; border-radius: 50%; background: var(--glass-sky); filter: blur(3px); pointer-events: none; }
+.wish-jar-spark { position: absolute; z-index: 30; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; color: var(--color-primary); animation: idle-breathe 2.6s ease-in-out infinite; }
+.wish-jar-spark svg { width: 100%; height: 100%; }
+.wish-jar-spark-left { left: 0.25rem; top: 5.5rem; }
+.wish-jar-spark-right { right: 0.15rem; top: 2.2rem; animation-delay: -1.2s; }
+.wish-note {
+  position: absolute; left: var(--note-x); bottom: var(--note-y); width: var(--note-width); min-height: 2.2rem; padding: 0.35rem 0.4rem;
+  animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.1s ease-in-out var(--note-delay) infinite;
+  transform: rotate(var(--note-rotate)); transform-origin: center; will-change: transform; backface-visibility: hidden;
+}
 .wish-note-paper {
   position: relative;
   overflow: hidden;
@@ -192,6 +234,12 @@
   background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 0.8rem, color-mix(in oklab, var(--wish-note-ink) 10%, transparent) 0.85rem);
   clip-path: polygon(1% 2%, 98% 0, 100% 94%, 96% 100%, 3% 97%, 0 8%);
 }
+.wish-note-icon { display: block; font-size: 0.72rem; line-height: 1; }
+.wish-note-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin-top: 0.12rem; font-family: var(--font-display); font-size: 0.5rem; font-weight: 700; line-height: 1.15; }
+.wish-note-sage { --wish-note-bg: oklch(0.93 0.05 145); --wish-note-ink: oklch(0.4 0.075 150); --wish-note-glow: oklch(0.77 0.11 145 / 0.48); --wish-note-shadow: oklch(0.42 0.06 145 / 0.2); }
+.wish-jar-empty { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; color: var(--color-muted-foreground); font-size: 0.78rem; }
+.wish-jar-empty span { font-size: 2rem; }
+.wish-jar-more { position: absolute; z-index: 40; right: 1.7rem; bottom: 1.15rem; min-width: 2rem; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-card); padding: 0.2rem 0.45rem; color: var(--color-foreground); font-size: 0.65rem; font-weight: 700; box-shadow: 0 3px 0 var(--color-border); }
 .wish-note-paper::after {
   content: "";
   position: absolute;
@@ -219,7 +267,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wish-jar-glass, .wish-note { animation: none; }
+  .wish-jar-shell, .wish-note, .wish-jar-spark { animation: none; }
 }
 
 /* ---------- Hiệu ứng chạm 3D & nảy jelly ---------- */
@@ -250,6 +298,21 @@ a[role="button"],
     filter 200ms ease;
   transform-origin: center;
 }
+
+.control-3d {
+  box-shadow: 0 1px 0 var(--depth-highlight) inset, 0 4px 0 color-mix(in oklab, currentColor 16%, var(--color-border)), 0 9px 14px -10px var(--depth-shadow);
+  transform: translateY(0);
+}
+.control-3d:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.025); }
+.control-3d:not(:disabled):active { transform: translateY(3px) scale(0.97); box-shadow: 0 1px 0 var(--depth-highlight) inset, 0 1px 0 color-mix(in oklab, currentColor 16%, var(--color-border)); }
+.section-lift, .paper { transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, filter 220ms ease; }
+.section-lift:hover, article.paper:hover { transform: translateY(-2px); box-shadow: 0 1px 0 var(--depth-highlight) inset, 0 7px 0 color-mix(in oklab, var(--color-border) 70%, transparent), 0 18px 28px -14px var(--depth-shadow); }
+.section-lift:active, article.paper:active { transform: translateY(2px) scale(0.99); }
+.bottom-nav-3d { box-shadow: 0 -1px 0 var(--depth-highlight), 0 -10px 24px -20px var(--depth-shadow); }
+.nav-bounce { position: relative; }
+.nav-bounce::before { content: ""; position: absolute; inset: 0.3rem 0.55rem; z-index: -1; border-radius: 0.85rem; background: var(--color-secondary); opacity: 0; transform: translateY(4px) scale(0.88); transition: opacity 180ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.nav-bounce[data-status="active"]::before { opacity: 1; transform: translateY(0) scale(1); box-shadow: 0 3px 0 var(--color-border); }
+.nav-bounce[data-status="active"] svg { filter: drop-shadow(0 2px 1px var(--depth-shadow)); }
 
 button:not(:disabled):active,
 a[role="button"]:active,
@@ -368,4 +431,10 @@ button:not(:disabled):hover {
     animation: none !important;
     transition: none !important;
   }
+}
+
+@media (max-width: 390px) {
+  .wish-jar-scene { height: 18.5rem; }
+  .wish-jar-shell { inset-inline: 0.55rem; }
+  .wish-jar-safe-zone { inset-inline: 1.3rem; }
 }

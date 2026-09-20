@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Shuffle, Sparkles, BarChart3, ChevronRight } from "lucide-react";
+import { Shuffle, Sparkles, BarChart3, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RandomDrawDialog } from "@/components/RandomDraw";
@@ -19,6 +19,7 @@ import {
 import { WISH_CATEGORIES, daysTogether, formatDate, labelOf, todayKey } from "@/lib/constants";
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { StreakFlame, STREAK_MILESTONES, streakLevel } from "@/components/StreakFlame";
+import { WishJarDisplay } from "@/components/WishJarDisplay";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -73,44 +74,8 @@ function HomePage() {
         <p className="text-sm text-muted-foreground">ngày, kể từ 22/12/2025 💗</p>
       </section>
 
-       <section className="paper overflow-hidden rounded-3xl px-5 pb-5 pt-4 text-center">
-         <div className="wish-jar relative mx-auto h-72 max-w-sm" aria-label="Lọ chứa những điều ước đang chờ">
-           <Sparkles className="absolute left-6 top-14 size-4 text-sky-400" aria-hidden="true" />
-           <Sparkles className="absolute right-5 top-5 size-5 text-sky-300" aria-hidden="true" />
-           <div className="absolute left-1/2 top-2 z-20 h-8 w-36 -translate-x-1/2 rounded-xl border border-sky-200 bg-gradient-to-b from-sky-100 to-sky-200 shadow-[0_4px_15px_rgba(56,189,248,.28)]" />
-           <div className="wish-jar-glass absolute inset-x-5 bottom-0 top-7 overflow-hidden rounded-b-[3.5rem] rounded-t-3xl border-2 border-sky-200/80 bg-gradient-to-b from-sky-50/80 via-sky-100/55 to-sky-200/65 shadow-inner backdrop-blur-sm">
-             <div className="absolute left-4 top-5 h-32 w-3 rounded-full bg-white/70" />
-             <div className="absolute inset-x-8 bottom-2 h-6 rounded-full bg-sky-300/25 blur-md" />
-             <div className="absolute inset-x-3 bottom-3 top-9">
-               {pending.slice(0, 28).map((wish, index) => (
-                <div
-                  key={wish.id}
-                    style={{
-                      animationDelay: `${index * -0.47}s`,
-                      animationDuration: `${4.6 + (index % 6) * 0.55}s`,
-                      left: `${5 + ((index * 29) % 72)}%`,
-                      top: `${8 + ((index * 37) % 70)}%`,
-                      width: `${58 + (index % 4) * 12}px`,
-                      zIndex: 2 + (index % 5),
-                    }}
-                     className={`wish-note wish-note-paper absolute px-2 py-1.5 font-display text-[9px] font-semibold leading-snug ${
-                    index % 3 === 0
-                        ? "wish-note-rose"
-                      : index % 3 === 1
-                          ? "wish-note-honey"
-                          : "wish-note-sky"
-                  }`}
-                >
-                   <span aria-hidden="true">{labelOf(WISH_CATEGORIES, wish.category).emoji} </span>
-                   <span className="line-clamp-2 inline">{wish.title}</span>
-             </div>
-              ))}
-              {pending.length === 0 && (
-                <p className="mb-10 text-sm text-muted-foreground">Lọ đang chờ điều ước mới 💗</p>
-              )}
-            </div>
-          </div>
-        </div>
+       <section className="paper section-lift overflow-hidden rounded-3xl px-4 pb-5 pt-3 text-center">
+         <WishJarDisplay wishes={pending} />
         <h2 className="mt-2 font-display text-xl font-bold">Lọ điều ước</h2>
         <p className="text-sm text-muted-foreground">
           {pending.length} điều ước đang chờ · {completed} đã thành hiện thực
