@@ -60,10 +60,11 @@ export function NotificationBell() {
     queryKey: ["notifications", me?.id],
     enabled: Boolean(me?.id),
     queryFn: async () => {
+      if (!me?.id) return [];
       const { data, error } = await db
         .from("notifications")
         .select("*")
-        .eq("recipient_member_id", me!.id)
+        .eq("recipient_member_id", me.id)
         .order("created_at", { ascending: false })
         .limit(30);
       if (error) throw error;
@@ -88,7 +89,9 @@ export function NotificationBell() {
           toast(title, { description: subject ?? undefined });
           if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "granted") {
             try {
-              new window.Notification(title, { body: subject ?? undefined, icon: "/app-icon-192.png" });
+              const options: NotificationOptions = { icon: "/app-icon-192.png" };
+              if (subject) options.body = subject;
+              new window.Notification(title, options);
             } catch {
               /* bỏ qua nếu trình duyệt chặn */
             }

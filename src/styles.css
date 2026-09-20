@@ -267,7 +267,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wish-jar-glass, .wish-note { animation: none; }
+  .wish-jar-shell, .wish-note, .wish-jar-spark { animation: none; }
 }
 
 /* ---------- Hiệu ứng chạm 3D & nảy jelly ---------- */
