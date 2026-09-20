@@ -11,7 +11,7 @@ const items = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 backdrop-blur">
+    <nav className="bottom-nav-3d fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 backdrop-blur">
       <div
         className="mx-auto flex max-w-2xl items-stretch justify-between px-1 pt-1"
         style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }}
