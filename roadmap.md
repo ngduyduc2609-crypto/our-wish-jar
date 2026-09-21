@@ -8,3 +8,6 @@
 - [ ] Verify the updated app on iPhone 16 Pro Max dimensions and desktop.
 - [ ] Redesign the Home wish jar so many layered notes stay inside the glass silhouette.
 - [ ] Add stronger, consistent 3D depth and lively interaction feedback across the app.
+- [ ] Make sound effects immediate and independent from background music.
+- [ ] Compress uploaded images and improve image loading placeholders.
+- [ ] Verify natural wish-note placement with small and large wish counts.

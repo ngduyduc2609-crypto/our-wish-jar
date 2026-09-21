@@ -24,7 +24,11 @@ export type SoundKind =
 let audioContext: AudioContext | null = null;
 let musicTimer: number | null = null;
 let musicGain: GainNode | null = null;
+let soundGain: GainNode | null = null;
+let noiseBuffer: AudioBuffer | null = null;
 let lastTapIndex = -1;
+
+const MUSIC_GAIN_MAX = 0.055;
 
 function prefersReducedMotion() {
   if (typeof window === "undefined") return false;
@@ -40,8 +44,6 @@ export function setSoundEnabled(enabled: boolean) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, String(enabled));
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: enabled }));
-  if (!enabled) stopMusic();
-  else if (isMusicEnabled()) startMusic();
 }
 
 export function isMusicEnabled() {
@@ -53,23 +55,27 @@ export function setMusicEnabled(enabled: boolean) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(MUSIC_KEY, String(enabled));
   window.dispatchEvent(new CustomEvent(MUSIC_EVENT, { detail: enabled }));
-  if (enabled && isSoundEnabled()) startMusic();
+  if (enabled) startMusic();
   else stopMusic();
 }
 
 export function getMusicVolume() {
   if (typeof window === "undefined") return 0.35;
   const raw = Number(window.localStorage.getItem(VOLUME_KEY));
-  return Number.isFinite(raw) && raw > 0 ? Math.min(1, raw) : 0.35;
+  return Number.isFinite(raw) && raw >= 0 ? Math.min(1, raw) : 0.35;
+}
+
+function musicLevel(volume: number) {
+  return Math.pow(volume, 1.6) * MUSIC_GAIN_MAX;
 }
 
 export function setMusicVolume(volume: number) {
   if (typeof window === "undefined") return;
-  const clamped = Math.min(1, Math.max(0.02, volume));
+  const clamped = Math.min(1, Math.max(0, volume));
   window.localStorage.setItem(VOLUME_KEY, String(clamped));
   window.dispatchEvent(new CustomEvent(VOLUME_EVENT, { detail: clamped }));
   if (musicGain && audioContext) {
-    musicGain.gain.setTargetAtTime(clamped * 0.14, audioContext.currentTime, 0.2);
+    musicGain.gain.setTargetAtTime(musicLevel(clamped), audioContext.currentTime, 0.08);
   }
 }
 
@@ -111,8 +117,24 @@ function getContext() {
   const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
   if (!AudioContextClass) return null;
   audioContext ??= new AudioContextClass();
-  if (audioContext.state === "suspended") void audioContext.resume();
+  if (!soundGain) {
+    soundGain = audioContext.createGain();
+    soundGain.gain.value = 1;
+    soundGain.connect(audioContext.destination);
+  }
   return audioContext;
+}
+
+export async function primeAudio() {
+  const context = getContext();
+  if (!context) return;
+  if (context.state === "suspended") await context.resume();
+  if (!noiseBuffer) {
+    const frames = Math.floor(context.sampleRate * 0.2);
+    noiseBuffer = context.createBuffer(1, frames, context.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let index = 0; index < frames; index += 1) data[index] = (Math.random() * 2 - 1) * (1 - index / frames);
+  }
 }
 
 function tone(
@@ -140,12 +162,14 @@ function tone(
 }
 
 function noise(context: AudioContext, start: number, duration: number, volume: number) {
-  const frames = Math.floor(context.sampleRate * duration);
-  const buffer = context.createBuffer(1, frames, context.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < frames; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+  if (!noiseBuffer) {
+    const frames = Math.floor(context.sampleRate * 0.2);
+    noiseBuffer = context.createBuffer(1, frames, context.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < frames; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+  }
   const source = context.createBufferSource();
-  source.buffer = buffer;
+  source.buffer = noiseBuffer;
   const filter = context.createBiquadFilter();
   filter.type = "highpass";
   filter.frequency.value = 3000;
@@ -164,7 +188,12 @@ export function playSound(kind: SoundKind) {
   if (!isSoundEnabled()) return;
   const context = getContext();
   if (!context) return;
+  if (context.state === "suspended") {
+    void context.resume().then(() => playSound(kind));
+    return;
+  }
   const now = context.currentTime;
+  const output = soundGain ?? context.destination;
 
   if (kind === "tap" || kind === "tap-soft") {
     let index = Math.floor(Math.random() * TAP_SCALE.length);
@@ -172,8 +201,8 @@ export function playSound(kind: SoundKind) {
     lastTapIndex = index;
     const base = TAP_SCALE[index]!;
     const level = kind === "tap" ? 0.032 : 0.02;
-    tone(context, base, now, 0.055, level, "triangle");
-    tone(context, base * 2, now + 0.01, 0.045, level * 0.4, "sine");
+    tone(context, base, now, 0.055, level, "triangle", output);
+    tone(context, base * 2, now + 0.01, 0.045, level * 0.4, "sine", output);
   } else if (kind === "swipe") {
     tone(context, 620, now, 0.09, 0.02, "sine", context.destination, 980);
     noise(context, now, 0.06, 0.012);
@@ -262,12 +291,12 @@ function hat(context: AudioContext, at: number, gainNode: AudioNode, level = 0.1
 
 export function startMusic() {
   if (typeof window === "undefined") return;
-  if (!isSoundEnabled() || !isMusicEnabled() || prefersReducedMotion()) return;
+  if (!isMusicEnabled() || prefersReducedMotion()) return;
   if (musicTimer !== null) return;
   const context = getContext();
   if (!context) return;
 
-  const target = getMusicVolume() * 0.14;
+  const target = musicLevel(getMusicVolume());
   musicGain = context.createGain();
   musicGain.gain.setValueAtTime(0.0001, context.currentTime);
   musicGain.gain.exponentialRampToValueAtTime(target, context.currentTime + 3);

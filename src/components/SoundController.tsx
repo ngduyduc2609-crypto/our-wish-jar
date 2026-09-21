@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { isMusicEnabled, isSoundEnabled, playSound, startMusic, type SoundKind } from "@/lib/sound";
+import { isMusicEnabled, playSound, primeAudio, startMusic, type SoundKind } from "@/lib/sound";
 
 function kindFor(control: Element): SoundKind {
   const label = `${control.getAttribute("aria-label") ?? ""} ${control.textContent ?? ""}`.toLowerCase();
@@ -17,23 +17,27 @@ function kindFor(control: Element): SoundKind {
 
 export function SoundController() {
   useEffect(() => {
-    const handlePointerUp = (event: PointerEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
       const control = target.closest("button, a, [role='button'], [role='menuitem'], [role='checkbox'], [role='switch'], [role='tab']");
       if (!control || control.getAttribute("aria-disabled") === "true" || control.hasAttribute("disabled")) return;
+      void primeAudio();
       playSound(kindFor(control));
+      if (isMusicEnabled()) startMusic();
     };
 
     const handleFirstGesture = () => {
-      if (isSoundEnabled() && isMusicEnabled()) startMusic();
+      void primeAudio().then(() => {
+        if (isMusicEnabled()) startMusic();
+      });
     };
 
-    document.addEventListener("pointerup", handlePointerUp);
+    document.addEventListener("pointerdown", handlePointerDown, { capture: true });
     document.addEventListener("pointerdown", handleFirstGesture, { once: true });
 
     // thử phát nhạc ngay khi mở app (trình duyệt có thể chờ tới cử chỉ đầu tiên)
-    if (isSoundEnabled() && isMusicEnabled()) startMusic();
+    if (isMusicEnabled()) startMusic();
 
     const observer = new MutationObserver((records) => {
       const hasSuccess = records.some((record) =>
@@ -49,7 +53,7 @@ export function SoundController() {
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
-      document.removeEventListener("pointerup", handlePointerUp);
+      document.removeEventListener("pointerdown", handlePointerDown, { capture: true });
       document.removeEventListener("pointerdown", handleFirstGesture);
       observer.disconnect();
     };

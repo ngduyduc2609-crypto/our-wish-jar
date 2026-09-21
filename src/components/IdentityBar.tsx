@@ -70,7 +70,6 @@ export function IdentityBar() {
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={musicEnabled}
-              disabled={!soundEnabled}
               onSelect={(event) => event.preventDefault()}
               onCheckedChange={(checked) => setMusicEnabled(checked)}
             >
@@ -81,10 +80,10 @@ export function IdentityBar() {
               <p className="mb-1 text-[11px] text-muted-foreground">Âm lượng nhạc</p>
               <input
                 type="range"
-                min={2}
+                min={0}
                 max={100}
                 value={Math.round(musicVolume * 100)}
-                disabled={!soundEnabled || !musicEnabled}
+                disabled={!musicEnabled}
                 onChange={(event) => setMusicVolume(Number(event.target.value) / 100)}
                 className="h-1.5 w-full accent-primary disabled:opacity-40"
                 aria-label="Âm lượng nhạc nền"

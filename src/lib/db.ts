@@ -183,11 +183,43 @@ export async function toggleReaction(wishId: string, memberId: string, emoji: st
 }
 
 export async function uploadImage(file: File) {
-  const ext = file.name.split(".").pop() ?? "jpg";
+  const prepared = await prepareImage(file);
+  const ext = prepared.type === "image/webp" ? "webp" : prepared.type === "image/png" ? "png" : "jpg";
   const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("media").upload(path, file, { upsert: false });
+  const { error } = await supabase.storage.from("media").upload(path, prepared, {
+    upsert: false,
+    contentType: prepared.type,
+    cacheControl: "31536000",
+  });
   if (error) throw error;
   return path;
+}
+
+async function prepareImage(file: File) {
+  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.size < 450_000) return file;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const maxEdge = 1600;
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) return file;
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+    const type = file.type === "image/png" ? "image/png" : "image/webp";
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.8));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.${type === "image/webp" ? "webp" : "png"}`, {
+      type,
+      lastModified: file.lastModified,
+    });
+  } catch {
+    return file;
+  }
 }
 
 export async function signedUrl(path: string) {

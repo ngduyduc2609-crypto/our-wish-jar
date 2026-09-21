@@ -205,7 +205,7 @@
   animation: jar-glow 3.8s ease-in-out infinite;
   transform: rotateX(1deg);
 }
-.wish-jar-safe-zone { position: absolute; inset: 2.25rem 1.55rem 1.15rem; }
+.wish-jar-safe-zone { position: absolute; inset: 2.25rem 1.55rem 1.35rem; overflow: hidden; border-radius: 0.75rem 0.75rem 3rem 3rem; }
 .wish-jar-lid {
   position: absolute; z-index: 20; left: 50%; top: 0.8rem; width: 10.5rem; height: 2.6rem; transform: translateX(-50%) rotateX(9deg);
   border: 1px solid var(--glass-edge); border-radius: 0.8rem; background: linear-gradient(var(--glass-sky), var(--color-secondary));
@@ -218,11 +218,11 @@
 .wish-jar-spark { position: absolute; z-index: 30; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; color: var(--color-primary); animation: idle-breathe 2.6s ease-in-out infinite; }
 .wish-jar-spark svg { width: 100%; height: 100%; }
 .wish-jar-spark-left { left: 0.25rem; top: 5.5rem; }
-.wish-jar-spark-right { right: 0.15rem; top: 2.2rem; animation-delay: -1.2s; }
+.wish-jar-spark-right { right: 1.45rem; top: 3.8rem; animation-delay: -1.2s; }
 .wish-note {
-  position: absolute; left: var(--note-x); bottom: var(--note-y); width: var(--note-width); min-height: 2.2rem; padding: 0.35rem 0.4rem;
+  position: absolute; left: var(--note-x); top: var(--note-y); width: var(--note-width); height: var(--note-height); padding: 0.3rem 0.35rem;
   animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.1s ease-in-out var(--note-delay) infinite;
-  transform: rotate(var(--note-rotate)); transform-origin: center; will-change: transform; backface-visibility: hidden;
+  transform: translate(-50%, -50%) rotate(var(--note-rotate)); transform-origin: center; will-change: transform; backface-visibility: hidden;
 }
 .wish-note-paper {
   position: relative;
