@@ -10,28 +10,50 @@ type NoteStyle = CSSProperties & {
   "--note-x": string;
   "--note-y": string;
   "--note-width": string;
+  "--note-height": string;
   "--note-rotate": string;
   "--note-delay": string;
   "--note-duration": string;
 };
 
-function noteStyle(index: number, total: number): NoteStyle {
-  const columns = 7;
-  const row = Math.floor(index / columns);
-  const column = index % columns;
-  const rows = Math.max(1, Math.ceil(Math.min(total, 42) / columns));
-  const offset = row % 2 === 0 ? 2 : -1;
-  const x = 9 + column * 12.7 + offset + ((index * 7) % 5);
-  const bottom = 7 + row * Math.min(15, 68 / rows) + ((index * 11) % 5);
+function hashSeed(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function randomFrom(seed: number, salt: number) {
+  const value = Math.sin(seed * 0.0001 + salt * 91.731) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function noteStyle(id: string, index: number, total: number): NoteStyle {
+  const seed = hashSeed(id);
+  const width = 45 + randomFrom(seed, 1) * 22;
+  const height = 31 + randomFrom(seed, 2) * 17;
+  const rows = Math.min(6, Math.max(1, Math.ceil(total / 7)));
+  const row = index % rows;
+  const lane = Math.floor(index / rows);
+  const yBase = rows === 1 ? 62 : 10 + row * (62 / (rows - 1));
+  const y = Math.min(73, Math.max(7, yBase + (randomFrom(seed, 3) - 0.5) * 12));
+  const bottomTaper = Math.max(0, (y - 55) / 18);
+  const sideInset = 4 + bottomTaper * 7;
+  const usableX = 100 - sideInset * 2;
+  const distributed = ((lane * 37 + row * 19) % 100) / 100;
+  const x = sideInset + ((distributed * 0.65 + randomFrom(seed, 4) * 0.35) % 1) * usableX;
 
   return {
-    "--note-x": `${Math.min(x, 83)}%`,
-    "--note-y": `${Math.min(bottom, 72)}%`,
-    "--note-width": `${48 + ((index * 13) % 30)}px`,
-    "--note-rotate": `${-9 + ((index * 17) % 19)}deg`,
-    "--note-delay": `${-((index * 0.37) % 5.5)}s`,
-    "--note-duration": `${4.8 + (index % 7) * 0.42}s`,
-    zIndex: row + 2,
+    "--note-x": `${x}%`,
+    "--note-y": `${y}%`,
+    "--note-width": `${width}px`,
+    "--note-height": `${height}px`,
+    "--note-rotate": `${-11 + randomFrom(seed, 5) * 22}deg`,
+    "--note-delay": `${-(randomFrom(seed, 6) * 6)}s`,
+    "--note-duration": `${5 + randomFrom(seed, 7) * 3}s`,
+    zIndex: 2 + Math.floor(randomFrom(seed, 8) * 12),
   };
 }
 
@@ -58,7 +80,7 @@ export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
             return (
               <div
                 key={wish.id}
-                style={noteStyle(index, visible.length)}
+                style={noteStyle(wish.id, index, visible.length)}
                 className={`wish-note wish-note-paper ${NOTE_COLORS[index % NOTE_COLORS.length]}`}
                 title={wish.title}
               >
