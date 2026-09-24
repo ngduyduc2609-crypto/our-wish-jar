@@ -21,6 +21,11 @@ function isAllowedEmail(email?: string | null) {
   return ALLOWED_EMAILS.has(normalizeEmail(email));
 }
 
+function getAppRedirectUrl() {
+  if (typeof window === "undefined") return "/";
+  return window.location.origin;
+}
+
 type IdentityValue = {
   members: Member[];
   me: Member | null;
@@ -111,7 +116,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: window.location.origin,
+            redirectTo: getAppRedirectUrl(),
           },
         });
       },
@@ -152,7 +157,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
           email: normalizedEmail,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: getAppRedirectUrl(),
           },
         });
         if (error) throw error;

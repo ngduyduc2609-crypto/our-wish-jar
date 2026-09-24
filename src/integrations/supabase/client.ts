@@ -61,13 +61,14 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 function createSupabaseClient() {
   const { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY } = getSupabaseClientConfig();
+  const isBrowser = typeof window !== 'undefined';
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
-      storage: typeof window !== 'undefined' ? window.localStorage : brokeredPreviewStorage(),
+      storage: isBrowser ? window.localStorage : undefined,
       persistSession: true,
       autoRefreshToken: true,
     },

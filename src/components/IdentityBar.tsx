@@ -62,7 +62,9 @@ export function IdentityBar() {
               onSelect={(event) => event.preventDefault()}
               onCheckedChange={(checked) => {
                 setSoundEnabled(checked);
-                if (checked) window.setTimeout(() => playSound("success"), 0);
+                if (checked && typeof window !== "undefined") {
+                  window.setTimeout(() => playSound("success"), 0);
+                }
               }}
             >
               {soundEnabled ? <Volume2 /> : <VolumeX />}

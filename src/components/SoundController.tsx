@@ -37,6 +37,8 @@ function safeStartMusic() {
 
 export function SoundController() {
   useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
