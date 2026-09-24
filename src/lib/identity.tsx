@@ -164,7 +164,9 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
 
       setLocalSession(nextSession);
       persistAuthSession(nextSession);
-      await queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["members"] });
+      void queryClient.invalidateQueries({ queryKey: ["wishes"] });
+      void queryClient.invalidateQueries({ queryKey: ["memories"] });
     };
 
     return {

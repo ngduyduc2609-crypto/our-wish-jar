@@ -128,7 +128,6 @@ export function IdentityGate() {
     setBusy(true);
     try {
       if (mode === "login") {
-        await signInWithPassword(cleanEmail, password);
         await loginAs(cleanEmail);
         toast.success("Đăng nhập thành công.");
       } else {

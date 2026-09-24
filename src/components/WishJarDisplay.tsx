@@ -59,7 +59,7 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
   }
 
   const safeX = Math.min(84, Math.max(16, x));
-  const safeY = Math.min(80, Math.max(18, y));
+  const safeY = Math.min(72, Math.max(28, y));
   const rotate = -15 + randomFrom(seed, 5) * 30;
 
   return {

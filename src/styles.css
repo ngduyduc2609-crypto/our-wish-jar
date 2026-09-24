@@ -184,8 +184,8 @@
 }
 
 @keyframes wish-note-glow {
-  0%, 100% { box-shadow: 0 3px 8px var(--wish-note-shadow), 0 0 7px var(--wish-note-glow); }
-  50% { box-shadow: 0 5px 12px var(--wish-note-shadow), 0 0 16px var(--wish-note-glow); }
+  0%, 100% { box-shadow: 0 3px 8px var(--wish-note-shadow), 0 0 10px var(--wish-note-glow), 0 0 18px color-mix(in oklab, var(--wish-note-glow) 60%, transparent); }
+  50% { box-shadow: 0 6px 14px var(--wish-note-shadow), 0 0 18px var(--wish-note-glow), 0 0 28px color-mix(in oklab, var(--wish-note-glow) 90%, transparent); }
 }
 
 @keyframes jar-glow {
@@ -235,6 +235,7 @@
   height: var(--note-height);
   padding: 0.3rem 0.35rem;
   box-sizing: border-box;
+  filter: drop-shadow(0 6px 10px color-mix(in oklab, var(--wish-note-shadow) 60%, transparent));
   animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.1s ease-in-out var(--note-delay) infinite;
   transform: translate(-50%, -50%) rotate(var(--note-rotate));
   transform-origin: center;
@@ -248,7 +249,9 @@
   border: 1px solid color-mix(in oklab, var(--wish-note-ink) 18%, transparent);
   border-radius: 0.35rem 0.2rem 0.45rem 0.25rem;
   color: var(--wish-note-ink);
-  background-color: var(--wish-note-bg);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.42), transparent 42%),
+    linear-gradient(180deg, color-mix(in oklab, var(--wish-note-bg) 92%, white) 0%, var(--wish-note-bg) 100%);
   background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 0.8rem, color-mix(in oklab, var(--wish-note-ink) 10%, transparent) 0.85rem);
   clip-path: polygon(1% 2%, 98% 0, 100% 94%, 96% 100%, 3% 97%, 0 8%);
 }

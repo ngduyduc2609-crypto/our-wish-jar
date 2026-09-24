@@ -166,29 +166,22 @@ export const fetchLog = () =>
 
 export const fetchPresence = () => rows<Presence>(db.from("daily_presence").select("*"));
 
-export async function insertRow<T>(table: string, values: Record<string, unknown>) {
+function sanitizePayload(table: string, values: Record<string, unknown>, memberId: string | null) {
   const resolvedValues = { ...values };
-  const identity = readCurrentUserIdentity();
-  const resolvedMemberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
 
-  if (!resolvedValues.user_id && resolvedMemberId) {
-    resolvedValues.user_id = resolvedMemberId;
+  if (resolvedValues.user_id == null || resolvedValues.user_id === "" || resolvedValues.user_id === "null") {
+    if (memberId) resolvedValues.user_id = memberId;
   }
+
   if (table === "wishes") {
     const safeCategory = String(resolvedValues.category ?? "experience").trim() || "experience";
     const safeDifficulty = String(resolvedValues.difficulty ?? "medium").trim() || "medium";
     const safeTitle = String(resolvedValues.title ?? "").trim();
     const safeNote = resolvedValues.note == null ? null : String(resolvedValues.note).trim() || null;
 
-    if (!safeTitle) {
-      throw new Error("Vui lòng nhập tiêu đề điều ước.");
-    }
-    if (!safeCategory) {
-      throw new Error("Vui lòng chọn loại điều ước hợp lệ.");
-    }
-    if (!safeDifficulty) {
-      throw new Error("Vui lòng chọn độ khó hợp lệ.");
-    }
+    if (!safeTitle) throw new Error("Vui lòng nhập tiêu đề điều ước.");
+    if (!safeCategory) throw new Error("Vui lòng chọn loại điều ước hợp lệ.");
+    if (!safeDifficulty) throw new Error("Vui lòng chọn độ khó hợp lệ.");
 
     resolvedValues.title = safeTitle;
     resolvedValues.note = safeNote;
@@ -196,48 +189,90 @@ export async function insertRow<T>(table: string, values: Record<string, unknown
     resolvedValues.difficulty = safeDifficulty;
     resolvedValues.completed = Boolean(resolvedValues.completed ?? false);
     resolvedValues.deadline = resolvedValues.deadline ?? null;
+    resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
 
-    if (!resolvedValues.proposed_by && resolvedMemberId) {
-      resolvedValues.proposed_by = resolvedMemberId;
+    if (!resolvedValues.proposed_by && memberId) {
+      resolvedValues.proposed_by = memberId;
     }
   }
 
   if (table === "memories") {
     const safeTitle = String(resolvedValues.title ?? "").trim();
-    if (!safeTitle) {
-      throw new Error("Vui lòng nhập tiêu đề kỷ niệm.");
-    }
+    if (!safeTitle) throw new Error("Vui lòng nhập tiêu đề kỷ niệm.");
+
     resolvedValues.title = safeTitle;
-    if (!resolvedValues.created_by && resolvedMemberId) {
-      resolvedValues.created_by = resolvedMemberId;
+    resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
+    resolvedValues.image_url = resolvedValues.image_url ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
+    resolvedValues.image_pos = resolvedValues.image_pos ?? "50% 50%";
+
+    if (!resolvedValues.created_by && memberId) {
+      resolvedValues.created_by = memberId;
     }
   }
 
-  if (table === "wishes" && !resolvedValues.proposed_by && !resolvedMemberId) {
-    throw new Error("Không xác định được thành viên hiện tại để lưu điều ước.");
+  if (table === "activities") {
+    const safeName = String(resolvedValues.name ?? "").trim();
+    if (!safeName) throw new Error("Vui lòng nhập tên hoạt động.");
+    resolvedValues.name = safeName;
+    resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
+    resolvedValues.image_url = resolvedValues.image_url ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
+    resolvedValues.image_pos = resolvedValues.image_pos ?? "50% 50%";
+
+    if (!resolvedValues.added_by && memberId) {
+      resolvedValues.added_by = memberId;
+    }
   }
+
+  if (table === "foods") {
+    const safeName = String(resolvedValues.name ?? "").trim();
+    if (!safeName) throw new Error("Vui lòng nhập tên món ăn.");
+    resolvedValues.name = safeName;
+    resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
+    resolvedValues.image_url = resolvedValues.image_url ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
+    resolvedValues.image_pos = resolvedValues.image_pos ?? "50% 50%";
+
+    if (!resolvedValues.added_by && memberId) {
+      resolvedValues.added_by = memberId;
+    }
+  }
+
+  if (table === "wish_comments") {
+    const content = String(resolvedValues.content ?? "").trim();
+    if (!content) throw new Error("Nội dung bình luận không được để trống.");
+    resolvedValues.content = content;
+  }
+
+  return resolvedValues;
+}
+
+export async function insertRow<T>(table: string, values: Record<string, unknown>) {
+  const identity = readCurrentUserIdentity();
+  const resolvedMemberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
+  const resolvedValues = sanitizePayload(table, values, resolvedMemberId);
 
   try {
     const { data, error } = await db.from(table).insert(resolvedValues).select().single();
-    if (error) {
-      if (table === "wishes") {
-        console.error("Insert wish error:", error);
-      }
-      throw error;
-    }
+    if (error) throw error;
     return data as T;
   } catch (error) {
-    if (table === "wishes") {
-      console.error("Insert wish error:", error);
-    }
+    console.error(`Insert ${table} error:`, error);
     throw error;
   }
 }
 
 export async function updateRow<T>(table: string, id: string, values: Record<string, unknown>) {
-  const { data, error } = await db.from(table).update(values).eq("id", id).select().single();
-  if (error) throw error;
-  return data as T;
+  const identity = readCurrentUserIdentity();
+  const resolvedMemberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
+  const resolvedValues = sanitizePayload(table, values, resolvedMemberId);
+
+  try {
+    const { data, error } = await db.from(table).update(resolvedValues).eq("id", id).select().single();
+    if (error) throw error;
+    return data as T;
+  } catch (error) {
+    console.error(`Update ${table} error:`, error);
+    throw error;
+  }
 }
 
 export async function deleteRow(table: string, id: string) {
