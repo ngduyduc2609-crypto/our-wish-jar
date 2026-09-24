@@ -123,7 +123,7 @@ function WishesPage() {
         </div>
         <Button
           variant="secondary"
-          className="shrink-0 rounded-full"
+          className="wish-card-pill shrink-0 border border-white/70 bg-white/70 px-4 py-2 shadow-[0_10px_18px_-10px_rgba(15,23,42,0.18)]"
           onClick={draw}
           disabled={!pending.length}
         >
@@ -152,7 +152,7 @@ function WishesPage() {
       </div>
 
       <Button
-        className="w-full rounded-2xl"
+        className="wish-card-pill w-full border border-white/80 bg-primary text-primary-foreground shadow-[0_12px_22px_-10px_rgba(146,116,180,0.34)]"
         onClick={() => {
           setEditing(null);
           setFormOpen(true);
@@ -394,7 +394,7 @@ function WishCard({
   }
 
   return (
-    <article className="paper overflow-hidden rounded-3xl">
+    <article className="wish-card-soft overflow-hidden">
       <ImageGallery images={wish.images ?? []} alt={wish.title} />
       <div className="p-4">
       <div className="flex items-start justify-between gap-3">
@@ -426,8 +426,8 @@ function WishCard({
           onClick={onToggleComplete}
           aria-label="Đánh dấu hoàn thành"
           className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
-            wish.completed ? "border-primary bg-primary text-primary-foreground" : "border-border",
+            "wish-card-button grid size-9 shrink-0 place-items-center border transition-colors",
+            wish.completed ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card/80",
           )}
         >
           <Check className="size-4" />
@@ -444,8 +444,8 @@ function WishCard({
               type="button"
               onClick={() => void react(emoji)}
               className={cn(
-                "rounded-full border px-2.5 py-1 text-xs transition-colors",
-                reacted ? "border-primary bg-accent" : "border-border bg-card",
+                "wish-card-button border px-2.5 py-1 text-xs transition-colors",
+                reacted ? "border-primary bg-accent shadow-[0_8px_18px_-10px_rgba(146,116,180,0.32)]" : "border-border bg-card/80",
               )}
             >
               {emoji} {list.length > 0 && list.length}
@@ -455,7 +455,7 @@ function WishCard({
         <button
           type="button"
           onClick={() => setOpenComments((v) => !v)}
-          className="ml-auto flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
+          className="wish-card-button ml-auto flex items-center gap-1 border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground"
         >
           <MessageCircle className="size-3.5" /> {comments.length}
         </button>
@@ -465,7 +465,7 @@ function WishCard({
               type="button"
               onClick={onEdit}
               aria-label="Sửa điều ước"
-              className="rounded-full border border-border px-2 py-1 text-muted-foreground"
+              className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
             >
               <Pencil className="size-3.5" />
             </button>
@@ -473,7 +473,7 @@ function WishCard({
               type="button"
               onClick={() => void remove()}
               aria-label="Xoá điều ước"
-              className="rounded-full border border-border px-2 py-1 text-muted-foreground"
+              className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -497,7 +497,7 @@ function WishCard({
               className="rounded-2xl"
             />
             <Button
-              className="rounded-2xl"
+              className="wish-card-pill rounded-full"
               onClick={() => void sendComment()}
               disabled={!draft.trim()}
             >

@@ -27,19 +27,19 @@ const THEME_OPTIONS = [
     themeColor: "#f8f3ff",
   },
   {
-    id: "blush-beige",
+    id: "blush-warm",
     label: "Hồng Be Ấm Áp",
     swatch: "linear-gradient(135deg, #f7eadf 0%, #f5d6d8 46%, #fdf5ef 100%)",
     themeColor: "#fdf5ef",
   },
   {
-    id: "ice-cyan",
+    id: "ocean-soft",
     label: "Xanh Biển Dịu Êm",
     swatch: "linear-gradient(135deg, #edfafd 0%, #d9efff 46%, #f7eaf1 100%)",
     themeColor: "#edfafd",
   },
   {
-    id: "matcha-cream",
+    id: "matcha-pure",
     label: "Matcha Tinh Khôi",
     swatch: "linear-gradient(135deg, #edf6ee 0%, #dfeedc 46%, #f8f2e9 100%)",
     themeColor: "#f6faf7",

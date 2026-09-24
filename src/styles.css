@@ -111,7 +111,7 @@ html[data-theme="lilac-dream"] {
   --wish-note-glow: rgba(170, 195, 255, 0.46);
 }
 
-html[data-theme="blush-beige"] {
+html[data-theme="blush-warm"] {
   --background: oklch(0.987 0.018 35);
   --background-top: oklch(1 0.008 40);
   --background-bottom: oklch(0.98 0.014 28);
@@ -168,7 +168,7 @@ html[data-theme="blush-beige"] {
   --wish-note-glow: rgba(239, 205, 170, 0.48);
 }
 
-html[data-theme="ice-cyan"] {
+html[data-theme="ocean-soft"] {
   --background: oklch(0.986 0.02 210);
   --background-top: oklch(1 0.008 215);
   --background-bottom: oklch(0.978 0.014 205);
@@ -225,7 +225,7 @@ html[data-theme="ice-cyan"] {
   --wish-note-glow: rgba(146, 210, 255, 0.46);
 }
 
-html[data-theme="matcha-cream"] {
+html[data-theme="matcha-pure"] {
   --background: oklch(0.985 0.016 150);
   --background-top: oklch(1 0.008 150);
   --background-bottom: oklch(0.976 0.014 160);
@@ -361,14 +361,32 @@ html[data-theme="matcha-cream"] {
 }
 
 @utility paper {
-  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.7));
-  border: 1px solid rgba(255,255,255,0.62);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72));
+  border: 1px solid rgba(255,255,255,0.75);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.72) inset,
-    0 10px 18px -14px rgba(137, 120, 176, 0.18),
-    0 20px 30px -20px rgba(112, 96, 151, 0.26);
+    0 1px 0 rgba(255,255,255,0.75) inset,
+    0 10px 25px -5px rgba(15, 23, 42, 0.06),
+    0 8px 10px -6px rgba(15, 23, 42, 0.04);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+.wish-card-soft {
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 1.75rem;
+  box-shadow:
+    0 10px 25px -5px rgba(15, 23, 42, 0.06),
+    0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.wish-card-pill,
+.wish-card-button {
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: 0 6px 16px -8px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255,255,255,0.7);
 }
 
 @keyframes wish-float {
