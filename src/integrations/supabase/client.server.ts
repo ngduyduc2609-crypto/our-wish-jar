@@ -8,6 +8,14 @@ import type { Database } from './types';
 const FALLBACK_SUPABASE_URL = 'https://c--9eb8642f-c04f-4194-8142-ddbbf1b88786-prod.lovable.cloud';
 const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_H_RhQ_PIDP9b82ZNqqa69w_2juXGuTH';
 
+function sanitizeSupabaseKey(value?: string): string {
+  const normalized = (value ?? '').trim();
+  if (!normalized || !normalized.startsWith('sb_')) {
+    return FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+  }
+  return normalized;
+}
+
 function normalizeSupabaseUrl(value?: string): string {
   if (!value) return FALLBACK_SUPABASE_URL;
 
@@ -31,6 +39,8 @@ function isNewSupabaseApiKey(value: string): boolean {
 }
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  const safeSupabaseKey = sanitizeSupabaseKey(supabaseKey);
+
   return (input, init) => {
     const headers = new Headers(
       typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
@@ -41,11 +51,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
-    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
+    if (isNewSupabaseApiKey(safeSupabaseKey) && headers.get('Authorization') === `Bearer ${safeSupabaseKey}`) {
       headers.delete('Authorization');
     }
 
-    headers.set('apikey', supabaseKey);
+    headers.set('apikey', safeSupabaseKey);
     return fetch(input, { ...init, headers });
   };
 }
@@ -55,7 +65,7 @@ function createSupabaseAdminClient() {
   const rawKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
 
   const SUPABASE_URL = rawUrl ? normalizeSupabaseUrl(rawUrl) : null;
-  const SUPABASE_SERVICE_ROLE_KEY = rawKey || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+  const SUPABASE_SERVICE_ROLE_KEY = sanitizeSupabaseKey(rawKey || FALLBACK_SUPABASE_PUBLISHABLE_KEY);
 
   if (!SUPABASE_URL) {
     console.warn('[Supabase] Missing server env SUPABASE_URL; using safe fallback for SSR.');

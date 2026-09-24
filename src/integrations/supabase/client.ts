@@ -6,6 +6,14 @@ import { brokeredPreviewStorage } from './previewAuthStorage';
 const FALLBACK_SUPABASE_URL = 'https://c--9eb8642f-c04f-4194-8142-ddbbf1b88786-prod.lovable.cloud';
 const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_H_RhQ_PIDP9b82ZNqqa69w_2juXGuTH';
 
+function sanitizeSupabaseKey(value?: string): string {
+  const normalized = (value ?? '').trim();
+  if (!normalized || !normalized.startsWith('sb_')) {
+    return FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+  }
+  return normalized;
+}
+
 function normalizeSupabaseUrl(value?: string): string {
   if (!value) return FALLBACK_SUPABASE_URL;
 
@@ -30,7 +38,7 @@ function getSupabaseClientConfig() {
 
   return {
     url: normalizeSupabaseUrl(rawUrl),
-    key: (rawKey || FALLBACK_SUPABASE_PUBLISHABLE_KEY).trim(),
+    key: sanitizeSupabaseKey(rawKey || FALLBACK_SUPABASE_PUBLISHABLE_KEY),
   };
 }
 
@@ -39,6 +47,7 @@ function isNewSupabaseApiKey(value: string): boolean {
 }
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  const safeSupabaseKey = sanitizeSupabaseKey(supabaseKey);
   return (input, init) => {
     const headers = new Headers(
       typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
@@ -49,11 +58,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
-    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
+    if (isNewSupabaseApiKey(safeSupabaseKey) && headers.get('Authorization') === `Bearer ${safeSupabaseKey}`) {
       headers.delete('Authorization');
     }
 
-    headers.set('apikey', supabaseKey);
+    headers.set('apikey', safeSupabaseKey);
     return fetch(input, { ...init, headers });
   };
 }
