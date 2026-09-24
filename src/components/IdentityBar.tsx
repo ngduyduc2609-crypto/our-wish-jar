@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, LogOut, Music, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, LogOut, Mail, Music, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether, todayKey } from "@/lib/constants";
@@ -102,10 +102,36 @@ export function IdentityBar() {
 }
 
 export function IdentityGate() {
-  const { members, signedIn, signIn, signOut, claim } = useIdentity();
+  const { members, signedIn, signIn, signInWithPassword, signUpWithPassword, signOut, claim } = useIdentity();
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const free = members.filter((m) => !m.user_id);
+
+  const handleEmailAuth = async () => {
+    if (!email.trim() || !password.trim()) {
+      toast.error("Vui lòng nhập email và mật khẩu của bạn.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      if (mode === "login") {
+        await signInWithPassword(email, password);
+        toast.success("Đăng nhập thành công.");
+      } else {
+        await signUpWithPassword(email, password);
+        toast.success("Tạo tài khoản thành công. Chúng mình đang chuẩn bị mở chiếc lọ cho bạn.");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Đăng nhập không thành công, thử lại nhé.";
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="flex min-h-[100svh] items-center justify-center px-6">
@@ -118,6 +144,68 @@ export function IdentityGate() {
             <p className="mt-2 text-sm text-muted-foreground">
               Đây là nơi riêng của hai đứa mình, đăng nhập để mở lọ nhé.
             </p>
+
+            <div className="mt-6 space-y-3 rounded-2xl border border-border/70 bg-card/50 p-3 text-left">
+              <div className="space-y-1">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Email</label>
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
+                  <Mail className="size-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Mật khẩu</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                />
+              </div>
+
+              <div className="flex gap-2 rounded-xl bg-secondary/60 p-1">
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className={`flex-1 rounded-lg px-2 py-2 text-sm font-medium transition ${mode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("signup")}
+                  className={`flex-1 rounded-lg px-2 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                >
+                  Đăng ký
+                </button>
+              </div>
+
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void handleEmailAuth()}
+                className="w-full rounded-2xl bg-primary px-4 py-3 text-base font-medium text-primary-foreground shadow disabled:opacity-60"
+              >
+                {busy ? "Đang xử lý..." : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}
+              </button>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              <span>hoặc</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
             <button
               type="button"
               disabled={busy}
@@ -131,7 +219,7 @@ export function IdentityGate() {
                   setBusy(false);
                 }
               }}
-              className="mt-6 w-full rounded-2xl bg-primary px-4 py-3 text-base font-medium text-primary-foreground shadow disabled:opacity-60"
+              className="mt-4 w-full rounded-2xl border border-border bg-card px-4 py-3 text-base font-medium shadow-sm disabled:opacity-60"
             >
               Đăng nhập bằng Google
             </button>

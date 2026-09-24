@@ -1,10 +1,25 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { fetchMembers, logAction, type Member } from "./db";
+
+const PRIVATE_ACCESS_MESSAGE = "Đây là không gian riêng tư của Duy Đức và Thu Thuỷ, bạn không có quyền truy cập chiếc lọ này nhé!";
+const ALLOWED_EMAILS = new Set([
+  "ngduyduc2609@gmail.com",
+  "thuthuydanghocbai@gmail.com",
+]);
+
+function normalizeEmail(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function isAllowedEmail(email?: string | null) {
+  return ALLOWED_EMAILS.has(normalizeEmail(email));
+}
 
 type IdentityValue = {
   members: Member[];
@@ -13,6 +28,8 @@ type IdentityValue = {
   signedIn: boolean;
   ready: boolean;
   signIn: () => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
+  signUpWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   claim: (memberId: string) => Promise<void>;
   track: (action: string, subject?: string | null) => void;
@@ -26,22 +43,53 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, next) => {
+      const email = next?.user?.email ?? session?.user?.email;
+      if (next?.user?.email && !isAllowedEmail(next.user.email)) {
+        await supabase.auth.signOut();
+        toast.error(PRIVATE_ACCESS_MESSAGE);
+        setSession(null);
+        setAuthReady(true);
+        return;
+      }
+
       setSession(next);
       setAuthReady(true);
+
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         void queryClient.invalidateQueries();
       }
       if (event === "SIGNED_OUT") {
         queryClient.clear();
       }
+
+      if (event === "SIGNED_IN" && next?.user?.id && email) {
+        const target = members.find((member) => member.name.toLowerCase().includes(next.user.email === "ngduyduc2609@gmail.com" ? "duy" : "thu"));
+        if (target && target.user_id !== next.user.id) {
+          const { error } = await supabase
+            .from("members")
+            .update({ user_id: next.user.id })
+            .eq("id", target.id)
+            .is("user_id", null);
+          if (!error) {
+            await queryClient.invalidateQueries();
+          }
+        }
+      }
     });
+
     void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+      if (data.session?.user?.email && !isAllowedEmail(data.session.user.email)) {
+        void supabase.auth.signOut();
+        toast.error(PRIVATE_ACCESS_MESSAGE);
+        setSession(null);
+      } else {
+        setSession(data.session);
+      }
       setAuthReady(true);
     });
     return () => sub.subscription.unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, members]);
 
   const userId = session?.user?.id ?? null;
 
@@ -66,6 +114,63 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
             redirectTo: window.location.origin,
           },
         });
+      },
+      signInWithPassword: async (email: string, password: string) => {
+        const normalizedEmail = normalizeEmail(email);
+        if (!isAllowedEmail(normalizedEmail)) {
+          await supabase.auth.signOut();
+          throw new Error(PRIVATE_ACCESS_MESSAGE);
+        }
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
+        if (error) throw error;
+        if (data.user?.id) {
+          const target = members.find((member) =>
+            member.name.toLowerCase().includes(normalizedEmail === "ngduyduc2609@gmail.com" ? "duy" : "thu"),
+          );
+          if (target && target.user_id !== data.user.id) {
+            const { error: updateError } = await supabase
+              .from("members")
+              .update({ user_id: data.user.id })
+              .eq("id", target.id)
+              .is("user_id", null);
+            if (!updateError) {
+              await queryClient.invalidateQueries();
+            }
+          }
+        }
+      },
+      signUpWithPassword: async (email: string, password: string) => {
+        const normalizedEmail = normalizeEmail(email);
+        if (!isAllowedEmail(normalizedEmail)) {
+          await supabase.auth.signOut();
+          throw new Error(PRIVATE_ACCESS_MESSAGE);
+        }
+        const { data, error } = await supabase.auth.signUp({
+          email: normalizedEmail,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+        if (data.user?.id) {
+          const target = members.find((member) =>
+            member.name.toLowerCase().includes(normalizedEmail === "ngduyduc2609@gmail.com" ? "duy" : "thu"),
+          );
+          if (target && target.user_id !== data.user.id) {
+            const { error: updateError } = await supabase
+              .from("members")
+              .update({ user_id: data.user.id })
+              .eq("id", target.id)
+              .is("user_id", null);
+            if (!updateError) {
+              await queryClient.invalidateQueries();
+            }
+          }
+        }
       },
       signOut: async () => {
         await queryClient.cancelQueries();

@@ -67,7 +67,7 @@ function createSupabaseClient() {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
-      storage: brokeredPreviewStorage(),
+      storage: typeof window !== 'undefined' ? window.localStorage : brokeredPreviewStorage(),
       persistSession: true,
       autoRefreshToken: true,
     },
