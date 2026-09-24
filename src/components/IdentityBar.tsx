@@ -256,10 +256,10 @@ export function IdentityGate() {
               Đây là nơi riêng của hai đứa mình, đăng nhập để mở lọ nhé.
             </p>
 
-            <div className="mt-6 space-y-3 rounded-2xl border border-border/70 bg-card/50 p-3 text-left">
+            <div className="mt-6 space-y-3 rounded-[2rem] border border-border/70 bg-card/50 p-3 text-left">
               <div className="space-y-1">
                 <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Email</label>
-                <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 shadow-sm">
                   <Mail className="size-4 text-muted-foreground" />
                   <input
                     type="email"
@@ -279,23 +279,23 @@ export function IdentityGate() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                  className="w-full rounded-full border border-border bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
                 />
               </div>
 
-              <div className="flex gap-2 rounded-xl bg-secondary/60 p-1">
+              <div className="flex gap-2 rounded-full bg-secondary/60 p-1">
                 <button
                   type="button"
                   onClick={() => setMode("login")}
-                  className={`flex-1 rounded-lg px-2 py-2 text-sm font-medium transition ${mode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                  className={`flex-1 rounded-full px-2 py-2 text-sm font-medium transition ${mode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                 >
                   Đăng nhập
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("signup")}
-                  className={`flex-1 rounded-lg px-2 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                  className={`flex-1 rounded-full px-2 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                 >
                   Đăng ký
                 </button>
@@ -305,7 +305,7 @@ export function IdentityGate() {
                 type="button"
                 disabled={busy}
                 onClick={() => void handleEmailAuth()}
-                className="w-full rounded-2xl bg-primary px-4 py-3 text-base font-medium text-primary-foreground shadow disabled:opacity-60"
+                className="w-full rounded-full bg-primary px-4 py-3 text-base font-medium text-primary-foreground shadow disabled:opacity-60"
               >
                 {busy ? "Đang xử lý..." : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}
               </button>
@@ -321,7 +321,7 @@ export function IdentityGate() {
               type="button"
               disabled={true}
               title="Đăng nhập bằng Google đang tắt cho môi trường riêng tư này"
-              className="mt-4 w-full cursor-not-allowed rounded-2xl border border-border bg-card px-4 py-3 text-base font-medium text-muted-foreground shadow-sm opacity-60"
+              className="mt-4 w-full cursor-not-allowed rounded-full border border-border bg-card px-4 py-3 text-base font-medium text-muted-foreground shadow-sm opacity-60"
             >
               Đăng nhập bằng Google (tắt)
             </button>
@@ -345,7 +345,7 @@ export function IdentityGate() {
                       setBusy(false);
                     }
                   }}
-                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-left text-base font-medium transition-colors hover:bg-accent disabled:opacity-60"
+                  className="w-full rounded-full border border-border bg-card px-4 py-3 text-left text-base font-medium transition-colors hover:bg-accent disabled:opacity-60"
                 >
                   <span className="mr-2 text-xl">{member.emoji}</span>
                   {member.name}
@@ -382,7 +382,7 @@ export function IdentityGate() {
                 }
                 void signOut();
               }}
-              className="mt-6 w-full rounded-2xl border border-border px-4 py-3 text-base font-medium"
+              className="mt-6 w-full rounded-full border border-border px-4 py-3 text-base font-medium"
             >
               Đăng nhập tài khoản khác
             </button>

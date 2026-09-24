@@ -55,6 +55,7 @@
 
 :root,
 html[data-theme="lilac-dream"] {
+  --radius: 1.75rem;
   --background: oklch(0.992 0.012 290);
   --background-top: oklch(1 0.008 290);
   --background-bottom: oklch(0.985 0.012 282);
