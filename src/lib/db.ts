@@ -205,6 +205,13 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
     resolvedValues.user_id = null;
   }
 
+  if (table === "activities" || table === "memories" || table === "foods" || table === "wishes") {
+    const ownerId = normalizeMemberId(resolvedValues.user_id) ?? validMemberId ?? normalizeMemberId(resolvedValues.created_by) ?? normalizeMemberId(resolvedValues.added_by) ?? normalizeMemberId(resolvedValues.proposed_by);
+    if (ownerId) {
+      resolvedValues.user_id = ownerId;
+    }
+  }
+
   if (table === "wishes") {
     const safeCategory = String(resolvedValues.category ?? "experience").trim() || "experience";
     const safeDifficulty = String(resolvedValues.difficulty ?? "medium").trim() || "medium";

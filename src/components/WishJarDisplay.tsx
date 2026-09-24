@@ -84,7 +84,7 @@ const jarParticles = [
 ];
 
 export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
-  const visible = wishes;
+  const visible = wishes.filter((wish) => !wish.completed);
 
   return (
     <div className="wish-jar-scene" aria-label={`Lọ chứa ${wishes.length} điều ước đang chờ`}>

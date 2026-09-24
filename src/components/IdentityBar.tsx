@@ -21,28 +21,28 @@ import { StreakFlame } from "@/components/StreakFlame";
 
 const THEME_OPTIONS = [
   {
-    id: "blush-beige",
-    label: "Hồng Be Thơ Mộng",
-    swatch: "linear-gradient(135deg, #f8e7dc 0%, #f7d6df 46%, #f4e5ea 100%)",
-    themeColor: "#fbf1eb",
+    id: "lilac-dream",
+    label: "Tím Thơ Mộng",
+    swatch: "linear-gradient(135deg, #f5eefe 0%, #e6d9ff 46%, #f8e9ef 100%)",
+    themeColor: "#f8f3ff",
   },
   {
-    id: "smoky-lavender",
-    label: "Tím Khói Mộng Mơ",
-    swatch: "linear-gradient(135deg, #f3eefc 0%, #e8def9 48%, #f7f3ff 100%)",
-    themeColor: "#f9f5ff",
+    id: "blush-beige",
+    label: "Hồng Be Ấm Áp",
+    swatch: "linear-gradient(135deg, #f7eadf 0%, #f5d6d8 46%, #fdf5ef 100%)",
+    themeColor: "#fdf5ef",
   },
   {
     id: "ice-cyan",
-    label: "Xanh Biển Ánh Bạc",
-    swatch: "linear-gradient(135deg, #edfafe 0%, #dceeff 48%, #ebf3ff 100%)",
-    themeColor: "#edf9ff",
+    label: "Xanh Biển Dịu Êm",
+    swatch: "linear-gradient(135deg, #edfafd 0%, #d9efff 46%, #f7eaf1 100%)",
+    themeColor: "#edfafd",
   },
   {
-    id: "sage-cream",
-    label: "Matcha Sữa Ấm Áp",
-    swatch: "linear-gradient(135deg, #eef6ed 0%, #e0f1df 48%, #f6f1e8 100%)",
-    themeColor: "#f4f8f2",
+    id: "matcha-cream",
+    label: "Matcha Tinh Khôi",
+    swatch: "linear-gradient(135deg, #edf6ee 0%, #dfeedc 46%, #f8f2e9 100%)",
+    themeColor: "#f6faf7",
   },
 ] as const;
 
@@ -77,7 +77,7 @@ export function IdentityBar() {
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const [musicEnabled, setMusicEnabled] = useMusicEnabled();
   const [musicVolume, setMusicVolume] = useMusicVolume();
-  const [selectedTheme, setSelectedTheme] = useState<ThemeId>("blush-beige");
+  const [selectedTheme, setSelectedTheme] = useState<ThemeId>("lilac-dream");
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const streak = computeStreak(presence, members.length || 2);
   const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
@@ -87,7 +87,7 @@ export function IdentityBar() {
     if (typeof window === "undefined") return;
 
     const savedTheme = window.localStorage.getItem(getThemeStorageKey());
-    const nextTheme = isThemeId(savedTheme) ? savedTheme : "blush-beige";
+    const nextTheme = isThemeId(savedTheme) ? savedTheme : "lilac-dream";
     setSelectedTheme(nextTheme);
     applyTheme(nextTheme);
   }, [me?.id, me?.name]);
