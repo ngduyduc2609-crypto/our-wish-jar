@@ -98,6 +98,7 @@ type IdentityValue = {
   signedIn: boolean;
   ready: boolean;
   signIn: () => Promise<void>;
+  loginAs: (email: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
   signUpWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -124,21 +125,52 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<IdentityValue>(() => {
-    const sessionEmail = localSession?.email ?? null;
-    const me = userId
-      ? members.find((member) => member.id === userId) ??
-        (sessionEmail ? findMemberForEmail(members, sessionEmail) : null) ??
-        null
+    const sessionEmail = localSession?.email ?? (typeof window !== "undefined" ? window.localStorage.getItem("wishjar_user_email") : null);
+    const activeEmail = normalizeEmail(sessionEmail);
+    const localUser = activeEmail && isAllowedEmail(activeEmail)
+      ? {
+          id: activeEmail,
+          name: activeEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
+          emoji: activeEmail.toLowerCase().includes("duc") ? "🧑‍💻" : "💐",
+          color: activeEmail.toLowerCase().includes("duc") ? "#f59e0b" : "#f472b6",
+          user_id: activeEmail,
+        }
       : null;
+
+    const me = userId
+      ? members.find((member) => member.id === userId || member.user_id === userId || member.name.toLowerCase().includes(userId.includes("duc") ? "duy" : "thu")) ??
+        localUser ??
+        null
+      : localUser ?? null;
+
+    const setAuthenticatedSession = async (email: string) => {
+      const cleanEmail = email.trim().toLowerCase();
+      if (!ALLOWED_EMAILS.includes(cleanEmail)) {
+        throw new Error(PRIVATE_ACCESS_MESSAGE);
+      }
+
+      const nextSession: LocalAuthSession = {
+        userId: cleanEmail,
+        email: cleanEmail,
+        name: cleanEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
+      };
+
+      setLocalSession(nextSession);
+      persistAuthSession(nextSession);
+      await queryClient.invalidateQueries();
+    };
 
     return {
       members,
       me,
       userId,
-      signedIn: Boolean(userId),
+      signedIn: Boolean(userId || activeEmail),
       ready: authReady && isFetched,
       signIn: async () => {
         throw new Error("Vui lòng đăng nhập bằng email được cấp trong danh sách trắng.");
+      },
+      loginAs: async (email: string) => {
+        await setAuthenticatedSession(email);
       },
       signInWithPassword: async (email: string, password: string) => {
         const cleanEmail = email.trim().toLowerCase();
@@ -148,24 +180,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         if (!ALLOWED_EMAILS.includes(cleanEmail)) {
           throw new Error(PRIVATE_ACCESS_MESSAGE);
         }
-
-        const member = findMemberForEmail(members, cleanEmail) ?? {
-          id: cleanEmail,
-          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
-          emoji: cleanEmail.includes("duc") ? "🧑‍💻" : "💐",
-          color: cleanEmail.includes("duc") ? "#f59e0b" : "#f472b6",
-          user_id: null,
-        };
-
-        const nextSession: LocalAuthSession = {
-          userId: member.id,
-          email: cleanEmail,
-          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
-        };
-
-        setLocalSession(nextSession);
-        persistAuthSession(nextSession);
-        await queryClient.invalidateQueries();
+        await setAuthenticatedSession(cleanEmail);
       },
       signUpWithPassword: async (email: string, password: string) => {
         const cleanEmail = email.trim().toLowerCase();
@@ -175,24 +190,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         if (!ALLOWED_EMAILS.includes(cleanEmail)) {
           throw new Error(PRIVATE_ACCESS_MESSAGE);
         }
-
-        const member = findMemberForEmail(members, cleanEmail) ?? {
-          id: cleanEmail,
-          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
-          emoji: cleanEmail.includes("duc") ? "🧑‍💻" : "💐",
-          color: cleanEmail.includes("duc") ? "#f59e0b" : "#f472b6",
-          user_id: null,
-        };
-
-        const nextSession: LocalAuthSession = {
-          userId: member.id,
-          email: cleanEmail,
-          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
-        };
-
-        setLocalSession(nextSession);
-        persistAuthSession(nextSession);
-        await queryClient.invalidateQueries();
+        await setAuthenticatedSession(cleanEmail);
       },
       signOut: async () => {
         await queryClient.cancelQueries();

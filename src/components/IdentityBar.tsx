@@ -104,7 +104,7 @@ export function IdentityBar() {
 }
 
 export function IdentityGate() {
-  const { members, signedIn, signIn, signInWithPassword, signUpWithPassword, signOut, claim } = useIdentity();
+  const { members, signedIn, signIn, loginAs, signInWithPassword, signUpWithPassword, signOut, claim } = useIdentity();
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -129,9 +129,11 @@ export function IdentityGate() {
     try {
       if (mode === "login") {
         await signInWithPassword(cleanEmail, password);
+        await loginAs(cleanEmail);
         toast.success("Đăng nhập thành công.");
       } else {
         await signUpWithPassword(cleanEmail, password);
+        await loginAs(cleanEmail);
         toast.success("Tạo tài khoản thành công. Chúng mình đang chuẩn bị mở chiếc lọ cho bạn.");
       }
     } catch (error) {
