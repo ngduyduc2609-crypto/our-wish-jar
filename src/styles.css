@@ -178,83 +178,203 @@
 }
 
 @keyframes wish-float {
-  0%, 100% { transform: translate3d(-1px, 1px, 0) rotate(calc(var(--note-rotate) - 1deg)); }
-  40% { transform: translate3d(2px, -4px, 0) rotate(calc(var(--note-rotate) + 1.5deg)); }
+  0%, 100% { transform: translate3d(-2px, 1px, 0) rotate(calc(var(--note-rotate) - 1.5deg)); }
+  40% { transform: translate3d(2px, -5px, 0) rotate(calc(var(--note-rotate) + 1.8deg)); }
   72% { transform: translate3d(-1px, -2px, 0) rotate(var(--note-rotate)); }
 }
 
 @keyframes wish-note-glow {
   0%, 100% { box-shadow: 0 3px 8px var(--wish-note-shadow), 0 0 10px var(--wish-note-glow), 0 0 18px color-mix(in oklab, var(--wish-note-glow) 60%, transparent); }
-  50% { box-shadow: 0 6px 14px var(--wish-note-shadow), 0 0 18px var(--wish-note-glow), 0 0 28px color-mix(in oklab, var(--wish-note-glow) 90%, transparent); }
+  50% { box-shadow: 0 7px 15px var(--wish-note-shadow), 0 0 18px var(--wish-note-glow), 0 0 28px color-mix(in oklab, var(--wish-note-glow) 90%, transparent); }
 }
 
 @keyframes jar-glow {
-  0%, 100% { filter: drop-shadow(0 12px 12px var(--depth-shadow)) drop-shadow(0 0 8px var(--glass-glow)); }
-  50% { filter: drop-shadow(0 14px 14px var(--depth-shadow)) drop-shadow(0 0 18px var(--glass-glow)); }
+  0%, 100% { filter: drop-shadow(0 18px 18px rgba(146, 109, 58, 0.18)) drop-shadow(0 0 12px rgba(255, 220, 150, 0.32)); }
+  50% { filter: drop-shadow(0 22px 24px rgba(146, 109, 58, 0.22)) drop-shadow(0 0 20px rgba(255, 220, 150, 0.45)); }
 }
 
-.wish-jar-scene { position: relative; width: min(100%, 23rem); height: 20rem; margin-inline: auto; perspective: 900px; }
+@keyframes sparkle-drift {
+  0%, 100% { transform: translateY(0) scale(0.85); opacity: 0.3; }
+  50% { transform: translateY(-8px) scale(1.2); opacity: 1; }
+}
+
+.wish-jar-scene {
+  position: relative;
+  width: min(100%, 23rem);
+  height: 20rem;
+  margin-inline: auto;
+  perspective: 900px;
+}
+
+.wish-jar-neck {
+  position: absolute;
+  left: 50%;
+  top: 0.25rem;
+  z-index: 20;
+  width: 8rem;
+  height: 2.6rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-bottom: none;
+  border-radius: 1.1rem 1.1rem 0.75rem 0.75rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(247, 234, 198, 0.42));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 10px 18px rgba(110, 93, 67, 0.18);
+}
+
+.wish-jar-ribbon {
+  position: absolute;
+  inset: 0.4rem 1rem auto;
+  height: 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 180, 197, 0.9), rgba(255, 228, 168, 0.9), rgba(183, 226, 214, 0.9));
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 0 12px rgba(255, 206, 133, 0.45);
+}
+
 .wish-jar-shell {
   position: absolute;
-  inset: 2.35rem 1.15rem 0.55rem;
+  left: 7%;
+  right: 7%;
+  bottom: 0;
+  height: 83%;
   overflow: hidden;
-  border: 2px solid var(--glass-edge);
-  border-radius: 2.15rem 2.15rem 4.6rem 4.6rem / 1.75rem 1.75rem 3.1rem 3.1rem;
-  background: linear-gradient(105deg, var(--glass-sky), color-mix(in oklab, var(--color-card) 72%, transparent) 45%, var(--glass-sky));
-  box-shadow: 0 0 0 5px color-mix(in oklab, var(--glass-edge) 14%, transparent) inset, 0 -14px 28px -20px var(--glass-edge) inset;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-bottom: none;
+  border-radius: 41% 41% 23% 23% / 18% 18% 13% 13%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08) 16%, rgba(201, 233, 244, 0.12) 30%, rgba(255,255,255,0.1) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.26),
+    inset 0 18px 22px rgba(255,255,255,0.18),
+    inset 0 -18px 22px rgba(126, 165, 212, 0.08),
+    0 24px 40px -22px rgba(109, 75, 42, 0.42);
   animation: jar-glow 3.8s ease-in-out infinite;
-  transform: rotateX(1deg);
 }
+
+.wish-jar-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0.65rem 1rem 1.15rem;
+  border-radius: 40% 40% 22% 22% / 16% 16% 12% 12%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+}
+
 .wish-jar-safe-zone {
   position: absolute;
-  inset: 2.3rem 1.35rem 1.2rem;
+  inset: 1.5rem 1.1rem 1.75rem;
   overflow: hidden;
-  border-radius: 0.9rem 0.9rem 3rem 3rem;
-  padding: 0.6rem 0.7rem 0.9rem;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08));
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.09);
+  border-radius: 34% 34% 28% 28% / 18% 18% 17% 17%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(176, 211, 232, 0.06));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.09), inset 0 10px 12px rgba(255,255,255,0.06);
+  padding-bottom: 1.2rem;
 }
-.wish-jar-lid {
-  position: absolute; z-index: 20; left: 50%; top: 0.8rem; width: 10.5rem; height: 2.6rem; transform: translateX(-50%) rotateX(9deg);
-  border: 1px solid var(--glass-edge); border-radius: 0.8rem; background: linear-gradient(var(--glass-sky), var(--color-secondary));
-  box-shadow: 0 4px 0 var(--glass-edge), 0 10px 18px -10px var(--depth-shadow), 0 1px 0 var(--depth-highlight) inset;
+
+.wish-jar-glass-shine {
+  position: absolute;
+  left: 1.1rem;
+  top: 1.9rem;
+  bottom: 1.2rem;
+  width: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  opacity: 0.72;
+  pointer-events: none;
 }
-.wish-jar-lid span { position: absolute; inset: 0.45rem 0.7rem; border-radius: 0.45rem; border: 1px solid color-mix(in oklab, var(--glass-edge) 65%, transparent); }
-.wish-jar-glass-shine { position: absolute; z-index: 30; left: 1.15rem; top: 2.5rem; width: 0.7rem; height: 58%; border-radius: 999px; background: linear-gradient(transparent, var(--depth-highlight), transparent); opacity: 0.8; pointer-events: none; }
-.wish-jar-glass-rim { position: absolute; z-index: 30; inset: 0.45rem 1.2rem auto; height: 1.15rem; border-radius: 999px; border: 1px solid var(--glass-edge); box-shadow: 0 3px 6px var(--depth-shadow) inset; pointer-events: none; }
-.wish-jar-glass-base { position: absolute; z-index: 30; inset: auto 2.75rem 0.55rem; height: 1.05rem; border-radius: 50%; background: var(--glass-sky); filter: blur(3px); pointer-events: none; }
-.wish-jar-spark { position: absolute; z-index: 30; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; color: var(--color-primary); animation: idle-breathe 2.6s ease-in-out infinite; }
+
+.wish-jar-glass-highlight {
+  position: absolute;
+  right: 1.6rem;
+  top: 1.5rem;
+  width: 2.1rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,255,255,0.08) 56%, transparent 70%);
+  filter: blur(4px);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.wish-jar-waterline {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 3.6rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(190,220,245,0.2), rgba(255,255,255,0.06));
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.wish-jar-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wish-jar-particle {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 227, 170, 0.82), transparent 70%);
+  box-shadow: 0 0 10px rgba(255, 220, 150, 0.7);
+  animation: sparkle-drift 3.2s ease-in-out infinite;
+}
+
+.wish-jar-spark {
+  position: absolute;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: rgba(255, 196, 102, 0.9);
+  animation: idle-breathe 2.6s ease-in-out infinite;
+}
+
 .wish-jar-spark svg { width: 100%; height: 100%; }
-.wish-jar-spark-left { left: 0.25rem; top: 5.5rem; }
-.wish-jar-spark-right { right: 1.45rem; top: 3.8rem; animation-delay: -1.2s; }
+.wish-jar-spark-left { left: 0.65rem; top: 5.5rem; }
+.wish-jar-spark-right { right: 1.2rem; top: 4.5rem; animation-delay: -1.2s; }
+
+.wish-jar-base-glow {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0.55rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(135, 170, 210, 0.3), rgba(135, 170, 210, 0.04) 62%, transparent 100%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
 .wish-note {
   position: absolute;
   left: var(--note-x);
   top: var(--note-y);
   width: var(--note-width);
   height: var(--note-height);
-  padding: 0.3rem 0.35rem;
+  padding: 0.32rem 0.38rem 0.28rem;
   box-sizing: border-box;
-  filter: drop-shadow(0 6px 10px color-mix(in oklab, var(--wish-note-shadow) 60%, transparent));
-  animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.1s ease-in-out var(--note-delay) infinite;
+  filter: drop-shadow(0 10px 10px color-mix(in oklab, var(--wish-note-shadow) 65%, transparent));
+  animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.2s ease-in-out var(--note-delay) infinite;
   transform: translate(-50%, -50%) rotate(var(--note-rotate));
   transform-origin: center;
   will-change: transform, filter;
   backface-visibility: hidden;
-  box-shadow: 0 8px 12px -8px color-mix(in oklab, var(--wish-note-shadow) 70%, transparent);
 }
+
 .wish-note-paper {
   position: relative;
   overflow: hidden;
   border: 1px solid color-mix(in oklab, var(--wish-note-ink) 18%, transparent);
-  border-radius: 0.35rem 0.2rem 0.45rem 0.25rem;
+  border-radius: 0.55rem 0.68rem 0.62rem 0.52rem;
   color: var(--wish-note-ink);
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.42), transparent 42%),
-    linear-gradient(180deg, color-mix(in oklab, var(--wish-note-bg) 92%, white) 0%, var(--wish-note-bg) 100%);
-  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 0.8rem, color-mix(in oklab, var(--wish-note-ink) 10%, transparent) 0.85rem);
-  clip-path: polygon(1% 2%, 98% 0, 100% 94%, 96% 100%, 3% 97%, 0 8%);
+    linear-gradient(135deg, rgba(255,255,255,0.5), transparent 32%),
+    linear-gradient(to bottom, color-mix(in oklab, var(--wish-note-bg) 88%, white), var(--wish-note-bg));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -8px 10px rgba(0,0,0,0.02);
 }
+
 .wish-note-icon { display: block; font-size: 0.72rem; line-height: 1; }
 .wish-note-title {
   display: -webkit-box;
@@ -265,48 +385,91 @@
   font-family: var(--font-display);
   font-size: 0.5rem;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.12;
+  letter-spacing: 0.01em;
 }
-.wish-note-sage { --wish-note-bg: oklch(0.93 0.05 145); --wish-note-ink: oklch(0.4 0.075 150); --wish-note-glow: oklch(0.77 0.11 145 / 0.48); --wish-note-shadow: oklch(0.42 0.06 145 / 0.2); }
-.wish-jar-empty { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; color: var(--color-muted-foreground); font-size: 0.78rem; }
-.wish-jar-empty span { font-size: 2rem; }
-.wish-jar-more { position: absolute; z-index: 40; right: 1.7rem; bottom: 1.15rem; min-width: 2rem; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-card); padding: 0.2rem 0.45rem; color: var(--color-foreground); font-size: 0.65rem; font-weight: 700; box-shadow: 0 3px 0 var(--color-border); }
+
 .wish-note-paper::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(135deg, transparent 43%, color-mix(in oklab, var(--wish-note-ink) 8%, transparent) 49%, transparent 55%);
+  background: linear-gradient(135deg, transparent 42%, color-mix(in oklab, var(--wish-note-ink) 6%, transparent) 49%, transparent 55%);
 }
+
 .wish-note-rose {
-  --wish-note-bg: oklch(0.94 0.05 15);
-  --wish-note-ink: oklch(0.43 0.08 15);
-  --wish-note-glow: oklch(0.78 0.12 15 / 0.55);
-  --wish-note-shadow: oklch(0.5 0.07 15 / 0.2);
+  --wish-note-bg: oklch(0.96 0.055 20);
+  --wish-note-ink: oklch(0.42 0.08 20);
+  --wish-note-glow: oklch(0.79 0.12 18 / 0.6);
+  --wish-note-shadow: oklch(0.48 0.07 20 / 0.2);
 }
+
 .wish-note-honey {
-  --wish-note-bg: oklch(0.95 0.06 86);
-  --wish-note-ink: oklch(0.43 0.07 70);
-  --wish-note-glow: oklch(0.84 0.13 83 / 0.55);
-  --wish-note-shadow: oklch(0.5 0.07 70 / 0.2);
+  --wish-note-bg: oklch(0.96 0.07 86);
+  --wish-note-ink: oklch(0.42 0.07 72);
+  --wish-note-glow: oklch(0.84 0.13 82 / 0.6);
+  --wish-note-shadow: oklch(0.5 0.07 74 / 0.2);
 }
+
 .wish-note-sky {
-  --wish-note-bg: oklch(0.94 0.045 230);
-  --wish-note-ink: oklch(0.4 0.08 240);
-  --wish-note-glow: oklch(0.78 0.12 225 / 0.55);
-  --wish-note-shadow: oklch(0.45 0.08 235 / 0.2);
+  --wish-note-bg: oklch(0.95 0.04 230);
+  --wish-note-ink: oklch(0.4 0.08 235);
+  --wish-note-glow: oklch(0.8 0.11 226 / 0.58);
+  --wish-note-shadow: oklch(0.48 0.08 235 / 0.2);
+}
+
+.wish-note-sage {
+  --wish-note-bg: oklch(0.94 0.05 145);
+  --wish-note-ink: oklch(0.38 0.07 150);
+  --wish-note-glow: oklch(0.77 0.1 145 / 0.55);
+  --wish-note-shadow: oklch(0.42 0.06 148 / 0.2);
+}
+
+.wish-note-lavender {
+  --wish-note-bg: oklch(0.95 0.045 305);
+  --wish-note-ink: oklch(0.41 0.08 310);
+  --wish-note-glow: oklch(0.78 0.12 305 / 0.55);
+  --wish-note-shadow: oklch(0.46 0.06 310 / 0.2);
+}
+
+.wish-jar-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--color-muted-foreground);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.wish-jar-empty span { font-size: 2rem; }
+
+.wish-jar-more {
+  position: absolute;
+  z-index: 40;
+  right: 1.4rem;
+  bottom: 1.3rem;
+  min-width: 2.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0.22rem 0.5rem;
+  color: var(--color-foreground);
+  font-size: 0.66rem;
+  font-weight: 700;
+  box-shadow: 0 6px 12px rgba(117, 100, 83, 0.15);
 }
 
 @media (max-width: 420px) {
   .wish-jar-scene { width: min(100%, 20rem); height: 18.25rem; }
-  .wish-jar-shell { inset: 2.1rem 0.75rem 0.5rem; }
-  .wish-jar-safe-zone { inset: 2.1rem 1.05rem 1rem; padding: 0.5rem 0.55rem 0.8rem; }
-  .wish-jar-lid { width: 9.25rem; height: 2.3rem; }
+  .wish-jar-neck { width: 6.5rem; height: 2.2rem; }
+  .wish-jar-shell { left: 6%; right: 6%; }
+  .wish-jar-safe-zone { inset: 1.2rem 0.9rem 1.6rem; }
   .wish-note { min-width: 2.6rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wish-jar-shell, .wish-note, .wish-jar-spark { animation: none; }
+  .wish-jar-shell, .wish-note, .wish-jar-spark, .wish-jar-particle { animation: none; }
 }
 
 /* ---------- Hiệu ứng chạm 3D & nảy jelly ---------- */
