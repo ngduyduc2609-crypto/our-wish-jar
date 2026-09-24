@@ -8,10 +8,11 @@ import { lovable } from "@/integrations/lovable/index";
 import { fetchMembers, logAction, type Member } from "./db";
 
 const PRIVATE_ACCESS_MESSAGE = "Đây là không gian riêng tư của Duy Đức và Thu Thuỷ, bạn không có quyền truy cập chiếc lọ này nhé!";
-const ALLOWED_EMAILS = new Set([
+const ALLOWED_MEMBERS = [
   "ngduyduc2609@gmail.com",
   "thuthuydanghocbai@gmail.com",
-]);
+];
+const ALLOWED_EMAILS = new Set(ALLOWED_MEMBERS.map((email) => email.trim().toLowerCase()));
 
 function normalizeEmail(value?: string | null) {
   return (value ?? "").trim().toLowerCase();
@@ -46,6 +47,13 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const queryClient = useQueryClient();
+  const userId = session?.user?.id ?? null;
+
+  const { data: members = [], isFetched } = useQuery({
+    queryKey: ["members"],
+    queryFn: fetchMembers,
+    enabled: Boolean(userId),
+  });
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, next) => {
@@ -94,15 +102,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       setAuthReady(true);
     });
     return () => sub.subscription.unsubscribe();
-  }, [queryClient, members]);
-
-  const userId = session?.user?.id ?? null;
-
-  const { data: members = [], isFetched } = useQuery({
-    queryKey: ["members"],
-    queryFn: fetchMembers,
-    enabled: Boolean(userId),
-  });
+  }, [queryClient, members, session]);
 
   const value = useMemo<IdentityValue>(() => {
     const me = userId ? (members.find((m) => m.user_id === userId) ?? null) : null;
