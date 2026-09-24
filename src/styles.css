@@ -207,11 +207,12 @@
 }
 .wish-jar-safe-zone {
   position: absolute;
-  inset: 2.25rem 1.4rem 1.15rem;
+  inset: 2.3rem 1.35rem 1.2rem;
   overflow: hidden;
-  border-radius: 0.75rem 0.75rem 3rem 3rem;
-  padding: 0.35rem 0.15rem 0.25rem;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.1));
+  border-radius: 0.9rem 0.9rem 3rem 3rem;
+  padding: 0.6rem 0.7rem 0.9rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.09);
 }
 .wish-jar-lid {
   position: absolute; z-index: 20; left: 50%; top: 0.8rem; width: 10.5rem; height: 2.6rem; transform: translateX(-50%) rotateX(9deg);
@@ -227,10 +228,19 @@
 .wish-jar-spark-left { left: 0.25rem; top: 5.5rem; }
 .wish-jar-spark-right { right: 1.45rem; top: 3.8rem; animation-delay: -1.2s; }
 .wish-note {
-  position: absolute; left: var(--note-x); top: var(--note-y); width: var(--note-width); height: var(--note-height); padding: 0.3rem 0.35rem;
+  position: absolute;
+  left: var(--note-x);
+  top: var(--note-y);
+  width: var(--note-width);
+  height: var(--note-height);
+  padding: 0.3rem 0.35rem;
+  box-sizing: border-box;
   animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.1s ease-in-out var(--note-delay) infinite;
-  transform: translate(-50%, -50%) rotate(var(--note-rotate)); transform-origin: center; will-change: transform; backface-visibility: hidden;
-  box-shadow: 0 6px 10px -6px color-mix(in oklab, var(--wish-note-shadow) 65%, transparent);
+  transform: translate(-50%, -50%) rotate(var(--note-rotate));
+  transform-origin: center;
+  will-change: transform, filter;
+  backface-visibility: hidden;
+  box-shadow: 0 8px 12px -8px color-mix(in oklab, var(--wish-note-shadow) 70%, transparent);
 }
 .wish-note-paper {
   position: relative;
@@ -243,7 +253,17 @@
   clip-path: polygon(1% 2%, 98% 0, 100% 94%, 96% 100%, 3% 97%, 0 8%);
 }
 .wish-note-icon { display: block; font-size: 0.72rem; line-height: 1; }
-.wish-note-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin-top: 0.12rem; font-family: var(--font-display); font-size: 0.5rem; font-weight: 700; line-height: 1.15; }
+.wish-note-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin-top: 0.12rem;
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
 .wish-note-sage { --wish-note-bg: oklch(0.93 0.05 145); --wish-note-ink: oklch(0.4 0.075 150); --wish-note-glow: oklch(0.77 0.11 145 / 0.48); --wish-note-shadow: oklch(0.42 0.06 145 / 0.2); }
 .wish-jar-empty { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; color: var(--color-muted-foreground); font-size: 0.78rem; }
 .wish-jar-empty span { font-size: 2rem; }
@@ -272,6 +292,14 @@
   --wish-note-ink: oklch(0.4 0.08 240);
   --wish-note-glow: oklch(0.78 0.12 225 / 0.55);
   --wish-note-shadow: oklch(0.45 0.08 235 / 0.2);
+}
+
+@media (max-width: 420px) {
+  .wish-jar-scene { width: min(100%, 20rem); height: 18.25rem; }
+  .wish-jar-shell { inset: 2.1rem 0.75rem 0.5rem; }
+  .wish-jar-safe-zone { inset: 2.1rem 1.05rem 1rem; padding: 0.5rem 0.55rem 0.8rem; }
+  .wish-jar-lid { width: 9.25rem; height: 2.3rem; }
+  .wish-note { min-width: 2.6rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

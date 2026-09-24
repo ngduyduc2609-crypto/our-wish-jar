@@ -34,16 +34,16 @@ function getMemberNameFromEmail(email?: string | null) {
   return normalized === "ngduyduc2609@gmail.com" ? "Duy Đức" : "Thu Thuỷ";
 }
 
-function getMemberIdFromEmail(email?: string | null) {
-  const normalized = normalizeEmail(email);
-  if (!normalized) return "guest";
-  return normalized.includes("duc") ? "duy-duc" : normalized.includes("thu") || normalized.includes("thuy") ? "thu-thuy" : normalized;
-}
-
 function findMemberForEmail(members: Member[], email?: string | null) {
   const normalized = normalizeEmail(email);
-  const keyword = normalized === "ngduyduc2609@gmail.com" ? "duy" : "thu";
-  return members.find((member) => member.name.toLowerCase().includes(keyword)) ?? null;
+  if (!normalized) return null;
+
+  return members.find((member) => {
+    const name = member.name.toLowerCase();
+    if (normalized.includes("duc")) return name.includes("duy");
+    if (normalized.includes("thu") || normalized.includes("thuy")) return name.includes("thu") || name.includes("thuy");
+    return false;
+  }) ?? null;
 }
 
 function readStoredAuthSession(): LocalAuthSession | null {
@@ -71,7 +71,7 @@ function readStoredAuthSession(): LocalAuthSession | null {
     }
 
     return {
-      userId: getMemberIdFromEmail(email),
+      userId: raw.userId ?? normalizeEmail(email),
       email,
       name: raw.name || getMemberNameFromEmail(email),
     };
@@ -134,13 +134,13 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     const sessionEmail = localSession?.email ?? (typeof window !== "undefined" ? window.localStorage.getItem("wishjar_user_email") : null);
     const activeEmail = normalizeEmail(sessionEmail);
     const localUser = activeEmail && isAllowedEmail(activeEmail)
-      ? {
-          id: getMemberIdFromEmail(activeEmail),
+      ? ({
+          id: findMemberForEmail(members, activeEmail)?.id ?? userId ?? activeEmail,
           name: activeEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
           emoji: activeEmail.toLowerCase().includes("duc") ? "🧑‍💻" : "💐",
           color: activeEmail.toLowerCase().includes("duc") ? "#f59e0b" : "#f472b6",
-          user_id: getMemberIdFromEmail(activeEmail),
-        }
+          user_id: findMemberForEmail(members, activeEmail)?.id ?? userId ?? activeEmail,
+        } as Member)
       : null;
 
     const me = userId
@@ -155,8 +155,9 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         throw new Error(PRIVATE_ACCESS_MESSAGE);
       }
 
+      const memberId = findMemberForEmail(members, cleanEmail)?.id ?? userId ?? cleanEmail;
       const nextSession: LocalAuthSession = {
-        userId: getMemberIdFromEmail(cleanEmail),
+        userId: memberId,
         email: cleanEmail,
         name: cleanEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
       };

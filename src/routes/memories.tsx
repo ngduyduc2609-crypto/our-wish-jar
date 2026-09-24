@@ -216,6 +216,7 @@ function MemoryDialog({
           track("thêm kỷ niệm", values.title);
         }
       } catch (error) {
+        console.error("Insert memory error:", error);
         const reason = error instanceof Error ? error.message : "Không rõ nguyên nhân";
         toast.error(`Không thể lưu kỷ niệm: ${reason}`);
         throw error;

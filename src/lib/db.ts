@@ -129,11 +129,22 @@ function readCurrentUserIdentity() {
 
   if (!email) return null;
 
-  return {
-    email,
-    name,
-    memberId: email.includes("duc") ? "duy-duc" : "thu-thuy",
-  };
+  return { email, name };
+}
+
+export async function resolveMemberIdForEmail(email?: string | null) {
+  const normalized = (email ?? "").trim().toLowerCase();
+  if (!normalized) return null;
+
+  const members = await fetchMembers();
+  const directMatch = members.find((member) => {
+    const target = member.name.toLowerCase();
+    if (normalized.includes("duc")) return target.includes("duy");
+    if (normalized.includes("thu") || normalized.includes("thuy")) return target.includes("thu") || target.includes("thuy");
+    return false;
+  });
+
+  return directMatch?.id ?? null;
 }
 
 export const fetchComments = () =>
@@ -158,23 +169,69 @@ export const fetchPresence = () => rows<Presence>(db.from("daily_presence").sele
 export async function insertRow<T>(table: string, values: Record<string, unknown>) {
   const resolvedValues = { ...values };
   const identity = readCurrentUserIdentity();
+  const resolvedMemberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
 
-  if (!resolvedValues.user_id && identity) {
-    resolvedValues.user_id = identity.memberId;
+  if (!resolvedValues.user_id && resolvedMemberId) {
+    resolvedValues.user_id = resolvedMemberId;
   }
-  if (table === "wishes" && !resolvedValues.proposed_by && identity) {
-    resolvedValues.proposed_by = identity.memberId;
-  }
-  if (table === "memories" && !resolvedValues.created_by && identity) {
-    resolvedValues.created_by = identity.memberId;
-  }
-  if ((table === "foods" || table === "activities") && !resolvedValues.added_by && identity) {
-    resolvedValues.added_by = identity.memberId;
+  if (table === "wishes") {
+    const safeCategory = String(resolvedValues.category ?? "experience").trim() || "experience";
+    const safeDifficulty = String(resolvedValues.difficulty ?? "medium").trim() || "medium";
+    const safeTitle = String(resolvedValues.title ?? "").trim();
+    const safeNote = resolvedValues.note == null ? null : String(resolvedValues.note).trim() || null;
+
+    if (!safeTitle) {
+      throw new Error("Vui lòng nhập tiêu đề điều ước.");
+    }
+    if (!safeCategory) {
+      throw new Error("Vui lòng chọn loại điều ước hợp lệ.");
+    }
+    if (!safeDifficulty) {
+      throw new Error("Vui lòng chọn độ khó hợp lệ.");
+    }
+
+    resolvedValues.title = safeTitle;
+    resolvedValues.note = safeNote;
+    resolvedValues.category = safeCategory;
+    resolvedValues.difficulty = safeDifficulty;
+    resolvedValues.completed = Boolean(resolvedValues.completed ?? false);
+    resolvedValues.deadline = resolvedValues.deadline ?? null;
+
+    if (!resolvedValues.proposed_by && resolvedMemberId) {
+      resolvedValues.proposed_by = resolvedMemberId;
+    }
   }
 
-  const { data, error } = await db.from(table).insert(resolvedValues).select().single();
-  if (error) throw error;
-  return data as T;
+  if (table === "memories") {
+    const safeTitle = String(resolvedValues.title ?? "").trim();
+    if (!safeTitle) {
+      throw new Error("Vui lòng nhập tiêu đề kỷ niệm.");
+    }
+    resolvedValues.title = safeTitle;
+    if (!resolvedValues.created_by && resolvedMemberId) {
+      resolvedValues.created_by = resolvedMemberId;
+    }
+  }
+
+  if (table === "wishes" && !resolvedValues.proposed_by && !resolvedMemberId) {
+    throw new Error("Không xác định được thành viên hiện tại để lưu điều ước.");
+  }
+
+  try {
+    const { data, error } = await db.from(table).insert(resolvedValues).select().single();
+    if (error) {
+      if (table === "wishes") {
+        console.error("Insert wish error:", error);
+      }
+      throw error;
+    }
+    return data as T;
+  } catch (error) {
+    if (table === "wishes") {
+      console.error("Insert wish error:", error);
+    }
+    throw error;
+  }
 }
 
 export async function updateRow<T>(table: string, id: string, values: Record<string, unknown>) {

@@ -263,6 +263,7 @@ function WishDialog({
           track("thêm điều ước", values.title);
         }
       } catch (error) {
+        console.error("Insert wish error:", error);
         const reason = error instanceof Error ? error.message : "Không rõ nguyên nhân";
         toast.error(`Không thể lưu điều ước: ${reason}`);
         throw error;
