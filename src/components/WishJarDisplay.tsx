@@ -85,7 +85,7 @@ const jarParticles = [
 ];
 
 export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
-  const visible = wishes.slice(0, 48);
+  const visible = wishes;
 
   return (
     <div className="wish-jar-scene" aria-label={`Lọ chứa ${wishes.length} điều ước đang chờ`}>
@@ -147,10 +147,6 @@ export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
       <span className="wish-jar-spark wish-jar-spark-right" aria-hidden="true">
         <Sparkles />
       </span>
-
-      {wishes.length > visible.length ? (
-        <span className="wish-jar-more">+{wishes.length - visible.length}</span>
-      ) : null}
     </div>
   );
 }
