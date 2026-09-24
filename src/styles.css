@@ -54,13 +54,13 @@
 }
 
 :root,
-html[data-theme="lilac-blush"] {
+html[data-theme="blush-beige"] {
   --radius: 1.25rem;
-  --background: oklch(0.985 0.014 330);
-  --background-top: oklch(0.998 0.008 330);
-  --background-bottom: oklch(0.978 0.014 305);
-  --bg-accent-1: oklch(0.97 0.08 330 / 0.82);
-  --bg-accent-2: oklch(0.92 0.06 225 / 0.72);
+  --background: oklch(0.988 0.018 35);
+  --background-top: oklch(0.998 0.01 42);
+  --background-bottom: oklch(0.979 0.016 30);
+  --bg-accent-1: oklch(0.97 0.06 22 / 0.82);
+  --bg-accent-2: oklch(0.94 0.05 300 / 0.72);
   --foreground: oklch(0.33 0.04 290);
   --card: oklch(0.998 0.006 330);
   --card-foreground: oklch(0.33 0.04 290);
@@ -112,12 +112,12 @@ html[data-theme="lilac-blush"] {
   --wish-note-glow: rgba(149, 202, 255, 0.48);
 }
 
-html[data-theme="sky-blue"] {
-  --background: oklch(0.979 0.018 215);
-  --background-top: oklch(0.996 0.007 215);
-  --background-bottom: oklch(0.968 0.018 210);
-  --bg-accent-1: oklch(0.96 0.1 205 / 0.8);
-  --bg-accent-2: oklch(0.92 0.1 240 / 0.72);
+html[data-theme="smoky-lavender"] {
+  --background: oklch(0.986 0.02 290);
+  --background-top: oklch(0.998 0.01 295);
+  --background-bottom: oklch(0.97 0.018 282);
+  --bg-accent-1: oklch(0.95 0.06 292 / 0.8);
+  --bg-accent-2: oklch(0.9 0.05 250 / 0.74);
   --foreground: oklch(0.32 0.04 225);
   --card: oklch(0.998 0.007 214);
   --card-foreground: oklch(0.32 0.04 225);
@@ -156,12 +156,12 @@ html[data-theme="sky-blue"] {
   --wish-note-glow: rgba(116, 212, 255, 0.52);
 }
 
-html[data-theme="pearl"] {
-  --background: oklch(0.992 0.008 40);
-  --background-top: oklch(0.998 0.006 46);
-  --background-bottom: oklch(0.984 0.01 34);
-  --bg-accent-1: oklch(0.97 0.06 45 / 0.7);
-  --bg-accent-2: oklch(0.96 0.04 220 / 0.62);
+html[data-theme="ice-cyan"] {
+  --background: oklch(0.987 0.02 210);
+  --background-top: oklch(0.998 0.008 212);
+  --background-bottom: oklch(0.977 0.014 201);
+  --bg-accent-1: oklch(0.96 0.08 206 / 0.82);
+  --bg-accent-2: oklch(0.92 0.06 220 / 0.7);
   --foreground: oklch(0.34 0.03 35);
   --card: oklch(0.998 0.006 40);
   --card-foreground: oklch(0.34 0.03 35);
@@ -200,12 +200,12 @@ html[data-theme="pearl"] {
   --wish-note-glow: rgba(177, 207, 255, 0.46);
 }
 
-html[data-theme="sage"] {
-  --background: oklch(0.984 0.016 150);
-  --background-top: oklch(0.998 0.008 148);
-  --background-bottom: oklch(0.972 0.016 160);
-  --bg-accent-1: oklch(0.96 0.07 160 / 0.7);
-  --bg-accent-2: oklch(0.9 0.05 210 / 0.7);
+html[data-theme="sage-cream"] {
+  --background: oklch(0.985 0.016 150);
+  --background-top: oklch(0.998 0.008 145);
+  --background-bottom: oklch(0.974 0.016 160);
+  --bg-accent-1: oklch(0.96 0.06 165 / 0.72);
+  --bg-accent-2: oklch(0.92 0.05 95 / 0.7);
   --foreground: oklch(0.32 0.04 155);
   --card: oklch(0.998 0.006 150);
   --card-foreground: oklch(0.32 0.04 155);
@@ -517,9 +517,9 @@ html[data-theme="sage"] {
   top: var(--note-y);
   width: var(--note-width);
   height: var(--note-height);
-  padding: 0.32rem 0.38rem 0.28rem;
+  padding: 0.24rem 0.42rem 0.26rem;
   box-sizing: border-box;
-  filter: drop-shadow(0 10px 12px color-mix(in oklab, var(--wish-note-shadow) 68%, transparent));
+  filter: drop-shadow(0 12px 14px color-mix(in oklab, var(--wish-note-shadow) 72%, transparent));
   animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.2s ease-in-out var(--note-delay) infinite;
   transform: translate(-50%, -50%) rotate(var(--note-rotate));
   transform-origin: center;
@@ -543,13 +543,25 @@ html[data-theme="sage"] {
     0 0 18px color-mix(in oklab, var(--wish-note-glow) 80%, transparent);
 }
 
-.wish-note-icon { display: block; font-size: 0.72rem; line-height: 1; }
+.wish-note-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  line-height: 1;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
 .wish-note-title {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  margin-top: 0.12rem;
+  margin-top: 0.14rem;
   font-family: var(--font-display);
   font-size: 0.5rem;
   font-weight: 700;

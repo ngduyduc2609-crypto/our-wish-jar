@@ -33,35 +33,34 @@ function randomFrom(seed: number, salt: number) {
 function noteStyle(id: string, index: number, total: number): NoteStyle {
   const seed = hashSeed(id);
   const count = Math.max(1, total);
-  const width = 68 + randomFrom(seed, 1) * 24;
-  const height = 52 + randomFrom(seed, 2) * 16;
+  const width = 92 + randomFrom(seed, 1) * 28;
+  const height = 42 + randomFrom(seed, 2) * 12;
 
   let x: number;
   let y: number;
 
-  if (count > 18) {
-    const angle = (Math.PI * 2 * index) / count + randomFrom(seed, 6) * 1.4;
-    const radiusX = 14 + randomFrom(seed, 7) * 18;
-    const radiusY = 10 + randomFrom(seed, 8) * 12;
-    x = 50 + Math.cos(angle) * radiusX;
-    y = 64 + Math.sin(angle) * radiusY + (index % 2 === 0 ? 4 : -2);
-  } else {
-    const cols = count <= 3 ? 2 : count <= 6 ? 3 : count <= 12 ? 4 : 5;
-    const rows = Math.max(2, Math.ceil(count / cols));
+  if (count <= 3) {
+    const spread = count === 1 ? 0 : count === 2 ? 18 : 24;
+    x = 50 + (index - (count - 1) / 2) * spread;
+    y = 68 + (index % 2 === 0 ? -4 : 6);
+  } else if (count <= 6) {
+    const cols = 3;
+    const row = Math.floor(index / cols);
     const col = index % cols;
-    const row = Math.floor(index / cols) % rows;
-    const offsetX = (randomFrom(seed, 3) - 0.5) * 12;
-    const offsetY = (randomFrom(seed, 4) - 0.5) * 10;
-    const colGap = count <= 3 ? 22 : count <= 6 ? 18 : 16;
-    const rowGap = count <= 3 ? 18 : 14;
-
-    x = 20 + col * colGap + offsetX + (count <= 3 ? 12 : 0);
-    y = 60 + row * rowGap + offsetY + (index % 2 === 0 ? 4 : -3);
+    const rowOffset = row === 0 ? 0 : row === 1 ? 10 : 18;
+    const xBase = 20 + col * 28 + (randomFrom(seed, 3) - 0.5) * 10;
+    x = xBase;
+    y = 62 + rowOffset + (index % 2 === 0 ? 2 : -2);
+  } else {
+    const spread = 16 + randomFrom(seed, 4) * 8;
+    const arc = (Math.PI * 2 * index) / count;
+    x = 50 + Math.cos(arc) * spread;
+    y = 66 + Math.sin(arc) * 12 + (index % 2 === 0 ? 3 : -3);
   }
 
   const safeX = Math.min(82, Math.max(18, x));
-  const safeY = Math.min(84, Math.max(56, y));
-  const rotate = -18 + randomFrom(seed, 5) * 36;
+  const safeY = Math.min(82, Math.max(58, y));
+  const rotate = -8 + randomFrom(seed, 5) * 16;
 
   return {
     "--note-x": `${safeX}%`,
