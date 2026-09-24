@@ -210,20 +210,11 @@ export function IdentityGate() {
 
             <button
               type="button"
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  await signIn();
-                } catch {
-                  toast.error("Chưa đăng nhập được, thử lại nhé");
-                } finally {
-                  setBusy(false);
-                }
-              }}
-              className="mt-4 w-full rounded-2xl border border-border bg-card px-4 py-3 text-base font-medium shadow-sm disabled:opacity-60"
+              disabled={true}
+              title="Đăng nhập bằng Google đang tắt cho môi trường riêng tư này"
+              className="mt-4 w-full cursor-not-allowed rounded-2xl border border-border bg-card px-4 py-3 text-base font-medium text-muted-foreground shadow-sm opacity-60"
             >
-              Đăng nhập bằng Google
+              Đăng nhập bằng Google (tắt)
             </button>
           </>
         ) : free.length > 0 ? (

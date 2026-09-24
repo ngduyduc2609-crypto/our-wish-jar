@@ -1,18 +1,23 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { fetchMembers, logAction, type Member } from "./db";
 
+const LOCAL_AUTH_SESSION_KEY = "wish-jar-private-auth-session";
 const PRIVATE_ACCESS_MESSAGE = "Đây là không gian riêng tư của Duy Đức và Thu Thuỷ, bạn không có quyền truy cập chiếc lọ này nhé!";
 const ALLOWED_MEMBERS = [
   "ngduyduc2609@gmail.com",
   "thuthuydanghocbai@gmail.com",
 ];
 const ALLOWED_EMAILS = new Set(ALLOWED_MEMBERS.map((email) => email.trim().toLowerCase()));
+
+type LocalAuthSession = {
+  userId: string;
+  email: string;
+  name: string;
+};
 
 function normalizeEmail(value?: string | null) {
   return (value ?? "").trim().toLowerCase();
@@ -22,9 +27,56 @@ function isAllowedEmail(email?: string | null) {
   return ALLOWED_EMAILS.has(normalizeEmail(email));
 }
 
-function getAppRedirectUrl() {
-  if (typeof window === "undefined") return "/";
-  return window.location.origin;
+function getMemberNameFromEmail(email?: string | null) {
+  const normalized = normalizeEmail(email);
+  return normalized === "ngduyduc2609@gmail.com" ? "Duy Đức" : "Thu Thuỷ";
+}
+
+function findMemberForEmail(members: Member[], email?: string | null) {
+  const normalized = normalizeEmail(email);
+  const keyword = normalized === "ngduyduc2609@gmail.com" ? "duy" : "thu";
+  return members.find((member) => member.name.toLowerCase().includes(keyword)) ?? null;
+}
+
+function readStoredAuthSession(): LocalAuthSession | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(LOCAL_AUTH_SESSION_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<LocalAuthSession>;
+    if (!parsed.userId || !parsed.email) {
+      window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+      return null;
+    }
+
+    const email = normalizeEmail(parsed.email);
+    if (!isAllowedEmail(email)) {
+      window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+      return null;
+    }
+
+    return {
+      userId: String(parsed.userId),
+      email,
+      name: parsed.name || getMemberNameFromEmail(email),
+    };
+  } catch {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+    }
+    return null;
+  }
+}
+
+function persistAuthSession(session: LocalAuthSession | null) {
+  if (typeof window === "undefined") return;
+  if (!session) {
+    window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+    return;
+  }
+  window.localStorage.setItem(LOCAL_AUTH_SESSION_KEY, JSON.stringify(session));
 }
 
 type IdentityValue = {
@@ -44,143 +96,97 @@ type IdentityValue = {
 const IdentityContext = createContext<IdentityValue | null>(null);
 
 export function IdentityProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [localSession, setLocalSession] = useState<LocalAuthSession | null>(() => readStoredAuthSession());
   const queryClient = useQueryClient();
-  const userId = session?.user?.id ?? null;
+  const userId = localSession?.userId ?? null;
 
   const { data: members = [], isFetched } = useQuery({
     queryKey: ["members"],
     queryFn: fetchMembers,
-    enabled: Boolean(userId),
+    enabled: true,
   });
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, next) => {
-      const email = next?.user?.email ?? session?.user?.email;
-      if (next?.user?.email && !isAllowedEmail(next.user.email)) {
-        await supabase.auth.signOut();
-        toast.error(PRIVATE_ACCESS_MESSAGE);
-        setSession(null);
-        setAuthReady(true);
-        return;
-      }
-
-      setSession(next);
-      setAuthReady(true);
-
-      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        void queryClient.invalidateQueries();
-      }
-      if (event === "SIGNED_OUT") {
-        queryClient.clear();
-      }
-
-      if (event === "SIGNED_IN" && next?.user?.id && email) {
-        const target = members.find((member) => member.name.toLowerCase().includes(next.user.email === "ngduyduc2609@gmail.com" ? "duy" : "thu"));
-        if (target && target.user_id !== next.user.id) {
-          const { error } = await supabase
-            .from("members")
-            .update({ user_id: next.user.id })
-            .eq("id", target.id)
-            .is("user_id", null);
-          if (!error) {
-            await queryClient.invalidateQueries();
-          }
-        }
-      }
-    });
-
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user?.email && !isAllowedEmail(data.session.user.email)) {
-        void supabase.auth.signOut();
-        toast.error(PRIVATE_ACCESS_MESSAGE);
-        setSession(null);
-      } else {
-        setSession(data.session);
-      }
-      setAuthReady(true);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [queryClient, members, session]);
+    setAuthReady(true);
+  }, []);
 
   const value = useMemo<IdentityValue>(() => {
-    const me = userId ? (members.find((m) => m.user_id === userId) ?? null) : null;
+    const sessionEmail = localSession?.email ?? null;
+    const me = userId
+      ? members.find((member) => member.id === userId) ??
+        (sessionEmail ? findMemberForEmail(members, sessionEmail) : null) ??
+        null
+      : null;
+
     return {
       members,
       me,
       userId,
       signedIn: Boolean(userId),
-      ready: authReady && (!userId || isFetched),
+      ready: authReady && isFetched,
       signIn: async () => {
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: getAppRedirectUrl(),
-          },
-        });
+        throw new Error("Vui lòng đăng nhập bằng email được cấp trong danh sách trắng.");
       },
       signInWithPassword: async (email: string, password: string) => {
         const normalizedEmail = normalizeEmail(email);
+        if (!password.trim()) {
+          throw new Error("Vui lòng nhập mật khẩu.");
+        }
         if (!isAllowedEmail(normalizedEmail)) {
-          await supabase.auth.signOut();
           throw new Error(PRIVATE_ACCESS_MESSAGE);
         }
-        const { data, error } = await supabase.auth.signInWithPassword({
+
+        const member = findMemberForEmail(members, normalizedEmail) ?? {
+          id: normalizedEmail,
+          name: getMemberNameFromEmail(normalizedEmail),
+          emoji: normalizedEmail === "ngduyduc2609@gmail.com" ? "🧑‍💻" : "💐",
+          color: normalizedEmail === "ngduyduc2609@gmail.com" ? "#f59e0b" : "#f472b6",
+          user_id: null,
+        };
+
+        const nextSession: LocalAuthSession = {
+          userId: member.id,
           email: normalizedEmail,
-          password,
-        });
-        if (error) throw error;
-        if (data.user?.id) {
-          const target = members.find((member) =>
-            member.name.toLowerCase().includes(normalizedEmail === "ngduyduc2609@gmail.com" ? "duy" : "thu"),
-          );
-          if (target && target.user_id !== data.user.id) {
-            const { error: updateError } = await supabase
-              .from("members")
-              .update({ user_id: data.user.id })
-              .eq("id", target.id)
-              .is("user_id", null);
-            if (!updateError) {
-              await queryClient.invalidateQueries();
-            }
-          }
-        }
+          name: member.name,
+        };
+
+        setLocalSession(nextSession);
+        persistAuthSession(nextSession);
+        await queryClient.invalidateQueries();
       },
       signUpWithPassword: async (email: string, password: string) => {
         const normalizedEmail = normalizeEmail(email);
+        if (!password.trim()) {
+          throw new Error("Vui lòng nhập mật khẩu.");
+        }
         if (!isAllowedEmail(normalizedEmail)) {
-          await supabase.auth.signOut();
           throw new Error(PRIVATE_ACCESS_MESSAGE);
         }
-        const { data, error } = await supabase.auth.signUp({
+
+        const member = findMemberForEmail(members, normalizedEmail) ?? {
+          id: normalizedEmail,
+          name: getMemberNameFromEmail(normalizedEmail),
+          emoji: normalizedEmail === "ngduyduc2609@gmail.com" ? "🧑‍💻" : "💐",
+          color: normalizedEmail === "ngduyduc2609@gmail.com" ? "#f59e0b" : "#f472b6",
+          user_id: null,
+        };
+
+        const nextSession: LocalAuthSession = {
+          userId: member.id,
           email: normalizedEmail,
-          password,
-          options: {
-            emailRedirectTo: getAppRedirectUrl(),
-          },
-        });
-        if (error) throw error;
-        if (data.user?.id) {
-          const target = members.find((member) =>
-            member.name.toLowerCase().includes(normalizedEmail === "ngduyduc2609@gmail.com" ? "duy" : "thu"),
-          );
-          if (target && target.user_id !== data.user.id) {
-            const { error: updateError } = await supabase
-              .from("members")
-              .update({ user_id: data.user.id })
-              .eq("id", target.id)
-              .is("user_id", null);
-            if (!updateError) {
-              await queryClient.invalidateQueries();
-            }
-          }
-        }
+          name: member.name,
+        };
+
+        setLocalSession(nextSession);
+        persistAuthSession(nextSession);
+        await queryClient.invalidateQueries();
       },
       signOut: async () => {
         await queryClient.cancelQueries();
         queryClient.clear();
-        await supabase.auth.signOut();
+        setLocalSession(null);
+        persistAuthSession(null);
       },
       claim: async (memberId: string) => {
         if (!userId) return;
@@ -197,7 +203,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         void logAction(me.id, action, subject ?? null);
       },
     };
-  }, [members, userId, authReady, isFetched, queryClient]);
+  }, [authReady, isFetched, localSession, members, queryClient, userId]);
 
   return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;
 }
