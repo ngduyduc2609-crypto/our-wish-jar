@@ -34,6 +34,12 @@ function getMemberNameFromEmail(email?: string | null) {
   return normalized === "ngduyduc2609@gmail.com" ? "Duy Đức" : "Thu Thuỷ";
 }
 
+function getMemberIdFromEmail(email?: string | null) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return "guest";
+  return normalized.includes("duc") ? "duy-duc" : normalized.includes("thu") || normalized.includes("thuy") ? "thu-thuy" : normalized;
+}
+
 function findMemberForEmail(members: Member[], email?: string | null) {
   const normalized = normalizeEmail(email);
   const keyword = normalized === "ngduyduc2609@gmail.com" ? "duy" : "thu";
@@ -65,7 +71,7 @@ function readStoredAuthSession(): LocalAuthSession | null {
     }
 
     return {
-      userId: email,
+      userId: getMemberIdFromEmail(email),
       email,
       name: raw.name || getMemberNameFromEmail(email),
     };
@@ -129,11 +135,11 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     const activeEmail = normalizeEmail(sessionEmail);
     const localUser = activeEmail && isAllowedEmail(activeEmail)
       ? {
-          id: activeEmail,
+          id: getMemberIdFromEmail(activeEmail),
           name: activeEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
           emoji: activeEmail.toLowerCase().includes("duc") ? "🧑‍💻" : "💐",
           color: activeEmail.toLowerCase().includes("duc") ? "#f59e0b" : "#f472b6",
-          user_id: activeEmail,
+          user_id: getMemberIdFromEmail(activeEmail),
         }
       : null;
 
@@ -150,7 +156,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       }
 
       const nextSession: LocalAuthSession = {
-        userId: cleanEmail,
+        userId: getMemberIdFromEmail(cleanEmail),
         email: cleanEmail,
         name: cleanEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
       };

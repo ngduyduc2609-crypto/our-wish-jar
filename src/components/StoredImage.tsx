@@ -29,6 +29,7 @@ export function StoredImage({
 
   if (!path) return null;
 
+  const isDataUrl = path.startsWith("data:");
   const showPlaceholder = !loaded && !failed;
 
   return (
@@ -44,9 +45,9 @@ export function StoredImage({
         <span className={cn("absolute inset-0 animate-pulse bg-gradient-to-br from-rose-100/70 via-amber-50/60 to-sky-100/70", !showPlaceholder && "opacity-0")} />
       </span>
 
-      {data && !failed ? (
+      {(isDataUrl || (data && !failed)) ? (
         <img
-          src={data}
+          src={isDataUrl ? path : data}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
           decoding="async"

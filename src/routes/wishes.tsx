@@ -246,20 +246,26 @@ function WishDialog({
 
   const save = useMutation({
     mutationFn: async () => {
-      const values = {
-        title: title.trim(),
-        note: note.trim() || null,
-        category,
-        difficulty,
-        deadline: deadline || null,
-        images,
-      };
-      if (wish) {
-        await updateRow("wishes", wish.id, values);
-        track("sửa điều ước", values.title);
-      } else {
-        await insertRow("wishes", { ...values, proposed_by: me?.id ?? null });
-        track("thêm điều ước", values.title);
+      try {
+        const values = {
+          title: title.trim(),
+          note: note.trim() || null,
+          category,
+          difficulty,
+          deadline: deadline || null,
+          images,
+        };
+        if (wish) {
+          await updateRow("wishes", wish.id, values);
+          track("sửa điều ước", values.title);
+        } else {
+          await insertRow("wishes", { ...values, proposed_by: me?.id ?? null });
+          track("thêm điều ước", values.title);
+        }
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "Không rõ nguyên nhân";
+        toast.error(`Không thể lưu điều ước: ${reason}`);
+        throw error;
       }
     },
     onSuccess: () => {

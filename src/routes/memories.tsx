@@ -194,25 +194,31 @@ function MemoryDialog({
 
   const save = useMutation({
     mutationFn: async () => {
-      const values = {
-        title: title.trim(),
-        note: note.trim() || null,
-        happened_on: date,
-        rating,
-        images,
-        image_url: images[0]?.path ?? null,
-        image_pos: images[0]?.position ?? "50% 50%",
-      };
-      if (memory) {
-        await updateRow("memories", memory.id, values);
-        track("sửa kỷ niệm", values.title);
-      } else {
-        await insertRow("memories", {
-          ...values,
-          source_type: "manual",
-          created_by: me?.id ?? null,
-        });
-        track("thêm kỷ niệm", values.title);
+      try {
+        const values = {
+          title: title.trim(),
+          note: note.trim() || null,
+          happened_on: date,
+          rating,
+          images,
+          image_url: images[0]?.path ?? null,
+          image_pos: images[0]?.position ?? "50% 50%",
+        };
+        if (memory) {
+          await updateRow("memories", memory.id, values);
+          track("sửa kỷ niệm", values.title);
+        } else {
+          await insertRow("memories", {
+            ...values,
+            source_type: "manual",
+            created_by: me?.id ?? null,
+          });
+          track("thêm kỷ niệm", values.title);
+        }
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "Không rõ nguyên nhân";
+        toast.error(`Không thể lưu kỷ niệm: ${reason}`);
+        throw error;
       }
     },
     onSuccess: () => {

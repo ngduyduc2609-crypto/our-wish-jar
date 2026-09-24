@@ -120,6 +120,22 @@ export const fetchWishes = () =>
 
 export const fetchReactions = () => rows<WishReaction>(db.from("wish_reactions").select("*"));
 
+function readCurrentUserIdentity() {
+  if (typeof window === "undefined") return null;
+
+  const email = (window.localStorage.getItem("wishjar_user_email") ?? "").trim().toLowerCase();
+  const name = window.localStorage.getItem("wishjar_user_name")?.trim() ||
+    (email.includes("duc") ? "Duy Đức" : email.includes("thuy") || email.includes("thu") ? "Thu Thủy" : "Chúng mình");
+
+  if (!email) return null;
+
+  return {
+    email,
+    name,
+    memberId: email.includes("duc") ? "duy-duc" : "thu-thuy",
+  };
+}
+
 export const fetchComments = () =>
   rows<WishComment>(db.from("wish_comments").select("*").order("created_at"));
 
@@ -140,7 +156,23 @@ export const fetchLog = () =>
 export const fetchPresence = () => rows<Presence>(db.from("daily_presence").select("*"));
 
 export async function insertRow<T>(table: string, values: Record<string, unknown>) {
-  const { data, error } = await db.from(table).insert(values).select().single();
+  const resolvedValues = { ...values };
+  const identity = readCurrentUserIdentity();
+
+  if (!resolvedValues.user_id && identity) {
+    resolvedValues.user_id = identity.memberId;
+  }
+  if (table === "wishes" && !resolvedValues.proposed_by && identity) {
+    resolvedValues.proposed_by = identity.memberId;
+  }
+  if (table === "memories" && !resolvedValues.created_by && identity) {
+    resolvedValues.created_by = identity.memberId;
+  }
+  if ((table === "foods" || table === "activities") && !resolvedValues.added_by && identity) {
+    resolvedValues.added_by = identity.memberId;
+  }
+
+  const { data, error } = await db.from(table).insert(resolvedValues).select().single();
   if (error) throw error;
   return data as T;
 }
@@ -186,13 +218,26 @@ export async function uploadImage(file: File) {
   const prepared = await prepareImage(file);
   const ext = prepared.type === "image/webp" ? "webp" : prepared.type === "image/png" ? "png" : "jpg";
   const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("media").upload(path, prepared, {
-    upsert: false,
-    contentType: prepared.type,
-    cacheControl: "31536000",
-  });
-  if (error) throw error;
-  return path;
+
+  try {
+    const { error } = await supabase.storage.from("media").upload(path, prepared, {
+      upsert: false,
+      contentType: prepared.type,
+      cacheControl: "31536000",
+    });
+    if (error) throw error;
+    return path;
+  } catch (error) {
+    console.warn("[uploadImage] Storage upload failed, falling back to data URL preview.", error);
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+      reader.onerror = () => reject(new Error("Không chuyển đổi được ảnh sang preview"));
+      reader.readAsDataURL(prepared);
+    });
+    if (!dataUrl) throw new Error("Không thể tạo preview ảnh từ file này.");
+    return dataUrl;
+  }
 }
 
 async function prepareImage(file: File) {
@@ -223,6 +268,7 @@ async function prepareImage(file: File) {
 }
 
 export async function signedUrl(path: string) {
+  if (!path || path.startsWith("data:")) return path;
   const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60 * 24);
   if (error) throw error;
   return data.signedUrl;
