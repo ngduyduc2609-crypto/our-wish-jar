@@ -16,6 +16,7 @@ import { IdentityBar, IdentityGate } from "../components/IdentityBar";
 import { BottomNav } from "../components/BottomNav";
 import { Toaster } from "../components/ui/sonner";
 import { SoundController } from "@/components/SoundController";
+import { ClientOnly } from "@/components/ClientOnly";
 
 function NotFoundComponent() {
   return (
@@ -171,11 +172,17 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <IdentityProvider>
-        <SoundController />
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <AppLayout />
+        <ClientOnly>
+          <>
+            <SoundController />
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <AppLayout />
+          </>
+        </ClientOnly>
+        <ClientOnly>
+          <Toaster position="top-center" />
+        </ClientOnly>
       </IdentityProvider>
-      <Toaster position="top-center" />
     </QueryClientProvider>
   );
 }

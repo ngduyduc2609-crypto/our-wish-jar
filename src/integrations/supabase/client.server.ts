@@ -51,8 +51,16 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = normalizeSupabaseUrl(process.env['SUPABASE_URL']);
-  const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'] || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+  const rawUrl = process.env['SUPABASE_URL'];
+  const rawKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
+
+  const SUPABASE_URL = rawUrl ? normalizeSupabaseUrl(rawUrl) : null;
+  const SUPABASE_SERVICE_ROLE_KEY = rawKey || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!SUPABASE_URL) {
+    console.warn('[Supabase] Missing server env SUPABASE_URL; using safe fallback for SSR.');
+    return null as unknown as ReturnType<typeof createSupabaseAdminClient>;
+  }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     global: {
@@ -75,6 +83,9 @@ let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
 export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
   get(_, prop, receiver) {
     if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
+    if (!_supabaseAdmin) {
+      return undefined;
+    }
     return Reflect.get(_supabaseAdmin, prop, receiver);
   },
 });
