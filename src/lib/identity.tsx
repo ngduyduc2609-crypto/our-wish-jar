@@ -60,8 +60,11 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       signedIn: Boolean(userId),
       ready: authReady && (!userId || isFetched),
       signIn: async () => {
-        await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
+        await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin,
+          },
         });
       },
       signOut: async () => {
