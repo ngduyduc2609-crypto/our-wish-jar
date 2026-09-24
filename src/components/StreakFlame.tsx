@@ -20,17 +20,25 @@ export function StreakFlame({
   lit,
   compact = false,
   className,
+  restored = false,
 }: {
   days: number;
   lit: boolean;
   compact?: boolean;
   className?: string;
+  restored?: boolean;
 }) {
   const level = streakLevel(days);
 
   return (
     <span
-      className={cn("streak-flame-wrap", compact ? "streak-flame-compact" : "streak-flame-large", className)}
+      className={cn(
+        "streak-flame-wrap",
+        compact ? "streak-flame-compact" : "streak-flame-large",
+        lit && "streak-flame-live",
+        restored && "streak-flame-restored",
+        className,
+      )}
       title={lit ? `Chuỗi ${days} ngày · ${level.name}` : "Hôm nay đang chờ cả hai cùng ghé"}
       aria-label={lit ? `Chuỗi ${days} ngày đang sáng, cấp ${level.name}` : `Chuỗi ${days} ngày, hôm nay chưa thắp sáng`}
     >
@@ -39,6 +47,8 @@ export function StreakFlame({
         <Flame className="streak-flame-front" />
         {lit && days >= 30 ? <span className="streak-flame-spark streak-flame-spark-one" /> : null}
         {lit && days >= 100 ? <span className="streak-flame-spark streak-flame-spark-two" /> : null}
+        {restored ? <span className="streak-flame-burst streak-flame-burst-one" /> : null}
+        {restored ? <span className="streak-flame-burst streak-flame-burst-two" /> : null}
       </span>
       <span className="streak-flame-count">{days}</span>
     </span>

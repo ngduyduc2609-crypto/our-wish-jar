@@ -66,7 +66,12 @@ export function getMusicVolume() {
 }
 
 function musicLevel(volume: number) {
-  return Math.pow(volume, 1.6) * MUSIC_GAIN_MAX;
+  return Math.max(0.0001, Math.pow(Math.max(0, volume), 1.6) * MUSIC_GAIN_MAX);
+}
+
+function safeAudioTarget(value: number, minimum = 0.0001) {
+  if (!Number.isFinite(value)) return minimum;
+  return value > 0 ? Math.min(value, 1) : minimum;
 }
 
 export function setMusicVolume(volume: number) {
@@ -75,7 +80,8 @@ export function setMusicVolume(volume: number) {
   window.localStorage.setItem(VOLUME_KEY, String(clamped));
   window.dispatchEvent(new CustomEvent(VOLUME_EVENT, { detail: clamped }));
   if (musicGain && audioContext) {
-    musicGain.gain.setTargetAtTime(musicLevel(clamped), audioContext.currentTime, 0.08);
+    const target = musicLevel(clamped);
+    musicGain.gain.setTargetAtTime(safeAudioTarget(target), audioContext.currentTime, 0.08);
   }
 }
 
@@ -149,11 +155,15 @@ function tone(
 ) {
   const oscillator = context.createOscillator();
   const gain = context.createGain();
+  const safeVolume = safeAudioTarget(volume, 0.0001);
   oscillator.type = type;
   oscillator.frequency.setValueAtTime(frequency, start);
-  if (endFrequency) oscillator.frequency.exponentialRampToValueAtTime(endFrequency, start + duration);
+  if (endFrequency) {
+    const safeEnd = Math.max(20, endFrequency);
+    oscillator.frequency.exponentialRampToValueAtTime(safeEnd, start + duration);
+  }
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+  gain.gain.exponentialRampToValueAtTime(safeVolume, start + 0.012);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   oscillator.connect(gain);
   gain.connect(destination);
@@ -296,7 +306,7 @@ export function startMusic() {
   const context = getContext();
   if (!context) return;
 
-  const target = musicLevel(getMusicVolume());
+  const target = safeAudioTarget(musicLevel(getMusicVolume()));
   musicGain = context.createGain();
   musicGain.gain.setValueAtTime(0.0001, context.currentTime);
   musicGain.gain.exponentialRampToValueAtTime(target, context.currentTime + 3);
@@ -348,7 +358,9 @@ export function stopMusic() {
     const gain = musicGain;
     musicGain = null;
     try {
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.8);
+      gain.gain.cancelScheduledValues(audioContext.currentTime);
+      gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), audioContext.currentTime);
+      gain.gain.linearRampToValueAtTime(0.0001, audioContext.currentTime + 0.8);
       window.setTimeout(() => gain.disconnect(), 1000);
     } catch {
       gain.disconnect();

@@ -32,25 +32,29 @@ function randomFrom(seed: number, salt: number) {
 
 function noteStyle(id: string, index: number, total: number): NoteStyle {
   const seed = hashSeed(id);
-  const width = 45 + randomFrom(seed, 1) * 22;
-  const height = 31 + randomFrom(seed, 2) * 17;
-  const rows = Math.min(6, Math.max(1, Math.ceil(total / 7)));
-  const row = index % rows;
-  const lane = Math.floor(index / rows);
-  const yBase = rows === 1 ? 62 : 10 + row * (62 / (rows - 1));
-  const y = Math.min(73, Math.max(7, yBase + (randomFrom(seed, 3) - 0.5) * 12));
-  const bottomTaper = Math.max(0, (y - 55) / 18);
-  const sideInset = 4 + bottomTaper * 7;
-  const usableX = 100 - sideInset * 2;
-  const distributed = ((lane * 37 + row * 19) % 100) / 100;
-  const x = sideInset + ((distributed * 0.65 + randomFrom(seed, 4) * 0.35) % 1) * usableX;
+  const count = Math.max(1, total);
+  const densityScale = count > 20 ? 0.8 : count > 10 ? 0.9 : 1;
+  const width = (44 + randomFrom(seed, 1) * 22) * densityScale;
+  const height = (30 + randomFrom(seed, 2) * 17) * densityScale;
+
+  const cols = count <= 4 ? 2 : count <= 8 ? 3 : count <= 14 ? 4 : count <= 22 ? 5 : 6;
+  const rows = Math.max(2, Math.ceil(count / cols));
+  const col = index % cols;
+  const row = Math.floor(index / cols) % rows;
+
+  const colSpan = 100 / cols;
+  const x = 12 + col * colSpan + colSpan * (0.18 + randomFrom(seed, 4) * 0.64);
+  const y = 18 + row * (52 / Math.max(1, rows - 1)) + (randomFrom(seed, 3) - 0.5) * 12;
+
+  const safeX = Math.min(88, Math.max(12, x));
+  const safeY = Math.min(84, Math.max(16, y));
 
   return {
-    "--note-x": `${x}%`,
-    "--note-y": `${y}%`,
+    "--note-x": `${safeX}%`,
+    "--note-y": `${safeY}%`,
     "--note-width": `${width}px`,
     "--note-height": `${height}px`,
-    "--note-rotate": `${-11 + randomFrom(seed, 5) * 22}deg`,
+    "--note-rotate": `${-15 + randomFrom(seed, 5) * 30}deg`,
     "--note-delay": `${-(randomFrom(seed, 6) * 6)}s`,
     "--note-duration": `${5 + randomFrom(seed, 7) * 3}s`,
     zIndex: 2 + Math.floor(randomFrom(seed, 8) * 12),
@@ -58,7 +62,7 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
 }
 
 export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
-  const visible = wishes.slice(0, 42);
+  const visible = wishes.slice(0, 48);
 
   return (
     <div className="wish-jar-scene" aria-label={`Lọ chứa ${wishes.length} điều ước đang chờ`}>

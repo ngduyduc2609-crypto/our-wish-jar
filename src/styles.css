@@ -205,7 +205,14 @@
   animation: jar-glow 3.8s ease-in-out infinite;
   transform: rotateX(1deg);
 }
-.wish-jar-safe-zone { position: absolute; inset: 2.25rem 1.55rem 1.35rem; overflow: hidden; border-radius: 0.75rem 0.75rem 3rem 3rem; }
+.wish-jar-safe-zone {
+  position: absolute;
+  inset: 2.25rem 1.4rem 1.15rem;
+  overflow: hidden;
+  border-radius: 0.75rem 0.75rem 3rem 3rem;
+  padding: 0.35rem 0.15rem 0.25rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.1));
+}
 .wish-jar-lid {
   position: absolute; z-index: 20; left: 50%; top: 0.8rem; width: 10.5rem; height: 2.6rem; transform: translateX(-50%) rotateX(9deg);
   border: 1px solid var(--glass-edge); border-radius: 0.8rem; background: linear-gradient(var(--glass-sky), var(--color-secondary));
@@ -223,6 +230,7 @@
   position: absolute; left: var(--note-x); top: var(--note-y); width: var(--note-width); height: var(--note-height); padding: 0.3rem 0.35rem;
   animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.1s ease-in-out var(--note-delay) infinite;
   transform: translate(-50%, -50%) rotate(var(--note-rotate)); transform-origin: center; will-change: transform; backface-visibility: hidden;
+  box-shadow: 0 6px 10px -6px color-mix(in oklab, var(--wish-note-shadow) 65%, transparent);
 }
 .wish-note-paper {
   position: relative;
@@ -359,6 +367,15 @@ button:not(:disabled):hover {
   place-items: center;
   isolation: isolate;
 }
+.streak-flame-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -0.5rem;
+  border-radius: 999px;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(255, 205, 110, 0.34), transparent 65%);
+  transition: opacity 240ms ease;
+}
 .streak-flame-large { width: 3.5rem; height: 3.75rem; }
 .streak-flame-compact { width: 2.35rem; height: 2.6rem; }
 .streak-flame {
@@ -367,6 +384,8 @@ button:not(:disabled):hover {
   transform-origin: 50% 90%;
   animation: flame-dance 1.45s ease-in-out infinite, flame-glow 2s ease-in-out infinite;
 }
+.streak-flame-live::before { opacity: 1; }
+.streak-flame-restored .streak-flame { animation: flame-dance 0.75s ease-in-out infinite, flame-glow 1.4s ease-in-out infinite; }
 .streak-flame svg { position: absolute; inset: 0; width: 100%; height: 100%; stroke-width: 1.7; }
 .streak-flame-back { fill: var(--flame-outer); color: var(--flame-edge); }
 .streak-flame-front { transform: translateY(22%) scale(0.48); fill: var(--flame-inner); color: var(--flame-inner); }
@@ -393,6 +412,9 @@ button:not(:disabled):hover {
 .streak-flame-spark { position: absolute; width: 0.24rem; height: 0.24rem; border-radius: 999px; background: var(--flame-inner); animation: spark-rise 1.4s ease-out infinite; }
 .streak-flame-spark-one { left: 27%; top: 16%; }
 .streak-flame-spark-two { right: 20%; top: 28%; animation-delay: -0.65s; }
+.streak-flame-burst { position: absolute; width: 0.28rem; height: 0.28rem; border-radius: 999px; background: var(--flame-inner); opacity: 0; animation: spark-rise 1.1s ease-out infinite; }
+.streak-flame-burst-one { left: 14%; top: 45%; }
+.streak-flame-burst-two { right: 16%; top: 36%; animation-delay: 0.22s; }
 
 .milestone-dialog { perspective: 800px; }
 .milestone-burst { position: absolute; left: 50%; top: 42%; width: 1px; height: 1px; pointer-events: none; }

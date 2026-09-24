@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shuffle, Sparkles, BarChart3, ChevronRight } from "lucide-react";
+import { Shuffle, Sparkles, BarChart3, ChevronRight, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RandomDrawDialog } from "@/components/RandomDraw";
@@ -60,10 +60,29 @@ function HomePage() {
   const streakLit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
   const nextStreakMilestone = STREAK_MILESTONES.find((milestone) => milestone > streak.current);
   const flameLevel = streakLevel(streak.current);
+  const [restoresLeft, setRestoresLeft] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    const saved = Number(window.localStorage.getItem("wish-jar-streak-restores"));
+    return Number.isFinite(saved) && saved >= 0 ? saved : 1;
+  });
+  const [restoreUsed, setRestoreUsed] = useState(false);
+  const effectiveStreakLit = streakLit || restoreUsed;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("wish-jar-streak-restores", String(restoresLeft));
+    }
+  }, [restoresLeft]);
 
   function drawWish() {
     setDraw(pickRandom(pending));
     setDrawOpen(true);
+  }
+
+  function restoreStreak() {
+    if (restoresLeft <= 0) return;
+    setRestoreUsed(true);
+    setRestoresLeft((current) => Math.max(0, current - 1));
   }
 
   return (
@@ -85,17 +104,50 @@ function HomePage() {
         </Button>
       </section>
 
-      <section className="paper section-pop flex items-center gap-4 rounded-3xl p-4">
-        <StreakFlame days={streak.current} lit={streakLit} />
-        <div>
-          <p className="font-display text-lg font-semibold">
-            Chuỗi {streak.current} ngày cùng nhau
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {streakLit ? `Đang cháy · ${flameLevel.name}` : "Hôm nay đang chờ cả hai cùng ghé"} · Kỷ lục {streak.best} ngày
-          </p>
-          {nextStreakMilestone ? <p className="mt-1 text-[11px] text-primary">Còn {nextStreakMilestone - streak.current} ngày để nâng cấp ngọn lửa</p> : null}
+      <section className="paper section-pop rounded-3xl p-4">
+        <div className="flex items-center gap-4">
+          <StreakFlame days={streak.current} lit={effectiveStreakLit} restored={restoreUsed} />
+          <div className="flex-1">
+            <p className="font-display text-lg font-semibold">
+              Chuỗi {streak.current} ngày cùng nhau
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {effectiveStreakLit ? `Đang cháy · ${flameLevel.name}` : "Hôm nay đang chờ cả hai cùng ghé"} · Kỷ lục {streak.best} ngày
+            </p>
+            {nextStreakMilestone ? <p className="mt-1 text-[11px] text-primary">Còn {nextStreakMilestone - streak.current} ngày để nâng cấp ngọn lửa</p> : null}
+          </div>
         </div>
+
+        <div className="mt-3 space-y-2 rounded-2xl border border-border/80 bg-secondary/40 p-3">
+          {members.map((member) => {
+            const done = activeToday.has(member.id);
+            return (
+              <div key={member.id} className="flex items-center justify-between gap-3 text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-card text-base">{member.emoji}</span>
+                  <span className="font-medium text-foreground">{member.name}</span>
+                </span>
+                <span className={done ? "text-emerald-600" : "text-muted-foreground"}>
+                  {done ? "✅ Đã ghé" : "⏳ Đang chờ"}
+                </span>
+              </div>
+            );
+          })}
+          <p className="pt-1 text-[11px] text-muted-foreground">Cần cả hai cùng hoạt động hôm nay để tiếp tục chuỗi!</p>
+        </div>
+
+        {restoresLeft > 0 ? (
+          <Button
+            variant="outline"
+            className="mt-3 rounded-full"
+            onClick={restoreStreak}
+            disabled={effectiveStreakLit}
+          >
+            <RotateCcw className="size-4" /> Khôi phục chuỗi ({restoresLeft})
+          </Button>
+        ) : (
+          <p className="mt-3 text-[11px] text-muted-foreground">Đã hết lượt khôi phục tháng này.</p>
+        )}
       </section>
 
       <section className="space-y-2">

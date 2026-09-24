@@ -15,6 +15,18 @@ function kindFor(control: Element): SoundKind {
   return "tap";
 }
 
+function safePrimeAudio() {
+  void primeAudio().catch(() => undefined);
+}
+
+function safeStartMusic() {
+  try {
+    if (isMusicEnabled()) startMusic();
+  } catch {
+    // noop: browser can reject AudioContext startup in some environments
+  }
+}
+
 export function SoundController() {
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -22,22 +34,24 @@ export function SoundController() {
       if (!(target instanceof Element)) return;
       const control = target.closest("button, a, [role='button'], [role='menuitem'], [role='checkbox'], [role='switch'], [role='tab']");
       if (!control || control.getAttribute("aria-disabled") === "true" || control.hasAttribute("disabled")) return;
-      void primeAudio();
-      playSound(kindFor(control));
-      if (isMusicEnabled()) startMusic();
+      safePrimeAudio();
+      try {
+        playSound(kindFor(control));
+      } catch {
+        // noop: never let audio errors crash the app
+      }
+      safeStartMusic();
     };
 
     const handleFirstGesture = () => {
-      void primeAudio().then(() => {
-        if (isMusicEnabled()) startMusic();
-      });
+      safePrimeAudio();
+      safeStartMusic();
     };
 
     document.addEventListener("pointerdown", handlePointerDown, { capture: true });
     document.addEventListener("pointerdown", handleFirstGesture, { once: true });
 
-    // thử phát nhạc ngay khi mở app (trình duyệt có thể chờ tới cử chỉ đầu tiên)
-    if (isMusicEnabled()) startMusic();
+    safeStartMusic();
 
     const observer = new MutationObserver((records) => {
       const hasSuccess = records.some((record) =>
@@ -48,7 +62,13 @@ export function SoundController() {
               node.querySelector('[data-sonner-toast][data-type="success"]')),
         ),
       );
-      if (hasSuccess) playSound("add");
+      if (hasSuccess) {
+        try {
+          playSound("add");
+        } catch {
+          // noop
+        }
+      }
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
