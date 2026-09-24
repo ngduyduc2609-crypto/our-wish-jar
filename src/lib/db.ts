@@ -132,6 +132,35 @@ function readCurrentUserIdentity() {
   return { email, name };
 }
 
+function isValidUuid(value: unknown) {
+  if (typeof value !== "string") return false;
+  const candidate = value.trim();
+  return /^[0-9a-fA-F-]{36}$/.test(candidate);
+}
+
+function normalizeMemberId(value: unknown) {
+  if (typeof value !== "string") return null;
+  const candidate = value.trim();
+  if (!candidate || candidate === "null" || candidate === "undefined") return null;
+  return isValidUuid(candidate) ? candidate : null;
+}
+
+async function getFallbackMemberId() {
+  try {
+    const members = await fetchMembers();
+    const identity = readCurrentUserIdentity();
+
+    if (identity) {
+      const direct = await resolveMemberIdForEmail(identity.email);
+      if (direct) return direct;
+    }
+
+    return members[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function resolveMemberIdForEmail(email?: string | null) {
   const normalized = (email ?? "").trim().toLowerCase();
   if (!normalized) return null;
@@ -169,8 +198,11 @@ export const fetchPresence = () => rows<Presence>(db.from("daily_presence").sele
 function sanitizePayload(table: string, values: Record<string, unknown>, memberId: string | null) {
   const resolvedValues = { ...values };
 
-  if (resolvedValues.user_id == null || resolvedValues.user_id === "" || resolvedValues.user_id === "null") {
-    if (memberId) resolvedValues.user_id = memberId;
+  const validMemberId = normalizeMemberId(memberId) ?? normalizeMemberId(resolvedValues.user_id);
+  if (validMemberId) {
+    resolvedValues.user_id = validMemberId;
+  } else if (resolvedValues.user_id == null || resolvedValues.user_id === "" || resolvedValues.user_id === "null") {
+    resolvedValues.user_id = null;
   }
 
   if (table === "wishes") {
@@ -191,9 +223,8 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
     resolvedValues.deadline = resolvedValues.deadline ?? null;
     resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
 
-    if (!resolvedValues.proposed_by && memberId) {
-      resolvedValues.proposed_by = memberId;
-    }
+    const validProposedBy = normalizeMemberId(resolvedValues.proposed_by) ?? validMemberId;
+    resolvedValues.proposed_by = validProposedBy ?? null;
   }
 
   if (table === "memories") {
@@ -202,12 +233,12 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
 
     resolvedValues.title = safeTitle;
     resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
-    resolvedValues.image_url = resolvedValues.image_url ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
+    const memoryImage = typeof resolvedValues.image_url === "string" && resolvedValues.image_url.trim() ? resolvedValues.image_url.trim() : null;
+    resolvedValues.image_url = memoryImage ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
     resolvedValues.image_pos = resolvedValues.image_pos ?? "50% 50%";
 
-    if (!resolvedValues.created_by && memberId) {
-      resolvedValues.created_by = memberId;
-    }
+    const validCreatedBy = normalizeMemberId(resolvedValues.created_by) ?? validMemberId;
+    resolvedValues.created_by = validCreatedBy ?? null;
   }
 
   if (table === "activities") {
@@ -215,12 +246,12 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
     if (!safeName) throw new Error("Vui lòng nhập tên hoạt động.");
     resolvedValues.name = safeName;
     resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
-    resolvedValues.image_url = resolvedValues.image_url ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
+    const activityImage = typeof resolvedValues.image_url === "string" && resolvedValues.image_url.trim() ? resolvedValues.image_url.trim() : null;
+    resolvedValues.image_url = activityImage ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
     resolvedValues.image_pos = resolvedValues.image_pos ?? "50% 50%";
 
-    if (!resolvedValues.added_by && memberId) {
-      resolvedValues.added_by = memberId;
-    }
+    const validAddedBy = normalizeMemberId(resolvedValues.added_by) ?? validMemberId;
+    resolvedValues.added_by = validAddedBy ?? null;
   }
 
   if (table === "foods") {
@@ -228,12 +259,12 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
     if (!safeName) throw new Error("Vui lòng nhập tên món ăn.");
     resolvedValues.name = safeName;
     resolvedValues.images = Array.isArray(resolvedValues.images) ? resolvedValues.images : [];
-    resolvedValues.image_url = resolvedValues.image_url ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
+    const foodImage = typeof resolvedValues.image_url === "string" && resolvedValues.image_url.trim() ? resolvedValues.image_url.trim() : null;
+    resolvedValues.image_url = foodImage ?? (Array.isArray(resolvedValues.images) && resolvedValues.images[0]?.path ? resolvedValues.images[0].path : null);
     resolvedValues.image_pos = resolvedValues.image_pos ?? "50% 50%";
 
-    if (!resolvedValues.added_by && memberId) {
-      resolvedValues.added_by = memberId;
-    }
+    const validAddedBy = normalizeMemberId(resolvedValues.added_by) ?? validMemberId;
+    resolvedValues.added_by = validAddedBy ?? null;
   }
 
   if (table === "wish_comments") {
@@ -247,8 +278,9 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
 
 export async function insertRow<T>(table: string, values: Record<string, unknown>) {
   const identity = readCurrentUserIdentity();
-  const resolvedMemberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
-  const resolvedValues = sanitizePayload(table, values, resolvedMemberId);
+  const memberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
+  const fallbackMemberId = memberId ?? (await getFallbackMemberId());
+  const resolvedValues = sanitizePayload(table, values, fallbackMemberId);
 
   try {
     const { data, error } = await db.from(table).insert(resolvedValues).select().single();
@@ -262,8 +294,9 @@ export async function insertRow<T>(table: string, values: Record<string, unknown
 
 export async function updateRow<T>(table: string, id: string, values: Record<string, unknown>) {
   const identity = readCurrentUserIdentity();
-  const resolvedMemberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
-  const resolvedValues = sanitizePayload(table, values, resolvedMemberId);
+  const memberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
+  const fallbackMemberId = memberId ?? (await getFallbackMemberId());
+  const resolvedValues = sanitizePayload(table, values, fallbackMemberId);
 
   try {
     const { data, error } = await db.from(table).update(resolvedValues).eq("id", id).select().single();
@@ -306,10 +339,46 @@ export async function toggleReaction(wishId: string, memberId: string, emoji: st
   return true;
 }
 
+async function safeFileDataUrl(file: File) {
+  try {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+      reader.onerror = () => reject(new Error("Không chuyển đổi được ảnh sang preview"));
+      reader.readAsDataURL(file);
+    });
+    if (dataUrl) return dataUrl;
+  } catch {
+    // noop
+  }
+
+  const SVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+      <defs>
+        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#fdf2ff"/>
+          <stop offset="100%" stop-color="#dfeeff"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="900" fill="url(#g)"/>
+      <circle cx="600" cy="420" r="170" fill="rgba(255,255,255,0.45)"/>
+      <path d="M410 560 C490 500, 720 500, 790 560 L790 660 L410 660 Z" fill="rgba(255,255,255,0.55)"/>
+      <text x="600" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" fill="#6f6aa7">Ảnh đẹp</text>
+    </svg>`;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(SVG)}`;
+}
+
 export async function uploadImage(file: File) {
   const prepared = await prepareImage(file);
   const ext = prepared.type === "image/webp" ? "webp" : prepared.type === "image/png" ? "png" : "jpg";
   const path = `${crypto.randomUUID()}.${ext}`;
+
+  const storageAvailable = Boolean(supabase?.storage && typeof supabase.storage?.from === "function");
+
+  if (!storageAvailable) {
+    return safeFileDataUrl(prepared);
+  }
 
   try {
     const { error } = await supabase.storage.from("media").upload(path, prepared, {
@@ -320,15 +389,9 @@ export async function uploadImage(file: File) {
     if (error) throw error;
     return path;
   } catch (error) {
-    console.warn("[uploadImage] Storage upload failed, falling back to data URL preview.", error);
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-      reader.onerror = () => reject(new Error("Không chuyển đổi được ảnh sang preview"));
-      reader.readAsDataURL(prepared);
-    });
-    if (!dataUrl) throw new Error("Không thể tạo preview ảnh từ file này.");
-    return dataUrl;
+    const detail = error && typeof error === "object" && "message" in error ? String((error as { message?: string }).message) : String(error);
+    console.warn("[uploadImage] Storage upload failed, falling back to safe data URL preview.", detail);
+    return safeFileDataUrl(prepared);
   }
 }
 
@@ -361,9 +424,21 @@ async function prepareImage(file: File) {
 
 export async function signedUrl(path: string) {
   if (!path || path.startsWith("data:")) return path;
-  const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60 * 24);
-  if (error) throw error;
-  return data.signedUrl;
+
+  try {
+    const storageAvailable = Boolean(supabase?.storage && typeof supabase.storage?.from === "function");
+    if (!storageAvailable) return path;
+
+    const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60 * 24);
+    if (error) {
+      console.warn("[signedUrl] Could not create signed URL, returning original path.", error.message ?? error);
+      return path;
+    }
+    return data?.signedUrl ?? path;
+  } catch (error) {
+    console.warn("[signedUrl] Unexpected error.", error);
+    return path;
+  }
 }
 
 export function imageAssets(images: ImageAsset[] | null | undefined, legacyPath?: string | null, legacyPosition?: string | null) {

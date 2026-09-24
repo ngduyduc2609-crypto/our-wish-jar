@@ -55,11 +55,11 @@
 
 :root {
   --radius: 1.25rem;
-  --background: oklch(0.974 0.018 330);
+  --background: oklch(0.985 0.014 330);
   --foreground: oklch(0.33 0.04 290);
-  --card: oklch(0.995 0.008 330);
+  --card: oklch(0.998 0.006 330);
   --card-foreground: oklch(0.33 0.04 290);
-  --popover: oklch(0.995 0.008 330);
+  --popover: oklch(0.998 0.006 330);
   --popover-foreground: oklch(0.33 0.04 290);
   --primary: oklch(0.72 0.09 315);
   --primary-foreground: oklch(0.995 0.005 330);
@@ -154,10 +154,12 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(circle at 12% 8%, oklch(0.93 0.08 330 / 0.7), transparent 38%),
-      radial-gradient(circle at 86% 6%, oklch(0.9 0.06 220 / 0.72), transparent 40%),
-      linear-gradient(180deg, oklch(0.99 0.012 330), oklch(0.97 0.015 300));
+      radial-gradient(circle at 12% 8%, oklch(0.96 0.08 330 / 0.8), transparent 36%),
+      radial-gradient(circle at 86% 6%, oklch(0.92 0.06 225 / 0.72), transparent 40%),
+      linear-gradient(180deg, oklch(0.996 0.01 330), oklch(0.978 0.014 305));
     background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
 
@@ -170,12 +172,14 @@
 }
 
 @utility paper {
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.7));
+  border: 1px solid rgba(255,255,255,0.62);
   box-shadow:
-    0 1px 0 var(--depth-highlight) inset,
-    0 5px 0 color-mix(in oklab, var(--color-border) 78%, transparent),
-    0 14px 24px -14px var(--depth-shadow);
+    0 1px 0 rgba(255,255,255,0.72) inset,
+    0 10px 18px -14px rgba(137, 120, 176, 0.18),
+    0 20px 30px -20px rgba(112, 96, 151, 0.26);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 @keyframes wish-float {
@@ -190,8 +194,8 @@
 }
 
 @keyframes jar-glow {
-  0%, 100% { filter: drop-shadow(0 18px 18px rgba(120, 146, 201, 0.2)) drop-shadow(0 0 14px rgba(133, 196, 255, 0.42)); }
-  50% { filter: drop-shadow(0 22px 24px rgba(120, 146, 201, 0.26)) drop-shadow(0 0 22px rgba(151, 217, 255, 0.52)); }
+  0%, 100% { filter: drop-shadow(0 18px 18px rgba(96, 129, 198, 0.24)) drop-shadow(0 0 18px rgba(122, 197, 255, 0.42)); }
+  50% { filter: drop-shadow(0 24px 26px rgba(96, 129, 198, 0.28)) drop-shadow(0 0 26px rgba(146, 215, 255, 0.56)); }
 }
 
 @keyframes sparkle-drift {
@@ -238,25 +242,30 @@
   bottom: 0;
   height: 83%;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.72);
   border-bottom: none;
   border-radius: 41% 41% 23% 23% / 18% 18% 13% 13%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(224, 238, 255, 0.12) 22%, rgba(190, 219, 255, 0.1) 46%, rgba(255,255,255,0.08) 100%);
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.58) 0%, rgba(201,230,255,0.28) 15%, rgba(166,208,255,0.14) 30%, rgba(255,255,255,0.14) 100%),
+    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(192,224,255,0.12) 24%, rgba(137,187,255,0.08) 55%, rgba(255,255,255,0.08) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.3),
-    inset 0 18px 22px rgba(255,255,255,0.22),
-    inset 0 -18px 22px rgba(130, 174, 235, 0.1),
-    0 28px 40px -22px rgba(98, 118, 176, 0.32);
+    inset 0 0 0 1px rgba(255,255,255,0.32),
+    inset 0 18px 24px rgba(255,255,255,0.22),
+    inset -10px 0 14px rgba(117,173,255,0.08),
+    inset 10px 0 14px rgba(255,255,255,0.08),
+    inset 0 -18px 22px rgba(133, 173, 240, 0.09),
+    0 28px 40px -22px rgba(98, 118, 176, 0.35);
   animation: jar-glow 3.8s ease-in-out infinite;
 }
 
 .wish-jar-shell::before {
   content: "";
   position: absolute;
-  inset: 0.65rem 1rem 1.15rem;
+  inset: 0.75rem 1rem 1.15rem;
   border-radius: 40% 40% 22% 22% / 16% 16% 12% 12%;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.28);
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04));
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.16);
 }
 
 .wish-jar-safe-zone {
@@ -264,8 +273,10 @@
   inset: 1.5rem 1.1rem 1.75rem;
   overflow: hidden;
   border-radius: 34% 34% 28% 28% / 18% 18% 17% 17%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(173, 214, 255, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 10px 12px rgba(255,255,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(174,210,255,0.08)),
+    radial-gradient(circle at 50% 38%, rgba(135,196,255,0.18), transparent 52%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 10px 12px rgba(255,255,255,0.08), inset 0 -10px 14px rgba(135,180,255,0.05);
   padding-bottom: 1.2rem;
 }
 
@@ -356,7 +367,7 @@
   height: var(--note-height);
   padding: 0.32rem 0.38rem 0.28rem;
   box-sizing: border-box;
-  filter: drop-shadow(0 10px 10px color-mix(in oklab, var(--wish-note-shadow) 65%, transparent));
+  filter: drop-shadow(0 10px 12px color-mix(in oklab, var(--wish-note-shadow) 68%, transparent));
   animation: wish-float var(--note-duration) ease-in-out var(--note-delay) infinite, wish-note-glow 3.2s ease-in-out var(--note-delay) infinite;
   transform: translate(-50%, -50%) rotate(var(--note-rotate));
   transform-origin: center;
@@ -367,13 +378,16 @@
 .wish-note-paper {
   position: relative;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--wish-note-ink) 18%, transparent);
-  border-radius: 0.55rem 0.68rem 0.62rem 0.52rem;
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 0.62rem 0.8rem 0.7rem 0.56rem;
   color: var(--wish-note-ink);
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.5), transparent 32%),
-    linear-gradient(to bottom, color-mix(in oklab, var(--wish-note-bg) 88%, white), var(--wish-note-bg));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -8px 10px rgba(0,0,0,0.02);
+    linear-gradient(135deg, rgba(255,255,255,0.58), transparent 36%),
+    linear-gradient(180deg, color-mix(in oklab, var(--wish-note-bg) 90%, white), var(--wish-note-bg));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.52),
+    inset 0 -10px 12px rgba(0,0,0,0.02),
+    0 10px 14px -10px color-mix(in oklab, var(--wish-note-shadow) 70%, transparent);
 }
 
 .wish-note-icon { display: block; font-size: 0.72rem; line-height: 1; }
@@ -390,12 +404,29 @@
   letter-spacing: 0.01em;
 }
 
+.wish-note-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.15),
+      rgba(255,255,255,0.15) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  opacity: 0.42;
+}
+
 .wish-note-paper::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(135deg, transparent 42%, color-mix(in oklab, var(--wish-note-ink) 6%, transparent) 49%, transparent 55%);
+  background: linear-gradient(135deg, transparent 44%, rgba(255,255,255,0.22) 47%, transparent 52%);
+  box-shadow: inset -8px 0 12px rgba(255,255,255,0.08);
 }
 
 .wish-note-rose {
