@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, LogOut, Mail, Music, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, LogOut, Mail, Music, Palette, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether, todayKey } from "@/lib/constants";
@@ -19,15 +19,83 @@ import { playSound, useMusicEnabled, useMusicVolume, useSoundEnabled } from "@/l
 import { NotificationBell } from "@/components/NotificationBell";
 import { StreakFlame } from "@/components/StreakFlame";
 
+const THEME_OPTIONS = [
+  {
+    id: "lilac-blush",
+    label: "Tím Hồng Thơ Mộng",
+    swatch: "linear-gradient(135deg, #f6d8f5 0%, #f8b7d9 45%, #d6d6ff 100%)",
+    themeColor: "#f8f2ff",
+  },
+  {
+    id: "sky-blue",
+    label: "Xanh Dương Trong Trẻo",
+    swatch: "linear-gradient(135deg, #dff6ff 0%, #b9ebff 45%, #c4d9ff 100%)",
+    themeColor: "#edfaff",
+  },
+  {
+    id: "pearl",
+    label: "Trắng Kem Ngọc Trai",
+    swatch: "linear-gradient(135deg, #fffdf9 0%, #f3eadf 50%, #e9f0ff 100%)",
+    themeColor: "#fffdf9",
+  },
+  {
+    id: "sage",
+    label: "Xanh Matcha Dịu Êm",
+    swatch: "linear-gradient(135deg, #edf8ec 0%, #d9f2df 50%, #dfeef7 100%)",
+    themeColor: "#f4fbf6",
+  },
+] as const;
+
+type ThemeId = (typeof THEME_OPTIONS)[number]["id"];
+
+function isThemeId(value: string | null): value is ThemeId {
+  return Boolean(value && THEME_OPTIONS.some((theme) => theme.id === value));
+}
+
+function getThemeStorageKey() {
+  if (typeof window === "undefined") return "wish-jar-theme:guest";
+  const email = (window.localStorage.getItem("wishjar_user_email") ?? "").trim().toLowerCase();
+  return email ? `wish-jar-theme:${email}` : "wish-jar-theme:guest";
+}
+
+function applyTheme(themeId: ThemeId) {
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.theme = themeId;
+
+  const theme = THEME_OPTIONS.find((option) => option.id === themeId);
+  const meta = document.querySelector('meta[name="theme-color"]') ?? document.createElement("meta");
+  if (!meta.hasAttribute("name")) {
+    meta.setAttribute("name", "theme-color");
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute("content", theme?.themeColor ?? "#f8f2ff");
+}
+
 export function IdentityBar() {
   const { me, members, signOut } = useIdentity();
   const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const [musicEnabled, setMusicEnabled] = useMusicEnabled();
   const [musicVolume, setMusicVolume] = useMusicVolume();
+  const [selectedTheme, setSelectedTheme] = useState<ThemeId>("lilac-blush");
   const streak = computeStreak(presence, members.length || 2);
   const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
   const lit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const savedTheme = window.localStorage.getItem(getThemeStorageKey());
+    const nextTheme = isThemeId(savedTheme) ? savedTheme : "lilac-blush";
+    setSelectedTheme(nextTheme);
+    applyTheme(nextTheme);
+  }, [me?.id, me?.name]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(getThemeStorageKey(), selectedTheme);
+    applyTheme(selectedTheme);
+  }, [selectedTheme, me?.id, me?.name]);
 
   return (
     <header
@@ -90,6 +158,25 @@ export function IdentityBar() {
                 className="h-1.5 w-full accent-primary disabled:opacity-40"
                 aria-label="Âm lượng nhạc nền"
               />
+            </div>
+            <DropdownMenuSeparator />
+            <div className="px-2 pb-2 pt-1" onPointerDown={(event) => event.stopPropagation()}>
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                <Palette className="size-3.5" /> Chọn theme
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {THEME_OPTIONS.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setSelectedTheme(theme.id)}
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left text-[10px] font-medium transition-all ${selectedTheme === theme.id ? "border-primary bg-primary/10 text-foreground shadow-sm" : "border-border bg-background/70 text-muted-foreground hover:border-primary/60 hover:text-foreground"}`}
+                  >
+                    <span className="h-4 w-4 rounded-full border border-white/70 shadow-inner" style={{ background: theme.swatch }} />
+                    {theme.label.split(" ").slice(0, 2).join(" ")}
+                  </button>
+                ))}
+              </div>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
