@@ -27,8 +27,10 @@ let musicGain: GainNode | null = null;
 let soundGain: GainNode | null = null;
 let noiseBuffer: AudioBuffer | null = null;
 let lastTapIndex = -1;
+let audioWarmupStarted = false;
 
-const MUSIC_GAIN_MAX = 0.055;
+const MUSIC_GAIN_MAX = 0.04;
+const EFFECT_GAIN_MAX = 0.2;
 
 function prefersReducedMotion() {
   if (typeof window === "undefined") return false;
@@ -134,13 +136,24 @@ function getContext() {
 export async function primeAudio() {
   const context = getContext();
   if (!context) return;
-  if (context.state === "suspended") await context.resume();
+  try {
+    if (context.state === "suspended") await context.resume();
+  } catch {
+    // no-op: some browsers reject resume if the user gesture is not available yet
+  }
   if (!noiseBuffer) {
     const frames = Math.floor(context.sampleRate * 0.2);
     noiseBuffer = context.createBuffer(1, frames, context.sampleRate);
     const data = noiseBuffer.getChannelData(0);
     for (let index = 0; index < frames; index += 1) data[index] = (Math.random() * 2 - 1) * (1 - index / frames);
   }
+  audioWarmupStarted = true;
+}
+
+export function preloadAudio() {
+  if (audioWarmupStarted || typeof window === "undefined") return;
+  audioWarmupStarted = true;
+  void primeAudio();
 }
 
 function tone(
@@ -199,8 +212,11 @@ export function playSound(kind: SoundKind) {
   const context = getContext();
   if (!context) return;
   if (context.state === "suspended") {
-    void context.resume().then(() => playSound(kind));
-    return;
+    try {
+      void context.resume();
+    } catch {
+      // browser may reject if startup is not user-gesture driven
+    }
   }
   const now = context.currentTime;
   const output = soundGain ?? context.destination;
@@ -307,12 +323,15 @@ export function startMusic() {
   if (!context) return;
 
   const target = safeAudioTarget(musicLevel(getMusicVolume()));
-  musicGain = context.createGain();
+  if (!musicGain) {
+    musicGain = context.createGain();
+  }
   musicGain.gain.setValueAtTime(0.0001, context.currentTime);
-  musicGain.gain.exponentialRampToValueAtTime(target, context.currentTime + 3);
+  musicGain.gain.exponentialRampToValueAtTime(safeAudioTarget(target), context.currentTime + 3);
   const warm = context.createBiquadFilter();
   warm.type = "lowpass";
-  warm.frequency.value = 2400;
+  warm.frequency.value = 2200;
+  musicGain.disconnect();
   musicGain.connect(warm);
   warm.connect(context.destination);
 

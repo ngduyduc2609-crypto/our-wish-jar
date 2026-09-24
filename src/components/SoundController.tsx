@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 
-import { isMusicEnabled, playSound, primeAudio, startMusic, type SoundKind } from "@/lib/sound";
+import {
+  isMusicEnabled,
+  playSound,
+  preloadAudio,
+  primeAudio,
+  startMusic,
+  type SoundKind,
+} from "@/lib/sound";
 
 function kindFor(control: Element): SoundKind {
   const label = `${control.getAttribute("aria-label") ?? ""} ${control.textContent ?? ""}`.toLowerCase();
@@ -16,6 +23,7 @@ function kindFor(control: Element): SoundKind {
 }
 
 function safePrimeAudio() {
+  preloadAudio();
   void primeAudio().catch(() => undefined);
 }
 
