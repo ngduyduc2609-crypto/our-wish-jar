@@ -113,18 +113,25 @@ export function IdentityGate() {
   const free = members.filter((m) => !m.user_id);
 
   const handleEmailAuth = async () => {
-    if (!email.trim() || !password.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password.trim()) {
       toast.error("Vui lòng nhập email và mật khẩu của bạn.");
+      return;
+    }
+
+    const allowedEmails = ["ngduyduc2609@gmail.com", "thuthuydanghocbai@gmail.com"];
+    if (!allowedEmails.includes(cleanEmail)) {
+      toast.error("Đây là không gian riêng tư của Duy Đức và Thu Thuỷ, bạn không có quyền truy cập chiếc lọ này nhé!");
       return;
     }
 
     setBusy(true);
     try {
       if (mode === "login") {
-        await signInWithPassword(email, password);
+        await signInWithPassword(cleanEmail, password);
         toast.success("Đăng nhập thành công.");
       } else {
-        await signUpWithPassword(email, password);
+        await signUpWithPassword(cleanEmail, password);
         toast.success("Tạo tài khoản thành công. Chúng mình đang chuẩn bị mở chiếc lọ cho bạn.");
       }
     } catch (error) {
@@ -245,7 +252,14 @@ export function IdentityGate() {
             </div>
             <button
               type="button"
-              onClick={() => void signOut()}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.localStorage.removeItem("wishjar_user_email");
+                  window.localStorage.removeItem("wishjar_user_name");
+                  window.localStorage.removeItem("wish-jar-private-auth-session");
+                }
+                void signOut();
+              }}
               className="mt-5 text-xs text-muted-foreground underline"
             >
               Đăng nhập tài khoản khác
@@ -258,7 +272,14 @@ export function IdentityGate() {
             </p>
             <button
               type="button"
-              onClick={() => void signOut()}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.localStorage.removeItem("wishjar_user_email");
+                  window.localStorage.removeItem("wishjar_user_name");
+                  window.localStorage.removeItem("wish-jar-private-auth-session");
+                }
+                void signOut();
+              }}
               className="mt-6 w-full rounded-2xl border border-border px-4 py-3 text-base font-medium"
             >
               Đăng nhập tài khoản khác

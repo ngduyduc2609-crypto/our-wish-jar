@@ -6,12 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMembers, logAction, type Member } from "./db";
 
 const LOCAL_AUTH_SESSION_KEY = "wish-jar-private-auth-session";
+const USER_EMAIL_STORAGE_KEY = "wishjar_user_email";
+const USER_NAME_STORAGE_KEY = "wishjar_user_name";
 const PRIVATE_ACCESS_MESSAGE = "Đây là không gian riêng tư của Duy Đức và Thu Thuỷ, bạn không có quyền truy cập chiếc lọ này nhé!";
-const ALLOWED_MEMBERS = [
+const ALLOWED_EMAILS = [
   "ngduyduc2609@gmail.com",
   "thuthuydanghocbai@gmail.com",
 ];
-const ALLOWED_EMAILS = new Set(ALLOWED_MEMBERS.map((email) => email.trim().toLowerCase()));
+const ALLOWED_EMAIL_SET = new Set(ALLOWED_EMAILS.map((email) => email.trim().toLowerCase()));
 
 type LocalAuthSession = {
   userId: string;
@@ -24,7 +26,7 @@ function normalizeEmail(value?: string | null) {
 }
 
 function isAllowedEmail(email?: string | null) {
-  return ALLOWED_EMAILS.has(normalizeEmail(email));
+  return ALLOWED_EMAIL_SET.has(normalizeEmail(email));
 }
 
 function getMemberNameFromEmail(email?: string | null) {
@@ -41,31 +43,36 @@ function findMemberForEmail(members: Member[], email?: string | null) {
 function readStoredAuthSession(): LocalAuthSession | null {
   if (typeof window === "undefined") return null;
 
-  try {
-    const raw = window.localStorage.getItem(LOCAL_AUTH_SESSION_KEY);
-    if (!raw) return null;
+  const storedEmail = window.localStorage.getItem(USER_EMAIL_STORAGE_KEY);
+  const storedName = window.localStorage.getItem(USER_NAME_STORAGE_KEY);
+  const fallbackRaw = window.localStorage.getItem(LOCAL_AUTH_SESSION_KEY);
 
-    const parsed = JSON.parse(raw) as Partial<LocalAuthSession>;
-    if (!parsed.userId || !parsed.email) {
+  try {
+    const raw = storedEmail ? { email: storedEmail, name: storedName ?? getMemberNameFromEmail(storedEmail) } : fallbackRaw ? JSON.parse(fallbackRaw) : null;
+    if (!raw || !raw.email) {
+      window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
+      window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
       window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
       return null;
     }
 
-    const email = normalizeEmail(parsed.email);
+    const email = normalizeEmail(raw.email);
     if (!isAllowedEmail(email)) {
+      window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
+      window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
       window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
       return null;
     }
 
     return {
-      userId: String(parsed.userId),
+      userId: email,
       email,
-      name: parsed.name || getMemberNameFromEmail(email),
+      name: raw.name || getMemberNameFromEmail(email),
     };
   } catch {
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
-    }
+    window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
+    window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
+    window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
     return null;
   }
 }
@@ -73,9 +80,14 @@ function readStoredAuthSession(): LocalAuthSession | null {
 function persistAuthSession(session: LocalAuthSession | null) {
   if (typeof window === "undefined") return;
   if (!session) {
+    window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
+    window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
     window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
     return;
   }
+
+  window.localStorage.setItem(USER_EMAIL_STORAGE_KEY, session.email);
+  window.localStorage.setItem(USER_NAME_STORAGE_KEY, session.name);
   window.localStorage.setItem(LOCAL_AUTH_SESSION_KEY, JSON.stringify(session));
 }
 
@@ -129,26 +141,26 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         throw new Error("Vui lòng đăng nhập bằng email được cấp trong danh sách trắng.");
       },
       signInWithPassword: async (email: string, password: string) => {
-        const normalizedEmail = normalizeEmail(email);
+        const cleanEmail = email.trim().toLowerCase();
         if (!password.trim()) {
           throw new Error("Vui lòng nhập mật khẩu.");
         }
-        if (!isAllowedEmail(normalizedEmail)) {
+        if (!ALLOWED_EMAILS.includes(cleanEmail)) {
           throw new Error(PRIVATE_ACCESS_MESSAGE);
         }
 
-        const member = findMemberForEmail(members, normalizedEmail) ?? {
-          id: normalizedEmail,
-          name: getMemberNameFromEmail(normalizedEmail),
-          emoji: normalizedEmail === "ngduyduc2609@gmail.com" ? "🧑‍💻" : "💐",
-          color: normalizedEmail === "ngduyduc2609@gmail.com" ? "#f59e0b" : "#f472b6",
+        const member = findMemberForEmail(members, cleanEmail) ?? {
+          id: cleanEmail,
+          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
+          emoji: cleanEmail.includes("duc") ? "🧑‍💻" : "💐",
+          color: cleanEmail.includes("duc") ? "#f59e0b" : "#f472b6",
           user_id: null,
         };
 
         const nextSession: LocalAuthSession = {
           userId: member.id,
-          email: normalizedEmail,
-          name: member.name,
+          email: cleanEmail,
+          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
         };
 
         setLocalSession(nextSession);
@@ -156,26 +168,26 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         await queryClient.invalidateQueries();
       },
       signUpWithPassword: async (email: string, password: string) => {
-        const normalizedEmail = normalizeEmail(email);
+        const cleanEmail = email.trim().toLowerCase();
         if (!password.trim()) {
           throw new Error("Vui lòng nhập mật khẩu.");
         }
-        if (!isAllowedEmail(normalizedEmail)) {
+        if (!ALLOWED_EMAILS.includes(cleanEmail)) {
           throw new Error(PRIVATE_ACCESS_MESSAGE);
         }
 
-        const member = findMemberForEmail(members, normalizedEmail) ?? {
-          id: normalizedEmail,
-          name: getMemberNameFromEmail(normalizedEmail),
-          emoji: normalizedEmail === "ngduyduc2609@gmail.com" ? "🧑‍💻" : "💐",
-          color: normalizedEmail === "ngduyduc2609@gmail.com" ? "#f59e0b" : "#f472b6",
+        const member = findMemberForEmail(members, cleanEmail) ?? {
+          id: cleanEmail,
+          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
+          emoji: cleanEmail.includes("duc") ? "🧑‍💻" : "💐",
+          color: cleanEmail.includes("duc") ? "#f59e0b" : "#f472b6",
           user_id: null,
         };
 
         const nextSession: LocalAuthSession = {
           userId: member.id,
-          email: normalizedEmail,
-          name: member.name,
+          email: cleanEmail,
+          name: cleanEmail.includes("duc") ? "Duy Đức" : "Thu Thủy",
         };
 
         setLocalSession(nextSession);
