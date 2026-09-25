@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export type AppLanguage = "vi" | "en" | "zh";
 
 export const LANGUAGE_OPTIONS = [
