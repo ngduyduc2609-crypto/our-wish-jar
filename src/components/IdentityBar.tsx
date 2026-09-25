@@ -23,25 +23,25 @@ import { StreakFlame } from "@/components/StreakFlame";
 const THEME_OPTIONS = [
   {
     id: "lilac-dream",
-    label: "Lilac Dream",
+    label: { vi: "Lilac Dream", en: "Lilac Dream", zh: "淡紫梦境" },
     swatch: "linear-gradient(135deg, #f5eefe 0%, #e6d9ff 46%, #f8e9ef 100%)",
     themeColor: "#f8f3ff",
   },
   {
     id: "blush-warm",
-    label: "Warm Blush",
+    label: { vi: "Warm Blush", en: "Warm Blush", zh: "暖粉柔光" },
     swatch: "linear-gradient(135deg, #f7eadf 0%, #f5d6d8 46%, #fdf5ef 100%)",
     themeColor: "#fdf5ef",
   },
   {
     id: "ocean-soft",
-    label: "Ocean Calm",
+    label: { vi: "Ocean Calm", en: "Ocean Calm", zh: "海蓝宁静" },
     swatch: "linear-gradient(135deg, #edfafd 0%, #d9efff 46%, #f7eaf1 100%)",
     themeColor: "#edfafd",
   },
   {
     id: "matcha-pure",
-    label: "Pure Matcha",
+    label: { vi: "Pure Matcha", en: "Pure Matcha", zh: "薄荷清雅" },
     swatch: "linear-gradient(135deg, #edf6ee 0%, #dfeedc 46%, #f8f2e9 100%)",
     themeColor: "#f6faf7",
   },
@@ -83,6 +83,11 @@ export function IdentityBar() {
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage>("vi");
   const streak = computeStreak(presence, members.length || 2);
+  const themeMenuLabel = selectedLanguage === "zh" ? "主题" : "Theme";
+  const languageMenuLabel = selectedLanguage === "vi" ? "Ngôn ngữ" : selectedLanguage === "zh" ? "语言" : "Language";
+  const themePickerHeading =
+    selectedLanguage === "vi" ? "Chọn màu sắc" : selectedLanguage === "zh" ? "选择主题" : "Choose theme";
+  const currentThemeLabel = THEME_OPTIONS.find((theme) => theme.id === selectedTheme)?.label[selectedLanguage] ?? "Lilac Dream";
   const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
   const lit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
 
@@ -184,12 +189,12 @@ export function IdentityBar() {
                 setLanguagePickerOpen(false);
               }}
             >
-              <Palette /> Theme
+              <Palette /> {themeMenuLabel}
             </DropdownMenuItem>
 
             {themePickerOpen ? (
               <div className="border-t border-border/80 bg-background/80 px-2 pb-2 pt-2" onPointerDown={(event) => event.stopPropagation()}>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Choose theme</p>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{themePickerHeading}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {THEME_OPTIONS.map((theme) => (
                     <button
@@ -202,7 +207,7 @@ export function IdentityBar() {
                       className={`rounded-2xl border p-2 text-left transition-all ${selectedTheme === theme.id ? "border-primary bg-primary/10 shadow-sm" : "border-border bg-card/80 hover:border-primary/60"}`}
                     >
                       <div className="mb-2 h-8 rounded-xl border border-white/80 shadow-inner" style={{ background: theme.swatch }} />
-                      <div className="text-[10px] font-medium text-foreground">{theme.label}</div>
+                      <div className="text-[10px] font-medium text-foreground">{theme.label[selectedLanguage] ?? theme.label.en}</div>
                     </button>
                   ))}
                 </div>
@@ -216,12 +221,12 @@ export function IdentityBar() {
                 setThemePickerOpen(false);
               }}
             >
-              <Languages /> Ngôn ngữ / Language
+              <Languages /> {languageMenuLabel}
             </DropdownMenuItem>
 
             {languagePickerOpen ? (
               <div className="border-t border-border/80 bg-background/80 px-2 pb-2 pt-2" onPointerDown={(event) => event.stopPropagation()}>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Ngôn ngữ / Language</p>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{languageMenuLabel}</p>
                 <div className="space-y-2">
                   {LANGUAGE_OPTIONS.map((option) => (
                     <button
