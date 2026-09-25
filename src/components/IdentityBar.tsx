@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, LogOut, Mail, Music, Palette, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, Languages, LogOut, Mail, Music, Palette, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
 import { daysTogether, todayKey } from "@/lib/constants";
 import { computeStreak, fetchPresence } from "@/lib/db";
+import { LANGUAGE_OPTIONS, applyLanguage, getLanguageStorageKey, readStoredLanguage, type AppLanguage } from "@/lib/language";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,25 +23,25 @@ import { StreakFlame } from "@/components/StreakFlame";
 const THEME_OPTIONS = [
   {
     id: "lilac-dream",
-    label: "Tím Thơ Mộng",
+    label: "Lilac Dream",
     swatch: "linear-gradient(135deg, #f5eefe 0%, #e6d9ff 46%, #f8e9ef 100%)",
     themeColor: "#f8f3ff",
   },
   {
     id: "blush-warm",
-    label: "Hồng Be Ấm Áp",
+    label: "Warm Blush",
     swatch: "linear-gradient(135deg, #f7eadf 0%, #f5d6d8 46%, #fdf5ef 100%)",
     themeColor: "#fdf5ef",
   },
   {
     id: "ocean-soft",
-    label: "Xanh Biển Dịu Êm",
+    label: "Ocean Calm",
     swatch: "linear-gradient(135deg, #edfafd 0%, #d9efff 46%, #f7eaf1 100%)",
     themeColor: "#edfafd",
   },
   {
     id: "matcha-pure",
-    label: "Matcha Tinh Khôi",
+    label: "Pure Matcha",
     swatch: "linear-gradient(135deg, #edf6ee 0%, #dfeedc 46%, #f8f2e9 100%)",
     themeColor: "#f6faf7",
   },
@@ -79,6 +80,8 @@ export function IdentityBar() {
   const [musicVolume, setMusicVolume] = useMusicVolume();
   const [selectedTheme, setSelectedTheme] = useState<ThemeId>("lilac-dream");
   const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage>("vi");
   const streak = computeStreak(presence, members.length || 2);
   const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
   const lit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
@@ -97,6 +100,19 @@ export function IdentityBar() {
     window.localStorage.setItem(getThemeStorageKey(), selectedTheme);
     applyTheme(selectedTheme);
   }, [selectedTheme, me?.id, me?.name]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nextLanguage = readStoredLanguage();
+    setSelectedLanguage(nextLanguage);
+    applyLanguage(nextLanguage);
+  }, [me?.id, me?.name]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(getLanguageStorageKey(), selectedLanguage);
+    applyLanguage(selectedLanguage);
+  }, [selectedLanguage, me?.id, me?.name]);
 
   return (
     <header
@@ -165,14 +181,15 @@ export function IdentityBar() {
               onSelect={(event) => {
                 event.preventDefault();
                 setThemePickerOpen((current) => !current);
+                setLanguagePickerOpen(false);
               }}
             >
-              <Palette /> Giao diện (Theme)
+              <Palette /> Theme
             </DropdownMenuItem>
 
             {themePickerOpen ? (
               <div className="border-t border-border/80 bg-background/80 px-2 pb-2 pt-2" onPointerDown={(event) => event.stopPropagation()}>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Chọn màu sắc</p>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Choose theme</p>
                 <div className="grid grid-cols-2 gap-2">
                   {THEME_OPTIONS.map((theme) => (
                     <button
@@ -186,6 +203,38 @@ export function IdentityBar() {
                     >
                       <div className="mb-2 h-8 rounded-xl border border-white/80 shadow-inner" style={{ background: theme.swatch }} />
                       <div className="text-[10px] font-medium text-foreground">{theme.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                setLanguagePickerOpen((current) => !current);
+                setThemePickerOpen(false);
+              }}
+            >
+              <Languages /> Ngôn ngữ / Language
+            </DropdownMenuItem>
+
+            {languagePickerOpen ? (
+              <div className="border-t border-border/80 bg-background/80 px-2 pb-2 pt-2" onPointerDown={(event) => event.stopPropagation()}>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Ngôn ngữ / Language</p>
+                <div className="space-y-2">
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setSelectedLanguage(option.value);
+                        setLanguagePickerOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-xl border px-2.5 py-2 text-left text-sm transition-all ${selectedLanguage === option.value ? "border-primary bg-primary/10 text-primary" : "border-border bg-card/80 text-foreground"}`}
+                    >
+                      <span>{option.label}</span>
+                      {selectedLanguage === option.value ? <span className="text-xs">✓</span> : null}
                     </button>
                   ))}
                 </div>
