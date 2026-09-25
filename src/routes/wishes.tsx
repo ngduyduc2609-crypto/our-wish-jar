@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Chip } from "@/components/Chip";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
@@ -414,6 +415,7 @@ function WishCard({
   } as const;
   const [openComments, setOpenComments] = useState(false);
   const [draft, setDraft] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Wish | null>(null);
   const category = labelOf(WISH_CATEGORIES, wish.category, language);
   const difficulty = labelOf(DIFFICULTIES, wish.difficulty, language);
   const mine = canManage(me, wish.proposed_by);
@@ -522,7 +524,7 @@ function WishCard({
             </button>
             <button
               type="button"
-              onClick={() => void remove()}
+              onClick={() => setDeleteTarget(wish)}
               aria-label={language === "zh" ? "删除愿望" : language === "en" ? "Delete wish" : "Xoá điều ước"}
               className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
             >
@@ -531,6 +533,19 @@ function WishCard({
           </>
         )}
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        itemName={deleteTarget?.title ?? "mục"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          void remove(deleteTarget);
+          setDeleteTarget(null);
+        }}
+      />
 
       {openComments && (
         <div className="mt-3 space-y-2 border-t border-border pt-3">

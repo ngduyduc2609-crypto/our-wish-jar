@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ContentDetailDialog } from "@/components/ContentDetailDialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
@@ -77,6 +78,7 @@ function ActivitiesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Activity | null>(null);
   const [viewing, setViewing] = useState<Activity | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
 
   const { data: activities = [] } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
 
@@ -238,11 +240,9 @@ function ActivitiesPage() {
                         <button
                           type="button"
                           aria-label="Xoá hoạt động"
-                          onClick={async (event) => {
+                          onClick={(event) => {
                             event.stopPropagation();
-                            await deleteRow("activities", activity.id);
-                            track("xoá hoạt động", activity.name);
-                            refresh();
+                            setDeleteTarget(activity);
                           }}
                           className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                         >
@@ -268,6 +268,23 @@ function ActivitiesPage() {
         onOpenChange={setDialogOpen}
         activity={editing}
         onDone={refresh}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        itemName={deleteTarget?.name ?? "mục"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          void (async () => {
+            await deleteRow("activities", deleteTarget.id);
+            track("xoá hoạt động", deleteTarget.name);
+            refresh();
+          })();
+          setDeleteTarget(null);
+        }}
       />
 
       <RandomDrawDialog

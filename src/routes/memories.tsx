@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ContentDetailDialog } from "@/components/ContentDetailDialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
 import { deleteRow, fetchMemories, imageAssets, insertRow, updateRow, type Memory, type ImageAsset } from "@/lib/db";
@@ -72,6 +73,7 @@ function MemoriesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Memory | null>(null);
   const [viewing, setViewing] = useState<Memory | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Memory | null>(null);
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["memories"] });
@@ -140,11 +142,9 @@ function MemoriesPage() {
                     <button
                       type="button"
                       aria-label={copy.delete}
-                      onClick={async (event) => {
+                      onClick={(event) => {
                         event.stopPropagation();
-                        await deleteRow("memories", memory.id);
-                        track("xoá kỷ niệm", memory.title);
-                        refresh();
+                        setDeleteTarget(memory);
                       }}
                       className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                     >
@@ -163,6 +163,23 @@ function MemoriesPage() {
           </p>
         )}
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        itemName={deleteTarget?.title ?? "mục"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          void (async () => {
+            await deleteRow("memories", deleteTarget.id);
+            track("xoá kỷ niệm", deleteTarget.title);
+            refresh();
+          })();
+          setDeleteTarget(null);
+        }}
+      />
 
       <MemoryDialog
         open={dialogOpen}

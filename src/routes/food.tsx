@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ContentDetailDialog } from "@/components/ContentDetailDialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { RandomDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
@@ -69,6 +70,7 @@ function FoodPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Food | null>(null);
   const [viewing, setViewing] = useState<Food | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Food | null>(null);
 
   const { data: foods = [] } = useQuery({ queryKey: ["foods"], queryFn: fetchFoods });
 
@@ -183,7 +185,7 @@ function FoodPage() {
                         aria-label="Xoá món"
                         onClick={(event) => {
                           event.stopPropagation();
-                          remove.mutate(food);
+                          setDeleteTarget(food);
                         }}
                         className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                       >
@@ -213,6 +215,19 @@ function FoodPage() {
           </p>
         )}
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        itemName={deleteTarget?.name ?? "mục"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          void remove.mutate(deleteTarget);
+          setDeleteTarget(null);
+        }}
+      />
 
       <RandomDrawDialog
         open={drawOpen}
