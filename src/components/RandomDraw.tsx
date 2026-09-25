@@ -51,7 +51,7 @@ export function RandomDrawDialog({
           {spinning ? <p className="text-sm text-muted-foreground">{shakingLabel}</p> : result}
         </div>
         {!spinning && children}
-        <Button variant="secondary" className="rounded-full" onClick={onDrawAgain}>
+        <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={onDrawAgain}>
           {drawAgainLabel}
         </Button>
       </DialogContent>

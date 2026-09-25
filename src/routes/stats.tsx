@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft } from "lucide-react";
+import { Activity, ChevronLeft, Flame, Gift, Heart, ImageIcon, UtensilsCrossed } from "lucide-react";
 
 import { useAppLanguage } from "@/lib/language";
 
@@ -91,12 +91,12 @@ function StatsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Stat label={copy.stats.days} value={days} emoji="💗" />
-        <Stat label={copy.stats.wishes} value={wishes.filter((w) => w.completed).length} emoji="🫙" />
-        <Stat label={copy.stats.foods} value={foods.filter((f) => f.tried).length} emoji="🍜" />
-        <Stat label={copy.stats.activities} value={activities.filter((a) => a.done).length} emoji="🎡" />
-        <Stat label={copy.stats.memories} value={memories.length} emoji="📸" />
-        <Stat label={copy.stats.streak} value={language === "zh" ? `${streak.best} 天` : language === "en" ? `${streak.best} days` : `${streak.best} ngày`} emoji="🔥" />
+        <Stat label={copy.stats.days} value={days} icon={<Heart className="size-4" />} />
+        <Stat label={copy.stats.wishes} value={wishes.filter((w) => w.completed).length} icon={<Gift className="size-4" />} />
+        <Stat label={copy.stats.foods} value={foods.filter((f) => f.tried).length} icon={<UtensilsCrossed className="size-4" />} />
+        <Stat label={copy.stats.activities} value={activities.filter((a) => a.done).length} icon={<Activity className="size-4" />} />
+        <Stat label={copy.stats.memories} value={memories.length} icon={<ImageIcon className="size-4" />} />
+        <Stat label={copy.stats.streak} value={language === "zh" ? `${streak.best} 天` : language === "en" ? `${streak.best} days` : `${streak.best} ngày`} icon={<Flame className="size-4" />} />
       </div>
 
       <section className="paper rounded-3xl p-4">
@@ -176,12 +176,16 @@ function StatsPage() {
   );
 }
 
-function Stat({ label, value, emoji }: { label: string; value: number | string; emoji: string }) {
+function Stat({ label, value, icon }: { label: string; value: number | string; icon: React.ReactNode }) {
   return (
     <div className="paper rounded-3xl p-4">
-      <p className="text-2xl">{emoji}</p>
-      <p className="mt-1 font-display text-2xl font-bold">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="grid size-9 place-items-center rounded-full bg-primary/8 text-primary ring-1 ring-primary/10">
+          {icon}
+        </span>
+      </div>
+      <p className="font-display text-3xl font-black leading-none text-foreground">{value}</p>
+      <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground/85">{label}</p>
     </div>
   );
 }

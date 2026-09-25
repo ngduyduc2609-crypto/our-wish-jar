@@ -231,9 +231,9 @@ function ActivitiesPage() {
                             setEditing(activity);
                             setDialogOpen(true);
                           }}
-                          className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground"
+                          className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                         >
-                          <Pencil className="size-3.5" />
+                          <Pencil className="size-4" />
                         </button>
                         <button
                           type="button"
@@ -244,9 +244,9 @@ function ActivitiesPage() {
                             track("xoá hoạt động", activity.name);
                             refresh();
                           }}
-                          className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground"
+                          className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4" />
                         </button>
                       </>
                     )}

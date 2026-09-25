@@ -174,9 +174,9 @@ function FoodPage() {
                           setEditing(food);
                           setFormOpen(true);
                         }}
-                        className="rounded-full border border-border p-2 text-muted-foreground"
+                        className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                       >
-                        <Pencil className="size-3.5" />
+                        <Pencil className="size-4" />
                       </button>
                       <button
                         type="button"
@@ -185,9 +185,9 @@ function FoodPage() {
                           event.stopPropagation();
                           remove.mutate(food);
                         }}
-                        className="rounded-full border border-border p-2 text-muted-foreground"
+                        className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </button>
                     </div>
                   )}
