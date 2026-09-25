@@ -96,27 +96,33 @@ export function IdentityBar() {
 
     const savedTheme = window.localStorage.getItem(getThemeStorageKey());
     const nextTheme = isThemeId(savedTheme) ? savedTheme : "lilac-dream";
-    setSelectedTheme(nextTheme);
+    setSelectedTheme((current) => (current === nextTheme ? current : nextTheme));
     applyTheme(nextTheme);
   }, [me?.id, me?.name]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(getThemeStorageKey(), selectedTheme);
-    applyTheme(selectedTheme);
+    const next = selectedTheme;
+    if (window.localStorage.getItem(getThemeStorageKey()) !== next) {
+      window.localStorage.setItem(getThemeStorageKey(), next);
+    }
+    applyTheme(next);
   }, [selectedTheme, me?.id, me?.name]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const nextLanguage = readStoredLanguage();
-    setSelectedLanguage(nextLanguage);
+    setSelectedLanguage((current) => (current === nextLanguage ? current : nextLanguage));
     applyLanguage(nextLanguage);
   }, [me?.id, me?.name]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(getLanguageStorageKey(), selectedLanguage);
-    applyLanguage(selectedLanguage);
+    const next = selectedLanguage;
+    if (window.localStorage.getItem(getLanguageStorageKey()) !== next) {
+      window.localStorage.setItem(getLanguageStorageKey(), next);
+    }
+    applyLanguage(next);
   }, [selectedLanguage, me?.id, me?.name]);
 
   return (
@@ -130,7 +136,7 @@ export function IdentityBar() {
           <div className="min-w-0">
           <p className="truncate font-display text-base font-semibold">Wish Jar 🫙</p>
           <p className="text-[11px] text-muted-foreground">
-            Thu Thủy &amp; Duy Đức · ngày thứ {daysTogether()}
+            Thu Thủy &amp; Duy Đức · {selectedLanguage === "zh" ? `第 ${daysTogether()} 天` : selectedLanguage === "en" ? `Day ${daysTogether()}` : `ngày thứ ${daysTogether()}`}
           </p>
           </div>
         </div>

@@ -152,11 +152,14 @@ function WishesPage() {
         <Chip active={category === "all"} onClick={() => setCategory("all")}>
           {copy.all}
         </Chip>
-        {WISH_CATEGORIES.map((c) => (
-          <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
-            {c.emoji} {c.label}
-          </Chip>
-        ))}
+        {WISH_CATEGORIES.map((c) => {
+          const item = labelOf(WISH_CATEGORIES, c.value, language);
+          return (
+            <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
+              {item.emoji} {item.label}
+            </Chip>
+          );
+        })}
       </div>
 
       <div className="flex gap-2">
@@ -219,8 +222,8 @@ function WishesPage() {
             <div>
               <p className="font-display text-xl font-bold">{drawn.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {labelOf(WISH_CATEGORIES, drawn.category).label} ·{" "}
-                {labelOf(DIFFICULTIES, drawn.difficulty).label}
+                {labelOf(WISH_CATEGORIES, drawn.category, language).label} ·{" "}
+                {labelOf(DIFFICULTIES, drawn.difficulty, language).label}
               </p>
             </div>
           ) : (
@@ -333,29 +336,35 @@ function WishDialog({
           <div className="space-y-1.5">
             <Label>{copy.category}</Label>
             <div className="flex flex-wrap gap-2">
-              {WISH_CATEGORIES.map((c) => (
-                <Chip
-                  key={c.value}
-                  active={category === c.value}
-                  onClick={() => setCategory(c.value)}
-                >
-                  {c.emoji} {c.label}
-                </Chip>
-              ))}
+              {WISH_CATEGORIES.map((c) => {
+                const item = labelOf(WISH_CATEGORIES, c.value, language);
+                return (
+                  <Chip
+                    key={c.value}
+                    active={category === c.value}
+                    onClick={() => setCategory(c.value)}
+                  >
+                    {item.emoji} {item.label}
+                  </Chip>
+                );
+              })}
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>{copy.difficulty}</Label>
             <div className="flex flex-wrap gap-2">
-              {DIFFICULTIES.map((d) => (
-                <Chip
-                  key={d.value}
-                  active={difficulty === d.value}
-                  onClick={() => setDifficulty(d.value)}
-                >
-                  {d.emoji} {d.label}
-                </Chip>
-              ))}
+              {DIFFICULTIES.map((d) => {
+                const item = labelOf(DIFFICULTIES, d.value, language);
+                return (
+                  <Chip
+                    key={d.value}
+                    active={difficulty === d.value}
+                    onClick={() => setDifficulty(d.value)}
+                  >
+                    {item.emoji} {item.label}
+                  </Chip>
+                );
+              })}
             </div>
           </div>
           <div className="space-y-1.5">
@@ -405,8 +414,8 @@ function WishCard({
   } as const;
   const [openComments, setOpenComments] = useState(false);
   const [draft, setDraft] = useState("");
-  const category = labelOf(WISH_CATEGORIES, wish.category);
-  const difficulty = labelOf(DIFFICULTIES, wish.difficulty);
+  const category = labelOf(WISH_CATEGORIES, wish.category, language);
+  const difficulty = labelOf(DIFFICULTIES, wish.difficulty, language);
   const mine = canManage(me, wish.proposed_by);
 
   async function react(emoji: string) {

@@ -132,11 +132,14 @@ function ActivitiesPage() {
         <Chip active={!filter} onClick={() => setFilter(null)}>
           {copy.mood}
         </Chip>
-        {ACTIVITY_TAGS.map((t) => (
-          <Chip key={t.value} active={filter === t.value} onClick={() => setFilter(t.value)}>
-            {t.label}
-          </Chip>
-        ))}
+        {ACTIVITY_TAGS.map((t) => {
+          const tag = labelOf(ACTIVITY_TAGS, t.value, language);
+          return (
+            <Chip key={t.value} active={filter === t.value} onClick={() => setFilter(t.value)}>
+              {tag.label}
+            </Chip>
+          );
+        })}
       </div>
 
       <div className="flex gap-2">
@@ -160,7 +163,7 @@ function ActivitiesPage() {
 
       <div className="grid gap-3">
         {visible.map((activity) => {
-          const category = labelOf(ACTIVITY_CATEGORIES, activity.category);
+          const category = labelOf(ACTIVITY_CATEGORIES, activity.category, language);
           const mine = canManage(me, activity.added_by);
           return (
             <article
@@ -196,7 +199,7 @@ function ActivitiesPage() {
                           key={tag}
                           className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground"
                         >
-                          {ACTIVITY_TAGS.find((t) => t.value === tag)?.label ?? tag}
+                          {labelOf(ACTIVITY_TAGS, tag, language).label}
                         </span>
                       ))}
                     </div>
@@ -303,13 +306,13 @@ function ActivitiesPage() {
         open={!!viewing}
         onOpenChange={(open) => !open && setViewing(null)}
         title={viewing?.name ?? ""}
-        subtitle={viewing ? `${labelOf(ACTIVITY_CATEGORIES, viewing.category).emoji} ${labelOf(ACTIVITY_CATEGORIES, viewing.category).label}${viewing.done ? copy.detailDone : ""}` : undefined}
+        subtitle={viewing ? `${labelOf(ACTIVITY_CATEGORIES, viewing.category, language).emoji} ${labelOf(ACTIVITY_CATEGORIES, viewing.category, language).label}${viewing.done ? copy.detailDone : ""}` : undefined}
         images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
       >
         {viewing?.place && <p className="flex items-center gap-1.5"><MapPin className="size-4 text-primary" />{viewing.place}</p>}
         {viewing && viewing.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {viewing.tags.map((tag) => <span key={tag} className="rounded-full bg-secondary px-2.5 py-1 text-xs text-secondary-foreground">{ACTIVITY_TAGS.find((item) => item.value === tag)?.label ?? tag}</span>)}
+            {viewing.tags.map((tag) => <span key={tag} className="rounded-full bg-secondary px-2.5 py-1 text-xs text-secondary-foreground">{labelOf(ACTIVITY_TAGS, tag, language).label}</span>)}
           </div>
         )}
         {viewing?.note && <p className="whitespace-pre-wrap text-muted-foreground">{viewing.note}</p>}
@@ -330,6 +333,7 @@ function ActivityDialog({
   onDone: () => void;
 }) {
   const { me, track } = useIdentity();
+  const language = useAppLanguage();
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>("cafe");
   const [place, setPlace] = useState("");
@@ -394,35 +398,41 @@ function ActivityDialog({
           <div className="space-y-1.5">
             <Label>Nhóm</Label>
             <div className="flex flex-wrap gap-2">
-              {ACTIVITY_CATEGORIES.map((c) => (
-                <Chip
-                  key={c.value}
-                  active={category === c.value}
-                  onClick={() => setCategory(c.value)}
-                >
-                  {c.emoji} {c.label}
-                </Chip>
-              ))}
+              {ACTIVITY_CATEGORIES.map((c) => {
+                const item = labelOf(ACTIVITY_CATEGORIES, c.value, language);
+                return (
+                  <Chip
+                    key={c.value}
+                    active={category === c.value}
+                    onClick={() => setCategory(c.value)}
+                  >
+                    {item.emoji} {item.label}
+                  </Chip>
+                );
+              })}
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Tâm trạng phù hợp</Label>
             <div className="flex flex-wrap gap-2">
-              {ACTIVITY_TAGS.map((t) => (
-                <Chip
-                  key={t.value}
-                  active={tags.includes(t.value)}
-                  onClick={() =>
-                    setTags((prev) =>
-                      prev.includes(t.value)
-                        ? prev.filter((x) => x !== t.value)
-                        : [...prev, t.value],
-                    )
-                  }
-                >
-                  {t.label}
-                </Chip>
-              ))}
+              {ACTIVITY_TAGS.map((t) => {
+                const item = labelOf(ACTIVITY_TAGS, t.value, language);
+                return (
+                  <Chip
+                    key={t.value}
+                    active={tags.includes(t.value)}
+                    onClick={() =>
+                      setTags((prev) =>
+                        prev.includes(t.value)
+                          ? prev.filter((x) => x !== t.value)
+                          : [...prev, t.value],
+                      )
+                    }
+                  >
+                    {item.label}
+                  </Chip>
+                );
+              })}
             </div>
           </div>
           <div className="space-y-1.5">

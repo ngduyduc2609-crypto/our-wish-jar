@@ -237,7 +237,7 @@ function HomePage() {
             <div>
               <p className="font-display text-xl font-bold">{draw.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {labelOf(WISH_CATEGORIES, draw.category).label}
+                {labelOf(WISH_CATEGORIES, draw.category, language).label}
               </p>
             </div>
           ) : (

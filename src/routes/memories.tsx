@@ -198,6 +198,7 @@ function MemoryDialog({
   onDone: () => void;
 }) {
   const { me, track } = useIdentity();
+  const language = useAppLanguage();
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(todayKey());
@@ -212,6 +213,19 @@ function MemoryDialog({
     setRating(memory?.rating ?? 5);
     setImages(imageAssets(memory?.images, memory?.image_url, memory?.image_pos));
   }, [open, memory]);
+
+  const dialogCopy = {
+    edit: language === "zh" ? "编辑回忆" : language === "en" ? "Edit memory" : "Sửa kỷ niệm",
+    new: language === "zh" ? "新回忆" : language === "en" ? "New memory" : "Kỷ niệm mới",
+    titleLabel: language === "zh" ? "标题" : language === "en" ? "Title" : "Tiêu đề",
+    dateLabel: language === "zh" ? "日期" : language === "en" ? "Date" : "Ngày",
+    ratingLabel: language === "zh" ? "评分" : language === "en" ? "Rating" : "Chấm điểm",
+    noteLabel: language === "zh" ? "感受" : language === "en" ? "Note" : "Cảm nhận",
+    saveChanges: language === "zh" ? "保存修改" : language === "en" ? "Save changes" : "Lưu thay đổi",
+    saveMemory: language === "zh" ? "保存回忆" : language === "en" ? "Save memory" : "Lưu kỷ niệm",
+    updateSuccess: language === "zh" ? "已更新 💕" : language === "en" ? "Updated 💕" : "Đã cập nhật 💕",
+    createSuccess: language === "zh" ? "已保存回忆 💕" : language === "en" ? "Saved memory 💕" : "Đã lưu kỷ niệm 💕",
+  } as const;
 
   const save = useMutation({
     mutationFn: async () => {
@@ -246,7 +260,7 @@ function MemoryDialog({
     onSuccess: () => {
       onOpenChange(false);
       onDone();
-      toast.success(memory ? copy.updateSuccess : copy.createSuccess);
+      toast.success(memory ? dialogCopy.updateSuccess : dialogCopy.createSuccess);
     },
   });
 
@@ -254,19 +268,19 @@ function MemoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-display">{memory ? copy.edit : copy.new}</DialogTitle>
+          <DialogTitle className="font-display">{memory ? dialogCopy.edit : dialogCopy.new}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>{copy.titleLabel}</Label>
+            <Label>{dialogCopy.titleLabel}</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>{copy.dateLabel}</Label>
+            <Label>{dialogCopy.dateLabel}</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>{copy.ratingLabel}</Label>
+            <Label>{dialogCopy.ratingLabel}</Label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button key={n} type="button" onClick={() => setRating(n)} className="text-2xl">
@@ -276,7 +290,7 @@ function MemoryDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>{copy.noteLabel}</Label>
+            <Label>{dialogCopy.noteLabel}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           </div>
           <MultiImagePicker value={images} onChange={setImages} />
@@ -285,7 +299,7 @@ function MemoryDialog({
             disabled={!title.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            {memory ? copy.saveChanges : copy.saveMemory}
+            {memory ? dialogCopy.saveChanges : dialogCopy.saveMemory}
           </Button>
         </div>
       </DialogContent>

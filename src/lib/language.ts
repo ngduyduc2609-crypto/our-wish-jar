@@ -39,11 +39,12 @@ export function notifyLanguageChange() {
 }
 
 export function useAppLanguage() {
-  const [language, setLanguage] = useState<AppLanguage>("vi");
+  const [language, setLanguage] = useState<AppLanguage>(() => readStoredLanguage());
 
   useEffect(() => {
     const sync = () => {
-      setLanguage(readStoredLanguage());
+      const next = readStoredLanguage();
+      setLanguage((current) => (current === next ? current : next));
     };
 
     sync();
@@ -69,7 +70,11 @@ export function useAppLanguage() {
 
 export function applyLanguage(language: AppLanguage) {
   if (typeof document === "undefined") return;
+  const current = document.documentElement.dataset.lang as AppLanguage | undefined;
   document.documentElement.lang = language;
   document.documentElement.dataset.lang = language;
-  notifyLanguageChange();
+
+  if (current !== language) {
+    notifyLanguageChange();
+  }
 }

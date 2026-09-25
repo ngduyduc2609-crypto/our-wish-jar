@@ -18,7 +18,7 @@ export function BottomNav() {
   useEffect(() => {
     const sync = () => {
       const stored = readStoredLanguage();
-      setLanguage(stored);
+      setLanguage((current) => (current === stored ? current : stored));
       applyLanguage(stored);
     };
 

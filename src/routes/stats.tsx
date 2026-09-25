@@ -72,6 +72,8 @@ function StatsPage() {
 
   const byCategory = WISH_CATEGORIES.map((c) => ({
     ...c,
+    label: labelOf(WISH_CATEGORIES, c.value, language).label,
+    emoji: labelOf(WISH_CATEGORIES, c.value, language).emoji,
     count: wishes.filter((w) => w.category === c.value).length,
     done: wishes.filter((w) => w.category === c.value && w.completed).length,
   })).filter((c) => c.count > 0);
