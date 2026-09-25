@@ -117,7 +117,7 @@ function HomePage() {
       <section className="paper rounded-3xl p-5 text-center">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">{copy.together}</p>
         <p className="font-display text-5xl font-bold text-primary">{days}</p>
-        <p className="text-sm text-muted-foreground">{days} {copy.daysLabel}</p>
+        <p className="text-sm text-muted-foreground">{copy.daysLabel}</p>
       </section>
 
        <section className="paper section-lift overflow-hidden rounded-3xl px-4 pb-5 pt-3 text-center">
