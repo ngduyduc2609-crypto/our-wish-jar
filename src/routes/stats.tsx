@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 
+import { useAppLanguage } from "@/lib/language";
+
 import { useIdentity } from "@/lib/identity";
 import {
   computeStreak,
@@ -37,6 +39,27 @@ const MILESTONES = [100, 200, 300, 365, 500, 730, 1000];
 
 function StatsPage() {
   const { members } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    back: language === "zh" ? "返回首页" : language === "en" ? "Back to home" : "Quay lại trang Nhà",
+    title: language === "zh" ? "足迹" : language === "en" ? "Trace" : "Dấu ấn",
+    subtitle: language === "zh" ? "回顾两人的旅程" : language === "en" ? "Look back at our journey" : "Nhìn lại hành trình của hai đứa",
+    stats: {
+      days: language === "zh" ? "在一起的日子" : language === "en" ? "Days together" : "Ngày bên nhau",
+      wishes: language === "zh" ? "已完成的愿望" : language === "en" ? "Wishes completed" : "Điều ước đã hoàn thành",
+      foods: language === "zh" ? "已吃过的美食" : language === "en" ? "Foods tried" : "Món đã ăn",
+      activities: language === "zh" ? "已完成的活动" : language === "en" ? "Activities done" : "Hoạt động đã làm",
+      memories: language === "zh" ? "已保存的回忆" : language === "en" ? "Memories saved" : "Kỷ niệm đã lưu",
+      streak: language === "zh" ? "最高连击" : language === "en" ? "Best streak" : "Chuỗi kỷ lục",
+    },
+    streakTitle: language === "zh" ? "一起的连击" : language === "en" ? "Streak together" : "Chuỗi ngày cùng nhau",
+    streakDesc: language === "zh" ? "目前：" : language === "en" ? "Current: " : "Hiện tại: ",
+    wishesByGroup: language === "zh" ? "按分组的愿望" : language === "en" ? "Wishes by group" : "Điều ước theo nhóm",
+    noWishes: language === "zh" ? "还没有愿望。" : language === "en" ? "No wishes yet." : "Chưa có điều ước nào.",
+    milestones: language === "zh" ? "里程碑" : language === "en" ? "Milestones" : "Cột mốc",
+    proposer: language === "zh" ? "谁提议得更多" : language === "en" ? "Who proposes more" : "Ai đề xuất nhiều hơn",
+    autoSaved: language === "zh" ? "所有内容都会自动保存给两个人。" : language === "en" ? "Everything is saved automatically for both of us." : "Mọi thứ đều được lưu tự động cho cả hai.",
+  } as const;
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });
   const { data: foods = [] } = useQuery({ queryKey: ["foods"], queryFn: fetchFoods });
   const { data: activities = [] } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
@@ -56,34 +79,34 @@ function StatsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Link to="/" aria-label="Quay lại trang Nhà" className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-card text-foreground">
+        <Link to="/" aria-label={copy.back} className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-card text-foreground">
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <h1 className="font-display text-2xl font-bold">Dấu ấn</h1>
-          <p className="text-sm text-muted-foreground">Nhìn lại hành trình của hai đứa</p>
+          <h1 className="font-display text-2xl font-bold">{copy.title}</h1>
+          <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Stat label="Ngày bên nhau" value={days} emoji="💗" />
-        <Stat label="Điều ước đã hoàn thành" value={wishes.filter((w) => w.completed).length} emoji="🫙" />
-        <Stat label="Món đã ăn" value={foods.filter((f) => f.tried).length} emoji="🍜" />
-        <Stat label="Hoạt động đã làm" value={activities.filter((a) => a.done).length} emoji="🎡" />
-        <Stat label="Kỷ niệm đã lưu" value={memories.length} emoji="📸" />
-        <Stat label="Chuỗi kỷ lục" value={`${streak.best} ngày`} emoji="🔥" />
+        <Stat label={copy.stats.days} value={days} emoji="💗" />
+        <Stat label={copy.stats.wishes} value={wishes.filter((w) => w.completed).length} emoji="🫙" />
+        <Stat label={copy.stats.foods} value={foods.filter((f) => f.tried).length} emoji="🍜" />
+        <Stat label={copy.stats.activities} value={activities.filter((a) => a.done).length} emoji="🎡" />
+        <Stat label={copy.stats.memories} value={memories.length} emoji="📸" />
+        <Stat label={copy.stats.streak} value={language === "zh" ? `${streak.best} 天` : language === "en" ? `${streak.best} days` : `${streak.best} ngày`} emoji="🔥" />
       </div>
 
       <section className="paper rounded-3xl p-4">
-        <h2 className="font-display text-lg font-semibold">Chuỗi ngày cùng nhau</h2>
+        <h2 className="font-display text-lg font-semibold">{copy.streakTitle}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Hiện tại: <span className="font-semibold text-foreground">{streak.current} ngày</span> · Kỷ
-          lục: {streak.best} ngày. Chuỗi chỉ tăng khi cả hai cùng ghi gì đó trong ngày.
+          {copy.streakDesc}
+          <span className="font-semibold text-foreground">{streak.current} {language === "zh" ? "天" : language === "en" ? "days" : "ngày"}</span> · {language === "zh" ? "最高记录" : language === "en" ? "Best" : "Kỷ lục"}: {streak.best} {language === "zh" ? "天" : language === "en" ? "days" : "ngày"}. {language === "zh" ? "只有双方都记录过当天，连击才会增加。" : language === "en" ? "The streak only increases when both of you log something on the same day." : "Chuỗi chỉ tăng khi cả hai cùng ghi gì đó trong ngày."}
         </p>
       </section>
 
       <section className="paper rounded-3xl p-4">
-        <h2 className="font-display text-lg font-semibold">Điều ước theo nhóm</h2>
+        <h2 className="font-display text-lg font-semibold">{copy.wishesByGroup}</h2>
         <div className="mt-3 space-y-2">
           {byCategory.map((c) => (
             <div key={c.value}>
@@ -104,32 +127,32 @@ function StatsPage() {
             </div>
           ))}
           {byCategory.length === 0 && (
-            <p className="text-sm text-muted-foreground">Chưa có điều ước nào.</p>
+            <p className="text-sm text-muted-foreground">{copy.noWishes}</p>
           )}
         </div>
       </section>
 
       <section className="paper rounded-3xl p-4">
-        <h2 className="font-display text-lg font-semibold">Cột mốc</h2>
+        <h2 className="font-display text-lg font-semibold">{copy.milestones}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {MILESTONES.map((m) => (
             <li key={m} className="flex items-center justify-between">
-              <span>{m} ngày bên nhau</span>
+              <span>{m} {language === "zh" ? "天在一起" : language === "en" ? "days together" : "ngày bên nhau"}</span>
               <span className={days >= m ? "text-primary" : "text-muted-foreground"}>
-                {days >= m ? "đã qua ✓" : `còn ${m - days} ngày`}
+                {days >= m ? (language === "zh" ? "已达成 ✓" : language === "en" ? "passed ✓" : "đã qua ✓") : (language === "zh" ? `还差 ${m - days} 天` : language === "en" ? `${m - days} days left` : `còn ${m - days} ngày`)}
               </span>
             </li>
           ))}
         </ul>
         {nextMilestone && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Sắp tới là mốc {nextMilestone} ngày — chuẩn bị gì chưa nè? 🎉
+            {language === "zh" ? `即将到来 ${nextMilestone} 天里程碑 — 还准备好了吗？ 🎉` : language === "en" ? `Next up is ${nextMilestone} days — ready for it? 🎉` : `Sắp tới là mốc ${nextMilestone} ngày — chuẩn bị gì chưa nè? 🎉`}
           </p>
         )}
       </section>
 
       <section className="paper rounded-3xl p-4">
-        <h2 className="font-display text-lg font-semibold">Ai đề xuất nhiều hơn</h2>
+        <h2 className="font-display text-lg font-semibold">{copy.proposer}</h2>
         <div className="mt-3 space-y-2 text-sm">
           {members.map((member) => (
             <div key={member.id} className="flex items-center justify-between">
@@ -137,7 +160,7 @@ function StatsPage() {
                 {member.emoji} {member.name}
               </span>
               <span className="text-muted-foreground">
-                {wishes.filter((w) => w.proposed_by === member.id).length} điều ước
+                {wishes.filter((w) => w.proposed_by === member.id).length} {language === "zh" ? "个愿望" : language === "en" ? "wishes" : "điều ước"}
               </span>
             </div>
           ))}
@@ -145,7 +168,7 @@ function StatsPage() {
       </section>
 
       <p className="pb-2 text-center text-xs text-muted-foreground">
-        {labelOf(WISH_CATEGORIES, "other").emoji} Mọi thứ đều được lưu tự động cho cả hai.
+        {labelOf(WISH_CATEGORIES, "other").emoji} {copy.autoSaved}
       </p>
     </div>
   );

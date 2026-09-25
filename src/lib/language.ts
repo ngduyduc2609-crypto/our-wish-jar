@@ -36,6 +36,35 @@ export function notifyLanguageChange() {
   }
 }
 
+export function useAppLanguage() {
+  const [language, setLanguage] = useState<AppLanguage>("vi");
+
+  useEffect(() => {
+    const sync = () => {
+      setLanguage(readStoredLanguage());
+    };
+
+    sync();
+
+    const onStorage = () => sync();
+    const onLanguageChange = () => sync();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", onStorage);
+      window.addEventListener("wishjar-language-change", onLanguageChange);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", onStorage);
+        window.removeEventListener("wishjar-language-change", onLanguageChange);
+      }
+    };
+  }, []);
+
+  return language;
+}
+
 export function applyLanguage(language: AppLanguage) {
   if (typeof document === "undefined") return;
   document.documentElement.lang = language;

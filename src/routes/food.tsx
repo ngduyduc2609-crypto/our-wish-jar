@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Shuffle, Star, Trash2, MapPin, Pencil } from "lucide-react";
+
+import { useAppLanguage } from "@/lib/language";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,24 @@ export const Route = createFileRoute("/food")({
 
 function FoodPage() {
   const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    title: language === "vi" ? "Ăn gì đây ta" : language === "zh" ? "今天吃什么" : "What’s for food?",
+    subtitle: language === "vi" ? "món trong danh sách" : language === "zh" ? "个在清单里" : "items in the list",
+    tried: language === "vi" ? "món đã thử" : language === "zh" ? "个已尝试" : "tried items",
+    all: language === "vi" ? "Tất cả" : language === "zh" ? "全部" : "All",
+    triedTab: language === "vi" ? "Đã thử" : language === "zh" ? "已尝试" : "Tried",
+    add: language === "vi" ? "Thêm món / quán" : language === "zh" ? "添加美食" : "Add place / dish",
+    draw: language === "vi" ? "Quay" : language === "zh" ? "抽奖" : "Draw",
+    update: language === "vi" ? "Cập nhật đánh giá" : language === "zh" ? "更新评价" : "Update rating",
+    mark: language === "vi" ? "Đã ăn rồi" : language === "zh" ? "已吃过" : "Already tried",
+    empty: language === "vi" ? "Chưa có món nào. Thêm món muốn thử nhé 🍜" : language === "zh" ? "还没有美食，添加一个想尝试的吧 🍜" : "No dishes yet. Add one you want to try 🍜",
+    randomTitle: language === "vi" ? "Hôm nay mình ăn..." : language === "zh" ? "今天吃什么..." : "What should we eat today...",
+    randomEmpty: language === "vi" ? "Danh sách món đang trống" : language === "zh" ? "清单里还没有内容" : "The list is empty",
+    markEaten: language === "vi" ? "Đánh dấu đã ăn" : language === "zh" ? "标记已吃过" : "Mark as eaten",
+    detailTried: language === "vi" ? "Đã thử" : language === "zh" ? "已尝试" : "Tried",
+    detailList: language === "vi" ? "Trong danh sách" : language === "zh" ? "在清单中" : "In list",
+  } as const;
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "tried">("all");
   const [drawOpen, setDrawOpen] = useState(false);
@@ -79,22 +99,22 @@ function FoodPage() {
     <div className="space-y-4">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-bold">Ăn gì đây ta</h1>
+          <h1 className="font-display text-2xl font-bold">{copy.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {foods.length} món trong danh sách · {triedList.length} món đã thử
+            {foods.length} {copy.subtitle} · {triedList.length} {copy.tried}
           </p>
         </div>
         <Button className="shrink-0 rounded-full" onClick={draw} disabled={!foods.length}>
-          <Shuffle className="size-4" /> Quay
+          <Shuffle className="size-4" /> {copy.draw}
         </Button>
       </div>
 
       <div className="flex gap-2">
         <Chip active={tab === "all"} onClick={() => setTab("all")}>
-          Tất cả
+          {copy.all}
         </Chip>
         <Chip active={tab === "tried"} onClick={() => setTab("tried")}>
-          Đã thử
+          {copy.triedTab}
         </Chip>
       </div>
 
@@ -105,7 +125,7 @@ function FoodPage() {
           setFormOpen(true);
         }}
       >
-        <Plus className="size-4" /> Thêm món / quán
+        <Plus className="size-4" /> {copy.add}
       </Button>
 
       <FoodDialog open={formOpen} onOpenChange={setFormOpen} food={editing} onDone={refresh} />
@@ -181,7 +201,7 @@ function FoodPage() {
                   }}
                 >
                   <Star className="size-4" />{" "}
-                  {food.tried ? "Cập nhật đánh giá" : "Đã ăn rồi"}
+                  {food.tried ? copy.update : copy.mark}
                 </Button>
               </div>
             </article>
@@ -189,7 +209,7 @@ function FoodPage() {
         })}
         {visible.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
-            Chưa có món nào. Thêm món muốn thử nhé 🍜
+            {copy.empty}
           </p>
         )}
       </div>
@@ -197,7 +217,7 @@ function FoodPage() {
       <RandomDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
-        title="Hôm nay mình ăn..."
+        title={copy.randomTitle}
         emoji="🍜"
         onDrawAgain={draw}
         result={
@@ -207,7 +227,7 @@ function FoodPage() {
               <p className="mt-1 text-sm text-muted-foreground">{drawn.place ?? "Chưa ghi quán"}</p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Danh sách món đang trống</p>
+            <p className="text-sm text-muted-foreground">{copy.randomEmpty}</p>
           )
         }
       >
@@ -219,7 +239,7 @@ function FoodPage() {
               setRatingTarget(drawn);
             }}
           >
-            Đánh dấu đã ăn
+            {copy.markEaten}
           </Button>
         )}
       </RandomDrawDialog>
@@ -230,7 +250,7 @@ function FoodPage() {
         open={!!viewing}
         onOpenChange={(open) => !open && setViewing(null)}
         title={viewing?.name ?? ""}
-        subtitle={viewing?.tried ? "Đã thử" : "Trong danh sách"}
+        subtitle={viewing?.tried ? copy.detailTried : copy.detailList}
         images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
       >
         {viewing?.place && <p className="flex items-center gap-1.5"><MapPin className="size-4 text-primary" />{viewing.place}</p>}

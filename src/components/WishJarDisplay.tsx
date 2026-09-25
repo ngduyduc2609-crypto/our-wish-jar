@@ -85,9 +85,10 @@ const jarParticles = [
 
 export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
   const visible = wishes.filter((wish) => !wish.completed);
+  const language = typeof window !== "undefined" ? (document.documentElement.dataset.lang as "vi" | "en" | "zh" | undefined) ?? "vi" : "vi";
 
   return (
-    <div className="wish-jar-scene" aria-label={`Lọ chứa ${wishes.length} điều ước đang chờ`}>
+    <div className="wish-jar-scene" aria-label={language === "zh" ? `装着 ${wishes.length} 个等待中的愿望` : language === "en" ? `Jar holding ${wishes.length} wishes waiting` : `Lọ chứa ${wishes.length} điều ước đang chờ`}>
       <div className="wish-jar-neck" aria-hidden="true">
         <span className="wish-jar-ribbon" />
       </div>
@@ -132,7 +133,7 @@ export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
           {visible.length === 0 ? (
             <div className="wish-jar-empty">
               <span>💌</span>
-              <p>Lọ đang chờ điều ước mới</p>
+              <p>{language === "zh" ? "等待新的愿望进入" : language === "en" ? "The jar is waiting for a new wish" : "Lọ đang chờ điều ước mới"}</p>
             </div>
           ) : null}
         </div>

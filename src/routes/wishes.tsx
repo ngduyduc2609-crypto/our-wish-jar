@@ -41,6 +41,7 @@ import {
   labelOf,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useAppLanguage } from "@/lib/language";
 
 export const Route = createFileRoute("/wishes")({
   head: () => ({
@@ -62,6 +63,22 @@ export const Route = createFileRoute("/wishes")({
 
 function WishesPage() {
   const { me, members, track } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    title: language === "zh" ? "许愿罐" : language === "en" ? "Wish Jar" : "Lọ điều ước",
+    pending: language === "zh" ? "个待完成" : language === "en" ? "wishes waiting" : "điều còn chờ",
+    done: language === "zh" ? "已完成" : language === "en" ? "done" : "đã xong",
+    all: language === "vi" ? "Tất cả" : language === "zh" ? "全部" : "All",
+    waiting: language === "vi" ? "Đang chờ" : language === "zh" ? "待完成" : "Waiting",
+    completed: language === "vi" ? "Đã hoàn thành" : language === "zh" ? "已完成" : "Completed",
+    add: language === "vi" ? "Thêm điều ước" : language === "zh" ? "添加愿望" : "Add wish",
+    draw: language === "zh" ? "抽取" : language === "en" ? "Draw" : "Rút",
+    empty: language === "vi" ? "Chưa có điều ước nào ở đây. Thêm một điều đi nào ✨" : language === "zh" ? "这里还没有愿望，添加一个吧 ✨" : "No wishes here yet. Add one ✨",
+    drawTitle: language === "vi" ? "Điều ước hôm nay là..." : language === "zh" ? "今日愿望是..." : "Today’s wish is...",
+    emptyJar: language === "vi" ? "Lọ đang trống rồi" : language === "zh" ? "许愿罐还空着" : "The jar is empty",
+    unknown: language === "zh" ? "某人" : language === "en" ? "Someone" : "Ai đó",
+    deleted: language === "zh" ? "已删除" : language === "en" ? "Deleted" : "Đã xoá",
+  } as const;
   const qc = useQueryClient();
   const [category, setCategory] = useState<string>("all");
   const [showDone, setShowDone] = useState(false);
@@ -116,9 +133,9 @@ function WishesPage() {
     <div className="space-y-4">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-bold">Lọ điều ước</h1>
+          <h1 className="font-display text-2xl font-bold">{copy.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {pending.length} điều còn chờ · {wishes.length - pending.length} đã xong
+            {pending.length} {copy.pending} · {wishes.length - pending.length} {copy.done}
           </p>
         </div>
         <Button
@@ -127,13 +144,13 @@ function WishesPage() {
           onClick={draw}
           disabled={!pending.length}
         >
-          <Shuffle className="size-4" /> Rút
+          <Shuffle className="size-4" /> {copy.draw}
         </Button>
       </div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <Chip active={category === "all"} onClick={() => setCategory("all")}>
-          Tất cả
+          {copy.all}
         </Chip>
         {WISH_CATEGORIES.map((c) => (
           <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
@@ -144,10 +161,10 @@ function WishesPage() {
 
       <div className="flex gap-2">
         <Chip active={!showDone} onClick={() => setShowDone(false)}>
-          Đang chờ
+          {copy.waiting}
         </Chip>
         <Chip active={showDone} onClick={() => setShowDone(true)}>
-          Đã hoàn thành
+          {copy.completed}
         </Chip>
       </div>
 
@@ -158,7 +175,7 @@ function WishesPage() {
           setFormOpen(true);
         }}
       >
-        <Plus className="size-4" /> Thêm điều ước
+        <Plus className="size-4" /> {copy.add}
       </Button>
 
       <WishDialog
@@ -186,7 +203,7 @@ function WishesPage() {
         ))}
         {visible.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
-            Chưa có điều ước nào ở đây. Thêm một điều đi nào ✨
+            {copy.empty}
           </p>
         )}
       </div>
@@ -194,7 +211,7 @@ function WishesPage() {
       <RandomDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
-        title="Điều ước hôm nay là..."
+        title={copy.drawTitle}
         emoji="🫙"
         onDrawAgain={draw}
         result={
@@ -207,7 +224,7 @@ function WishesPage() {
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Lọ đang trống rồi</p>
+            <p className="text-sm text-muted-foreground">{copy.emptyJar}</p>
           )
         }
       />
@@ -227,6 +244,22 @@ function WishDialog({
   onDone: () => void;
 }) {
   const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    edit: language === "zh" ? "编辑愿望" : language === "en" ? "Edit wish" : "Sửa điều ước",
+    new: language === "zh" ? "新愿望" : language === "en" ? "New wish" : "Điều ước mới",
+    want: language === "zh" ? "我想..." : language === "en" ? "I want..." : "Mình muốn...",
+    note: language === "zh" ? "备注" : language === "en" ? "Note" : "Ghi chú",
+    category: language === "zh" ? "类别" : language === "en" ? "Category" : "Nhóm",
+    difficulty: language === "zh" ? "难度" : language === "en" ? "Difficulty" : "Độ khó",
+    deadline: language === "zh" ? "希望在此之前完成" : language === "en" ? "Goal date" : "Mong hoàn thành trước",
+    save: language === "zh" ? "保存修改" : language === "en" ? "Save changes" : "Lưu thay đổi",
+    add: language === "zh" ? "放进许愿罐" : language === "en" ? "Add to jar" : "Bỏ vào lọ",
+    placeholder: language === "zh" ? "去大理看海" : language === "en" ? "Take a trip to the coast" : "Đi Đà Lạt ngắm thông",
+    error: language === "zh" ? "无法保存愿望" : language === "en" ? "Could not save wish" : "Không thể lưu điều ước",
+    successUpdate: language === "zh" ? "愿望已更新 ✨" : language === "en" ? "Wish updated ✨" : "Đã cập nhật điều ước ✨",
+    successCreate: language === "zh" ? "已放进许愿罐 🫙" : language === "en" ? "Added to the jar 🫙" : "Đã bỏ vào lọ điều ước 🫙",
+  } as const;
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
   const [category, setCategory] = useState<string>("experience");
@@ -281,24 +314,24 @@ function WishDialog({
       <DialogContent className="max-h-[85svh] overflow-y-auto rounded-3xl">
         <DialogHeader>
           <DialogTitle className="font-display">
-            {wish ? "Sửa điều ước" : "Điều ước mới"}
+            {wish ? copy.edit : copy.new}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Mình muốn...</Label>
+            <Label>{copy.want}</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Đi Đà Lạt ngắm thông"
+              placeholder={copy.placeholder}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Ghi chú</Label>
+            <Label>{copy.note}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           </div>
           <div className="space-y-1.5">
-            <Label>Nhóm</Label>
+            <Label>{copy.category}</Label>
             <div className="flex flex-wrap gap-2">
               {WISH_CATEGORIES.map((c) => (
                 <Chip
@@ -312,7 +345,7 @@ function WishDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Độ khó</Label>
+            <Label>{copy.difficulty}</Label>
             <div className="flex flex-wrap gap-2">
               {DIFFICULTIES.map((d) => (
                 <Chip
@@ -326,7 +359,7 @@ function WishDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Mong hoàn thành trước</Label>
+            <Label>{copy.deadline}</Label>
             <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </div>
           <MultiImagePicker value={images} onChange={setImages} />
@@ -335,7 +368,7 @@ function WishDialog({
             disabled={!title.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            {wish ? "Lưu thay đổi" : "Bỏ vào lọ"}
+            {wish ? copy.save : copy.add}
           </Button>
         </div>
       </DialogContent>
@@ -361,6 +394,15 @@ function WishCard({
   onToggleComplete: () => void;
 }) {
   const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    before: language === "zh" ? "之前" : language === "en" ? "before" : "trước",
+    proposed: language === "zh" ? "提出了这个愿望" : language === "en" ? "proposed" : "đề xuất",
+    markDone: language === "zh" ? "标记已完成" : language === "en" ? "Mark complete" : "Đánh dấu hoàn thành",
+    deleted: language === "zh" ? "已删除" : language === "en" ? "Deleted" : "Đã xoá",
+    send: language === "zh" ? "发送" : language === "en" ? "Send" : "Gửi",
+    commentPlaceholder: language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó...",
+  } as const;
   const [openComments, setOpenComments] = useState(false);
   const [draft, setDraft] = useState("");
   const category = labelOf(WISH_CATEGORIES, wish.category);
@@ -390,7 +432,7 @@ function WishCard({
     await deleteRow("wishes", wish.id);
     track("xoá điều ước", wish.title);
     onChanged();
-    toast.success("Đã xoá");
+    toast.success(copy.deleted);
   }
 
   return (
@@ -406,7 +448,7 @@ function WishCard({
             <span>
               {difficulty.emoji} {difficulty.label}
             </span>
-            {wish.deadline && <span>· trước {formatDate(wish.deadline)}</span>}
+            {wish.deadline && <span>· {copy.before} {formatDate(wish.deadline)}</span>}
           </div>
           <h2
             className={cn(
@@ -418,13 +460,13 @@ function WishCard({
           </h2>
           {wish.note && <p className="mt-1 text-sm text-muted-foreground">{wish.note}</p>}
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {memberName(wish.proposed_by)} đề xuất
+            {memberName(wish.proposed_by)} {copy.proposed}
           </p>
         </div>
         <button
           type="button"
           onClick={onToggleComplete}
-          aria-label="Đánh dấu hoàn thành"
+          aria-label={copy.markDone}
           className={cn(
             "wish-card-button grid size-9 shrink-0 place-items-center border transition-colors",
             wish.completed ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card/80",
@@ -464,7 +506,7 @@ function WishCard({
             <button
               type="button"
               onClick={onEdit}
-              aria-label="Sửa điều ước"
+              aria-label={language === "zh" ? "编辑愿望" : language === "en" ? "Edit wish" : "Sửa điều ước"}
               className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
             >
               <Pencil className="size-3.5" />
@@ -472,7 +514,7 @@ function WishCard({
             <button
               type="button"
               onClick={() => void remove()}
-              aria-label="Xoá điều ước"
+              aria-label={language === "zh" ? "删除愿望" : language === "en" ? "Delete wish" : "Xoá điều ước"}
               className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
             >
               <Trash2 className="size-3.5" />
@@ -493,7 +535,7 @@ function WishCard({
             <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Nhắn gì đó..."
+              placeholder={copy.commentPlaceholder}
               className="rounded-2xl"
             />
             <Button
@@ -501,7 +543,7 @@ function WishCard({
               onClick={() => void sendComment()}
               disabled={!draft.trim()}
             >
-              Gửi
+              {copy.send}
             </Button>
           </div>
         </div>

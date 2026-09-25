@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Shuffle, Trash2, MapPin, Check, Pencil } from "lucide-react";
+
+import { useAppLanguage } from "@/lib/language";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +53,22 @@ export const Route = createFileRoute("/activities")({
 
 function ActivitiesPage() {
   const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    title: language === "vi" ? "Làm gì hôm nay" : language === "zh" ? "今天做什么" : "What to do today",
+    subtitle: language === "vi" ? "ý tưởng" : language === "zh" ? "个想法" : "ideas",
+    doneText: language === "vi" ? "đã làm" : language === "zh" ? "已完成" : "done",
+    all: language === "vi" ? "Tất cả" : language === "zh" ? "全部" : "All",
+    doneTab: language === "vi" ? "Đã làm" : language === "zh" ? "已完成" : "Done",
+    mood: language === "vi" ? "Mọi tâm trạng" : language === "zh" ? "所有心情" : "All moods",
+    add: language === "vi" ? "Thêm hoạt động" : language === "zh" ? "添加活动" : "Add activity",
+    draw: language === "vi" ? "Quay" : language === "zh" ? "随机" : "Draw",
+    empty: language === "vi" ? "Chưa có hoạt động nào. Thêm một ý tưởng nhé ✨" : language === "zh" ? "还没有活动，添加一个想法吧 ✨" : "No activities yet. Add an idea ✨",
+    randomTitle: language === "vi" ? "Hôm nay mình đi..." : language === "zh" ? "今天去哪里..." : "Where should we go...",
+    randomEmpty: language === "vi" ? "Không có hoạt động nào hợp bộ lọc" : language === "zh" ? "没有符合筛选条件的活动" : "No activities match the filter",
+    markDone: language === "vi" ? "Đánh dấu đã làm" : language === "zh" ? "标记已完成" : "Mark as done",
+    detailDone: language === "vi" ? " · Đã làm" : language === "zh" ? " · 已完成" : " · Done",
+  } as const;
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "done">("all");
   const [filter, setFilter] = useState<string | null>(null);
@@ -100,19 +118,19 @@ function ActivitiesPage() {
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">Làm gì hôm nay</h1>
+          <h1 className="font-display text-2xl font-bold">{copy.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {activities.length} ý tưởng · {done.length} đã làm
+            {activities.length} {copy.subtitle} · {done.length} {copy.doneText}
           </p>
         </div>
         <Button className="rounded-full" onClick={draw} disabled={!pool.length}>
-          <Shuffle className="size-4" /> Quay
+          <Shuffle className="size-4" /> {copy.draw}
         </Button>
       </div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <Chip active={!filter} onClick={() => setFilter(null)}>
-          Mọi tâm trạng
+          {copy.mood}
         </Chip>
         {ACTIVITY_TAGS.map((t) => (
           <Chip key={t.value} active={filter === t.value} onClick={() => setFilter(t.value)}>
@@ -123,10 +141,10 @@ function ActivitiesPage() {
 
       <div className="flex gap-2">
         <Chip active={tab === "all"} onClick={() => setTab("all")}>
-          Tất cả
+          {copy.all}
         </Chip>
         <Chip active={tab === "done"} onClick={() => setTab("done")}>
-          Đã làm
+          {copy.doneTab}
         </Chip>
       </div>
 
@@ -137,7 +155,7 @@ function ActivitiesPage() {
           setDialogOpen(true);
         }}
       >
-        <Plus className="size-4" /> Thêm hoạt động
+        <Plus className="size-4" /> {copy.add}
       </Button>
 
       <div className="grid gap-3">
@@ -237,7 +255,7 @@ function ActivitiesPage() {
         })}
         {visible.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
-            Chưa có hoạt động nào. Thêm một ý tưởng nhé ✨
+            {copy.empty}
           </p>
         )}
       </div>
@@ -252,7 +270,7 @@ function ActivitiesPage() {
       <RandomDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
-        title="Hôm nay mình đi..."
+        title={copy.randomTitle}
         emoji="🎡"
         onDrawAgain={draw}
         result={
@@ -264,7 +282,7 @@ function ActivitiesPage() {
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Không có hoạt động nào hợp bộ lọc</p>
+            <p className="text-sm text-muted-foreground">{copy.randomEmpty}</p>
           )
         }
       >
@@ -276,7 +294,7 @@ function ActivitiesPage() {
               setDrawOpen(false);
             }}
           >
-            Đánh dấu đã làm
+            {copy.markDone}
           </Button>
         )}
       </RandomDrawDialog>
@@ -285,7 +303,7 @@ function ActivitiesPage() {
         open={!!viewing}
         onOpenChange={(open) => !open && setViewing(null)}
         title={viewing?.name ?? ""}
-        subtitle={viewing ? `${labelOf(ACTIVITY_CATEGORIES, viewing.category).emoji} ${labelOf(ACTIVITY_CATEGORIES, viewing.category).label}${viewing.done ? " · Đã làm" : ""}` : undefined}
+        subtitle={viewing ? `${labelOf(ACTIVITY_CATEGORIES, viewing.category).emoji} ${labelOf(ACTIVITY_CATEGORIES, viewing.category).label}${viewing.done ? copy.detailDone : ""}` : undefined}
         images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
       >
         {viewing?.place && <p className="flex items-center gap-1.5"><MapPin className="size-4 text-primary" />{viewing.place}</p>}
