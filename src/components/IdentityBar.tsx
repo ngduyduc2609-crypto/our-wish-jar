@@ -83,10 +83,16 @@ export function IdentityBar() {
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage>("vi");
   const streak = computeStreak(presence, members.length || 2);
-  const themeMenuLabel = selectedLanguage === "zh" ? "主题" : "Theme";
+  const themeMenuLabel = selectedLanguage === "zh" ? "主题" : selectedLanguage === "en" ? "Theme" : "Màu sắc";
   const languageMenuLabel = selectedLanguage === "vi" ? "Ngôn ngữ" : selectedLanguage === "zh" ? "语言" : "Language";
   const themePickerHeading =
     selectedLanguage === "vi" ? "Chọn màu sắc" : selectedLanguage === "zh" ? "选择主题" : "Choose theme";
+  const soundLabel = selectedLanguage === "vi" ? "Âm thanh" : selectedLanguage === "zh" ? "声音" : "Sound";
+  const musicLabel = selectedLanguage === "vi" ? "Nhạc nền" : selectedLanguage === "zh" ? "背景音乐" : "Background music";
+  const musicVolumeLabel = selectedLanguage === "vi" ? "Âm lượng nhạc" : selectedLanguage === "zh" ? "音乐音量" : "Music volume";
+  const musicVolumeAria = selectedLanguage === "vi" ? "Âm lượng nhạc nền" : selectedLanguage === "zh" ? "背景音乐音量" : "Background music volume";
+  const logoutLabel = selectedLanguage === "vi" ? "Đăng xuất" : selectedLanguage === "zh" ? "退出登录" : "Log out";
+  const accountMenuAria = selectedLanguage === "vi" ? "Mở menu tài khoản" : selectedLanguage === "zh" ? "打开账户菜单" : "Open account menu";
   const currentThemeLabel = THEME_OPTIONS.find((theme) => theme.id === selectedTheme)?.label[selectedLanguage] ?? "Lilac Dream";
   const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
   const lit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
@@ -144,7 +150,7 @@ export function IdentityBar() {
         <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="jelly flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label="Mở menu tài khoản">
+            <button type="button" className="jelly flex shrink-0 items-center gap-2 rounded-full bg-secondary py-1.5 pl-3 pr-2 text-xs font-medium text-secondary-foreground" aria-label={accountMenuAria}>
               <span>{me?.emoji}</span>
               <span>{me?.name.split(" ").slice(-1)[0]}</span>
               <ChevronDown className="size-3.5 text-muted-foreground" />
@@ -164,7 +170,7 @@ export function IdentityBar() {
               }}
             >
               {soundEnabled ? <Volume2 /> : <VolumeX />}
-              Âm thanh
+              {soundLabel}
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={musicEnabled}
@@ -172,10 +178,10 @@ export function IdentityBar() {
               onCheckedChange={(checked) => setMusicEnabled(checked)}
             >
               <Music />
-              Nhạc nền
+              {musicLabel}
             </DropdownMenuCheckboxItem>
             <div className="px-2 pb-2 pt-1" onPointerDown={(event) => event.stopPropagation()}>
-              <p className="mb-1 text-[11px] text-muted-foreground">Âm lượng nhạc</p>
+              <p className="mb-1 text-[11px] text-muted-foreground">{musicVolumeLabel}</p>
               <input
                 type="range"
                 min={0}
@@ -184,7 +190,7 @@ export function IdentityBar() {
                 disabled={!musicEnabled}
                 onChange={(event) => setMusicVolume(Number(event.target.value) / 100)}
                 className="h-1.5 w-full accent-primary disabled:opacity-40"
-                aria-label="Âm lượng nhạc nền"
+                aria-label={musicVolumeAria}
               />
             </div>
             <DropdownMenuSeparator />
@@ -254,7 +260,7 @@ export function IdentityBar() {
 
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void signOut()}>
-              <LogOut /> Đăng xuất
+              <LogOut /> {logoutLabel}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

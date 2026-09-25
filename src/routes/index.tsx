@@ -67,6 +67,7 @@ function HomePage() {
     daysLabel: language === "vi" ? "ngày, kể từ 22/12/2025 💗" : language === "zh" ? "天，从 2025/12/22 开始 💗" : "days, since 22/12/2025 💗",
     restore: language === "vi" ? "Khôi phục chuỗi" : language === "zh" ? "恢复连击" : "Restore streak",
     restoreDone: language === "vi" ? "Đã hết lượt khôi phục tháng này." : language === "zh" ? "本月恢复次数已用完。" : "No restores left this month.",
+    restoreButton: language === "vi" ? "Khôi phục chuỗi" : language === "zh" ? "恢复连击" : "Restore streak",
     doneMarker: language === "vi" ? "✅ Đã ghé" : language === "zh" ? "✅ 已打卡" : "✅ Checked in",
     pendingMarker: language === "vi" ? "⏳ Đang chờ" : language === "zh" ? "⏳ 等待中" : "⏳ Waiting",
     needBoth: language === "vi" ? "Cần cả hai cùng hoạt động hôm nay để tiếp tục chuỗi!" : language === "zh" ? "今天需要两人都动起来才能继续连击！" : "Both of us need to be active today to keep the streak going!",
@@ -169,10 +170,10 @@ function HomePage() {
             onClick={restoreStreak}
             disabled={effectiveStreakLit}
           >
-            <RotateCcw className="size-4" /> Khôi phục chuỗi ({restoresLeft})
+            <RotateCcw className="size-4" /> {copy.restoreButton} ({restoresLeft})
           </Button>
         ) : (
-          <p className="mt-3 text-[11px] text-muted-foreground">Đã hết lượt khôi phục tháng này.</p>
+          <p className="mt-3 text-[11px] text-muted-foreground">{copy.restoreDone}</p>
         )}
       </section>
 
