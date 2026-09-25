@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useAppLanguage } from "@/lib/language";
 import { cn } from "@/lib/utils";
 
 export function RandomDrawDialog({
@@ -21,6 +22,11 @@ export function RandomDrawDialog({
   children?: ReactNode;
 }) {
   const [spinning, setSpinning] = useState(true);
+  const language = useAppLanguage();
+  const drawAgainLabel =
+    language === "vi" ? "Rút lại 🎲" : language === "zh" ? "再抽一次 🎲" : "Draw again 🎲";
+  const shakingLabel =
+    language === "vi" ? "Đang lắc lọ..." : language === "zh" ? "正在摇罐..." : "Shaking the jar...";
 
   useEffect(() => {
     if (!open) return;
@@ -42,15 +48,11 @@ export function RandomDrawDialog({
           {emoji}
         </div>
         <div className={cn("min-h-16 transition-opacity", spinning ? "opacity-30" : "opacity-100")}>
-          {spinning ? (
-            <p className="text-sm text-muted-foreground">Đang lắc lọ...</p>
-          ) : (
-            result
-          )}
+          {spinning ? <p className="text-sm text-muted-foreground">{shakingLabel}</p> : result}
         </div>
         {!spinning && children}
         <Button variant="secondary" className="rounded-full" onClick={onDrawAgain}>
-          Rút lại 🎲
+          {drawAgainLabel}
         </Button>
       </DialogContent>
     </Dialog>
