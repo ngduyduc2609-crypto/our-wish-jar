@@ -60,7 +60,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
-function createSupabaseAdminClient() {
+function createSupabaseAdminClient(): SupabaseClient<Database> {
   const rawUrl = process.env['SUPABASE_URL'];
   const rawKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
 
@@ -69,7 +69,7 @@ function createSupabaseAdminClient() {
 
   if (!SUPABASE_URL) {
     console.warn('[Supabase] Missing server env SUPABASE_URL; using safe fallback for SSR.');
-    return null as unknown as ReturnType<typeof createSupabaseAdminClient>;
+    return null as unknown as SupabaseClient<Database>;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
