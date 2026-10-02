@@ -908,3 +908,8 @@ button:not(:disabled):hover {
   .wish-jar-shell { inset-inline: 0.55rem; }
   .wish-jar-safe-zone { inset-inline: 1.3rem; }
 }
+
+/* Folded horizontal paper strips */
+.wish-note.wish-note-paper { display: flex; align-items: center; gap: 0.2rem; min-width: 0; padding: 0.1rem 0.3rem; }
+.wish-note.wish-note-paper .wish-note-icon { flex: none; width: 0.85rem; height: 0.85rem; font-size: 0.55rem; }
+.wish-note.wish-note-paper .wish-note-title { margin-top: 0; -webkit-line-clamp: 1; font-size: 0.46rem; }

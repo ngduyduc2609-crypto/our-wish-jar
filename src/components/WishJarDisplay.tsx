@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 import type { Wish } from "@/lib/db";
 import { WISH_CATEGORIES, labelOf } from "@/lib/constants";
 
-const NOTE_COLORS = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage", "wish-note-lavender"];
+const NOTE_COLORS = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage"];
 
 type NoteStyle = CSSProperties & {
   "--note-x": string;
