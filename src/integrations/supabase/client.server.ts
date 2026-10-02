@@ -2,7 +2,7 @@
 // Server-side Supabase client with service role key - bypasses RLS.
 // Use this for admin operations in server functions and server routes only.
 // For user-authenticated queries (with RLS), use the auth middleware instead.
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const FALLBACK_SUPABASE_URL = 'https://c--9eb8642f-c04f-4194-8142-ddbbf1b88786-prod.lovable.cloud';
@@ -60,7 +60,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
-function createSupabaseAdminClient() {
+function createSupabaseAdminClient(): SupabaseClient<Database> {
   const rawUrl = process.env['SUPABASE_URL'];
   const rawKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
 
@@ -69,7 +69,7 @@ function createSupabaseAdminClient() {
 
   if (!SUPABASE_URL) {
     console.warn('[Supabase] Missing server env SUPABASE_URL; using safe fallback for SSR.');
-    return null as unknown as ReturnType<typeof createSupabaseAdminClient>;
+    return null as unknown as SupabaseClient<Database>;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
