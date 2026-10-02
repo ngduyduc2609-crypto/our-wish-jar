@@ -2,7 +2,7 @@
 // Server-side Supabase client with service role key - bypasses RLS.
 // Use this for admin operations in server functions and server routes only.
 // For user-authenticated queries (with RLS), use the auth middleware instead.
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const FALLBACK_SUPABASE_URL = 'https://c--9eb8642f-c04f-4194-8142-ddbbf1b88786-prod.lovable.cloud';
