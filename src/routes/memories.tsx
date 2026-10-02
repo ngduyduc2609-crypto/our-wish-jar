@@ -116,7 +116,7 @@ function MemoriesPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] text-muted-foreground">
-                    {formatDate(memory.happened_on)} · {SOURCE_LABEL[memory.source_type]?.[language] ?? SOURCE_LABEL.manual[language]}
+                    {formatDate(memory.happened_on)} · {SOURCE_LABEL[memory.source_type]?.[language] ?? SOURCE_LABEL["manual"]?.[language]}
                   </p>
                   <h2 className="mt-0.5 font-display text-lg font-semibold">{memory.title}</h2>
                   {memory.rating ? <p className="text-sm">{"⭐".repeat(memory.rating)}</p> : null}
@@ -192,7 +192,7 @@ function MemoriesPage() {
         open={!!viewing}
         onOpenChange={(open) => !open && setViewing(null)}
         title={viewing?.title ?? ""}
-        subtitle={viewing ? `${formatDate(viewing.happened_on)} · ${SOURCE_LABEL[viewing.source_type]?.[language] ?? SOURCE_LABEL.manual[language]}` : undefined}
+        subtitle={viewing ? `${formatDate(viewing.happened_on)} · ${SOURCE_LABEL[viewing.source_type]?.[language] ?? SOURCE_LABEL["manual"]?.[language]}` : undefined}
         images={viewing ? imageAssets(viewing.images, viewing.image_url, viewing.image_pos) : []}
       >
         {viewing?.rating ? <p>{"⭐".repeat(viewing.rating)}</p> : null}
