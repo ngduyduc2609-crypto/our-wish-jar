@@ -542,7 +542,7 @@ function WishCard({
         }}
         onConfirm={() => {
           if (!deleteTarget) return;
-          void remove(deleteTarget);
+          void remove();
           setDeleteTarget(null);
         }}
       />
