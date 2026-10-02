@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 import type { Wish } from "@/lib/db";
 import { WISH_CATEGORIES, labelOf } from "@/lib/constants";
 
-const NOTE_COLORS = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage", "wish-note-lavender"];
+const NOTE_COLORS = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage"];
 
 type NoteStyle = CSSProperties & {
   "--note-x": string;
@@ -30,47 +30,46 @@ function randomFrom(seed: number, salt: number) {
   return value - Math.floor(value);
 }
 
+// Horizontal paper strips piled in the curved bottom (50%–80% of the jar interior).
 function noteStyle(id: string, index: number, total: number): NoteStyle {
   const seed = hashSeed(id);
-  const count = Math.max(1, total);
-  const width = 92 + randomFrom(seed, 1) * 28;
-  const height = 42 + randomFrom(seed, 2) * 12;
+  const n = Math.max(1, total);
+  const perRow = n <= 4 ? 2 : n <= 9 ? 3 : n <= 20 ? 4 : 5;
+  const rows = Math.ceil(n / perRow);
+  const row = Math.floor(index / perRow); // 0 = bottom row
+  const inRow = Math.min(perRow, n - row * perRow);
+  const col = index % perRow;
+  const scale = n <= 4 ? 1 : n <= 9 ? 0.9 : n <= 20 ? 0.78 : n <= 40 ? 0.66 : 0.56;
 
-  let x: number;
-  let y: number;
+  const r = 0.8 + randomFrom(seed, 1) * 0.4; // 80–120% size
+  const width = Math.min(52, 44 * scale * r); // % of zone width
+  const height = 13 * scale * (0.85 + randomFrom(seed, 2) * 0.3); // % of zone height
 
-  if (count <= 3) {
-    const spread = count === 1 ? 0 : count === 2 ? 18 : 24;
-    x = 50 + (index - (count - 1) / 2) * spread;
-    y = 68 + (index % 2 === 0 ? -4 : 6);
-  } else if (count <= 6) {
-    const cols = 3;
-    const row = Math.floor(index / cols);
-    const col = index % cols;
-    const rowOffset = row === 0 ? 0 : row === 1 ? 10 : 18;
-    const xBase = 20 + col * 28 + (randomFrom(seed, 3) - 0.5) * 10;
-    x = xBase;
-    y = 62 + rowOffset + (index % 2 === 0 ? 2 : -2);
-  } else {
-    const spread = 16 + randomFrom(seed, 4) * 8;
-    const arc = (Math.PI * 2 * index) / count;
-    x = 50 + Math.cos(arc) * spread;
-    y = 66 + Math.sin(arc) * 12 + (index % 2 === 0 ? 3 : -3);
-  }
+  const yBottom = 80 - height / 2 - 2;
+  const yTop = 50 + height / 2;
+  const step = rows > 1 ? Math.min(height * 0.75, (yBottom - yTop) / (rows - 1)) : 0;
+  const y = yBottom - row * step + (randomFrom(seed, 3) - 0.5) * height * 0.3;
 
-  const safeX = Math.min(82, Math.max(18, x));
-  const safeY = Math.min(82, Math.max(58, y));
-  const rotate = -8 + randomFrom(seed, 5) * 16;
+  // bottom of the jar curves inward: lower rows get a narrower span
+  const halfSpan = Math.min(44, 30 + row * 5);
+  const minX = Math.max(50 - halfSpan, 0) + width / 2 + 4;
+  const maxX = Math.min(50 + halfSpan, 100) - width / 2 - 4;
+  const t = inRow === 1 ? 0.5 : col / (inRow - 1);
+  const jitter = (randomFrom(seed, 4) - 0.5) * width * 0.25;
+  const x = maxX > minX ? Math.min(maxX, Math.max(minX, minX + (maxX - minX) * t + jitter)) : 50;
+
+  const rotate = -10 + randomFrom(seed, 5) * 20;
 
   return {
-    "--note-x": `${safeX}%`,
-    "--note-y": `${safeY}%`,
-    "--note-width": `${width}px`,
-    "--note-height": `${height}px`,
+    "--note-x": `${x}%`,
+    "--note-y": `${y}%`,
+    "--note-width": `${width}%`,
+    "--note-height": `${height}%`,
     "--note-rotate": `${rotate}deg`,
     "--note-delay": `${-(randomFrom(seed, 6) * 7)}s`,
     "--note-duration": `${5 + randomFrom(seed, 7) * 3}s`,
-    zIndex: 2 + Math.floor(randomFrom(seed, 8) * 12),
+    zIndex: 2 + (index % 2 === 0 ? index : n - index),
+    fontSize: `${Math.max(0.6, scale)}em`,
   };
 }
 

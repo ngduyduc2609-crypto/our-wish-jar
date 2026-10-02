@@ -391,9 +391,9 @@ html[data-theme="matcha-pure"] {
 }
 
 @keyframes wish-float {
-  0%, 100% { transform: translate3d(-2px, 1px, 0) rotate(calc(var(--note-rotate) - 1.5deg)); }
-  40% { transform: translate3d(2px, -5px, 0) rotate(calc(var(--note-rotate) + 1.8deg)); }
-  72% { transform: translate3d(-1px, -2px, 0) rotate(var(--note-rotate)); }
+  0%, 100% { transform: translate(-50%, -50%) translate3d(-1px, 0, 0) rotate(calc(var(--note-rotate) - 1deg)); }
+  40% { transform: translate(-50%, -50%) translate3d(1px, -2px, 0) rotate(calc(var(--note-rotate) + 1deg)); }
+  72% { transform: translate(-50%, -50%) translate3d(0, -1px, 0) rotate(var(--note-rotate)); }
 }
 
 @keyframes wish-note-glow {
@@ -908,3 +908,8 @@ button:not(:disabled):hover {
   .wish-jar-shell { inset-inline: 0.55rem; }
   .wish-jar-safe-zone { inset-inline: 1.3rem; }
 }
+
+/* Folded horizontal paper strips */
+.wish-note.wish-note-paper { display: flex; align-items: center; gap: 0.2rem; min-width: 0; padding: 0.1rem 0.3rem; }
+.wish-note.wish-note-paper .wish-note-icon { flex: none; width: 0.85rem; height: 0.85rem; font-size: 0.55rem; }
+.wish-note.wish-note-paper .wish-note-title { margin-top: 0; -webkit-line-clamp: 1; font-size: 0.46rem; }
