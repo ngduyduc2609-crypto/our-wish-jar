@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shuffle, Sparkles, BarChart3, ChevronRight, RotateCcw } from "lucide-react";
 
 import { useAppLanguage } from "@/lib/language";
@@ -16,6 +16,7 @@ import {
   fetchWishes,
   pickRandom,
   imageAssets,
+  restoreYesterdayStreak,
   type Wish,
 } from "@/lib/db";
 import { WISH_CATEGORIES, daysTogether, formatDate, labelOf, todayKey } from "@/lib/constants";
@@ -72,6 +73,7 @@ function HomePage() {
     pendingMarker: language === "vi" ? "⏳ Đang chờ" : language === "zh" ? "⏳ 等待中" : "⏳ Waiting",
     needBoth: language === "vi" ? "Cần cả hai cùng hoạt động hôm nay để tiếp tục chuỗi!" : language === "zh" ? "今天需要两人都动起来才能继续连击！" : "Both of us need to be active today to keep the streak going!",
   } as const;
+  const qc = useQueryClient();
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });
   const { data: memories = [] } = useQuery({ queryKey: ["memories"], queryFn: fetchMemories });
   const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
@@ -117,6 +119,7 @@ function HomePage() {
   });
   const [restoreUsed, setRestoreUsed] = useState(false);
   const effectiveStreakLit = streakLit || restoreUsed;
+  const canRestoreStreak = streak.current === 0 && streak.best > 0 && restoresLeft > 0;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -140,10 +143,17 @@ function HomePage() {
     setDrawOpen(true);
   }
 
-  function restoreStreak() {
-    if (restoresLeft <= 0) return;
-    setRestoreUsed(true);
-    setRestoresLeft((current) => Math.max(0, current - 1));
+  async function restoreStreak() {
+    if (!canRestoreStreak) return;
+
+    try {
+      await restoreYesterdayStreak(members.map((member) => member.id));
+      setRestoreUsed(true);
+      setRestoresLeft((current) => Math.max(0, current - 1));
+      await qc.invalidateQueries({ queryKey: ["presence"] });
+    } catch (error) {
+      console.error("Failed to restore streak:", error);
+    }
   }
 
   return (
@@ -197,18 +207,16 @@ function HomePage() {
           <p className="pt-1 text-[11px] text-muted-foreground">{copy.needBoth}</p>
         </div>
 
-        {restoresLeft > 0 ? (
+        {canRestoreStreak ? (
           <Button
             variant="outline"
             className="mt-3 rounded-full"
-            onClick={restoreStreak}
+            onClick={() => void restoreStreak()}
             disabled={effectiveStreakLit}
           >
             <RotateCcw className="size-4" /> {copy.restoreButton} ({restoresLeft})
           </Button>
-        ) : (
-          <p className="mt-3 text-[11px] text-muted-foreground">{copy.restoreDone}</p>
-        )}
+        ) : null}
       </section>
 
       <section className="space-y-2">

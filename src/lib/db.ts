@@ -293,6 +293,32 @@ export async function logAction(memberId: string, action: string, subject?: stri
     .upsert({ member_id: memberId, day: todayKey() }, { onConflict: "member_id,day" });
 }
 
+export async function restoreYesterdayStreak(memberIds: string[]) {
+  const uniqueMemberIds = [...new Set(memberIds.filter(Boolean))];
+  if (uniqueMemberIds.length === 0) return;
+
+  const bangkokNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+  bangkokNow.setDate(bangkokNow.getDate() - 1);
+
+  const dayParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(bangkokNow);
+
+  const partsMap = Object.fromEntries(
+    dayParts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
+  );
+
+  const yesterdayKey = `${partsMap.year}-${partsMap.month}-${partsMap.day}`;
+
+  const rows = uniqueMemberIds.map((member_id) => ({ member_id, day: yesterdayKey }));
+
+  const { error } = await db.from("daily_presence").upsert(rows, { onConflict: "member_id,day" });
+  if (error) throw error;
+}
+
 export async function toggleReaction(wishId: string, memberId: string, emoji: string) {
   const { data } = await db
     .from("wish_reactions")
