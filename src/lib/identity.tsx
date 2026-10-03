@@ -1,100 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { fetchMembers, logAction, type Member } from "./db";
 
-const LOCAL_AUTH_SESSION_KEY = "wish-jar-private-auth-session";
-const USER_EMAIL_STORAGE_KEY = "wishjar_user_email";
-const USER_NAME_STORAGE_KEY = "wishjar_user_name";
 const PRIVATE_ACCESS_MESSAGE = "Đây là không gian riêng tư của Duy Đức và Thu Thuỷ, bạn không có quyền truy cập chiếc lọ này nhé!";
-const ALLOWED_EMAILS = [
-  "ngduyduc2609@gmail.com",
-  "thuthuydanghocbai@gmail.com",
-];
-const ALLOWED_EMAIL_SET = new Set(ALLOWED_EMAILS.map((email) => email.trim().toLowerCase()));
+const ALLOWED_EMAILS = new Set(["ngduyduc2609@gmail.com", "thuthuydanghocbai@gmail.com"]);
 
-type LocalAuthSession = {
-  userId: string;
-  email: string;
-  name: string;
-};
-
-function normalizeEmail(value?: string | null) {
-  return (value ?? "").trim().toLowerCase();
-}
-
-function isAllowedEmail(email?: string | null) {
-  return ALLOWED_EMAIL_SET.has(normalizeEmail(email));
-}
-
-function getMemberNameFromEmail(email?: string | null) {
-  const normalized = normalizeEmail(email);
-  return normalized === "ngduyduc2609@gmail.com" ? "Duy Đức" : "Thu Thuỷ";
-}
-
-function findMemberForEmail(members: Member[], email?: string | null) {
-  const normalized = normalizeEmail(email);
-  if (!normalized) return null;
-
-  return members.find((member) => {
-    const name = member.name.toLowerCase();
-    if (normalized.includes("duc")) return name.includes("duy");
-    if (normalized.includes("thu") || normalized.includes("thuy")) return name.includes("thu") || name.includes("thuy");
-    return false;
-  }) ?? null;
-}
-
-function readStoredAuthSession(): LocalAuthSession | null {
-  if (typeof window === "undefined") return null;
-
-  const storedEmail = window.localStorage.getItem(USER_EMAIL_STORAGE_KEY);
-  const storedName = window.localStorage.getItem(USER_NAME_STORAGE_KEY);
-  const fallbackRaw = window.localStorage.getItem(LOCAL_AUTH_SESSION_KEY);
-
-  try {
-    const raw = storedEmail ? { email: storedEmail, name: storedName ?? getMemberNameFromEmail(storedEmail) } : fallbackRaw ? JSON.parse(fallbackRaw) : null;
-    if (!raw || !raw.email) {
-      window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
-      window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
-      window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
-      return null;
-    }
-
-    const email = normalizeEmail(raw.email);
-    if (!isAllowedEmail(email)) {
-      window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
-      window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
-      window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
-      return null;
-    }
-
-    return {
-      userId: raw.userId ?? normalizeEmail(email),
-      email,
-      name: raw.name || getMemberNameFromEmail(email),
-    };
-  } catch {
-    window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
-    window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
-    window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
-    return null;
-  }
-}
-
-function persistAuthSession(session: LocalAuthSession | null) {
-  if (typeof window === "undefined") return;
-  if (!session) {
-    window.localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
-    window.localStorage.removeItem(USER_NAME_STORAGE_KEY);
-    window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(USER_EMAIL_STORAGE_KEY, session.email);
-  window.localStorage.setItem(USER_NAME_STORAGE_KEY, session.name);
-  window.localStorage.setItem(LOCAL_AUTH_SESSION_KEY, JSON.stringify(session));
+function cleanEmail(value: string) {
+  return value.trim().toLowerCase();
 }
 
 type IdentityValue = {
@@ -116,96 +31,66 @@ const IdentityContext = createContext<IdentityValue | null>(null);
 
 export function IdentityProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
-  const [localSession, setLocalSession] = useState<LocalAuthSession | null>(() => readStoredAuthSession());
+  const [userId, setUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const userId = localSession?.userId ?? null;
-
-  const { data: members = [], isFetched } = useQuery({
-    queryKey: ["members"],
-    queryFn: fetchMembers,
-    enabled: true,
-  });
 
   useEffect(() => {
-    setAuthReady(true);
-  }, []);
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      setUserId(session?.user.id ?? null);
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") void queryClient.invalidateQueries();
+    });
+    void supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user.id ?? null);
+      setAuthReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [queryClient]);
+
+  const { data: members = [], isFetched } = useQuery({
+    queryKey: ["members", userId],
+    queryFn: fetchMembers,
+    enabled: !!userId,
+  });
 
   const value = useMemo<IdentityValue>(() => {
-    const sessionEmail = localSession?.email ?? (typeof window !== "undefined" ? window.localStorage.getItem("wishjar_user_email") : null);
-    const activeEmail = normalizeEmail(sessionEmail);
-    const localUser = activeEmail && isAllowedEmail(activeEmail)
-      ? ({
-          id: findMemberForEmail(members, activeEmail)?.id ?? userId ?? activeEmail,
-          name: activeEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
-          emoji: activeEmail.toLowerCase().includes("duc") ? "🧑‍💻" : "💐",
-          color: activeEmail.toLowerCase().includes("duc") ? "#f59e0b" : "#f472b6",
-          user_id: findMemberForEmail(members, activeEmail)?.id ?? userId ?? activeEmail,
-        } as Member)
-      : null;
+    const me = userId ? members.find((member) => member.user_id === userId) ?? null : null;
 
-    const me = userId
-      ? members.find((member) => member.id === userId || member.user_id === userId || member.name.toLowerCase().includes(userId.includes("duc") ? "duy" : "thu")) ??
-        localUser ??
-        null
-      : localUser ?? null;
-
-    const setAuthenticatedSession = async (email: string) => {
-      const cleanEmail = email.trim().toLowerCase();
-      if (!ALLOWED_EMAILS.includes(cleanEmail)) {
-        throw new Error(PRIVATE_ACCESS_MESSAGE);
-      }
-
-      const memberId = findMemberForEmail(members, cleanEmail)?.id ?? userId ?? cleanEmail;
-      const nextSession: LocalAuthSession = {
-        userId: memberId,
-        email: cleanEmail,
-        name: cleanEmail.toLowerCase().includes("duc") ? "Duy Đức" : "Thu Thủy",
-      };
-
-      setLocalSession(nextSession);
-      persistAuthSession(nextSession);
-      void queryClient.invalidateQueries({ queryKey: ["members"] });
-      void queryClient.invalidateQueries({ queryKey: ["wishes"] });
-      void queryClient.invalidateQueries({ queryKey: ["memories"] });
+    const signInWithPassword = async (email: string, password: string) => {
+      const address = cleanEmail(email);
+      if (!ALLOWED_EMAILS.has(address)) throw new Error(PRIVATE_ACCESS_MESSAGE);
+      if (!password.trim()) throw new Error("Vui lòng nhập mật khẩu.");
+      const { error } = await supabase.auth.signInWithPassword({ email: address, password });
+      if (error) throw new Error("Email hoặc mật khẩu chưa đúng.");
     };
 
     return {
       members,
       me,
       userId,
-      signedIn: Boolean(userId || activeEmail),
-      ready: authReady && isFetched,
+      signedIn: !!userId,
+      ready: authReady && (!userId || isFetched),
       signIn: async () => {
-        throw new Error("Vui lòng đăng nhập bằng email được cấp trong danh sách trắng.");
+        const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+        if (result.error) throw result.error;
       },
-      loginAs: async (email: string) => {
-        await setAuthenticatedSession(email);
-      },
-      signInWithPassword: async (email: string, password: string) => {
-        const cleanEmail = email.trim().toLowerCase();
-        if (!password.trim()) {
-          throw new Error("Vui lòng nhập mật khẩu.");
-        }
-        if (!ALLOWED_EMAILS.includes(cleanEmail)) {
-          throw new Error(PRIVATE_ACCESS_MESSAGE);
-        }
-        await setAuthenticatedSession(cleanEmail);
-      },
+      loginAs: async () => undefined,
+      signInWithPassword,
       signUpWithPassword: async (email: string, password: string) => {
-        const cleanEmail = email.trim().toLowerCase();
-        if (!password.trim()) {
-          throw new Error("Vui lòng nhập mật khẩu.");
-        }
-        if (!ALLOWED_EMAILS.includes(cleanEmail)) {
-          throw new Error(PRIVATE_ACCESS_MESSAGE);
-        }
-        await setAuthenticatedSession(cleanEmail);
+        const address = cleanEmail(email);
+        if (!ALLOWED_EMAILS.has(address)) throw new Error(PRIVATE_ACCESS_MESSAGE);
+        if (password.trim().length < 6) throw new Error("Mật khẩu cần ít nhất 6 ký tự.");
+        const { data, error } = await supabase.auth.signUp({
+          email: address,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw new Error(error.message);
+        if (!data.session) throw new Error("Kiểm tra email để xác nhận tài khoản rồi đăng nhập nhé.");
       },
       signOut: async () => {
         await queryClient.cancelQueries();
+        await supabase.auth.signOut();
         queryClient.clear();
-        setLocalSession(null);
-        persistAuthSession(null);
       },
       claim: async (memberId: string) => {
         if (!userId) return;
@@ -222,7 +107,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         void logAction(me.id, action, subject ?? null);
       },
     };
-  }, [authReady, isFetched, localSession, members, queryClient, userId]);
+  }, [authReady, isFetched, members, queryClient, userId]);
 
   return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;
 }
