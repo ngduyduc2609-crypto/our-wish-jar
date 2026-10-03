@@ -47,13 +47,13 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
 
   const yBottom = 72 - height / 2;
   const yTop = 40 + height / 2;
-  const step = rows > 1 ? Math.min(height * 0.75, (yBottom - yTop) / (rows - 1)) : 0;
+  const step = rows > 1 ? Math.min(height * 0.9, (yBottom - yTop) / (rows - 1)) : 0;
   const y = yBottom - row * step + (randomFrom(seed, 3) - 0.5) * height * 0.3;
 
   // bottom of the jar curves inward: lower rows get a narrower span
-  const halfSpan = Math.min(42, 28 + row * 5);
-  const minX = Math.max(50 - halfSpan, 0) + width / 2 + 4;
-  const maxX = Math.min(50 + halfSpan, 100) - width / 2 - 4;
+  const inset = Math.max(4, 14 - row * 4);
+  const minX = inset + width / 2;
+  const maxX = 100 - inset - width / 2;
   const t = inRow === 1 ? 0.5 : col / (inRow - 1);
   const jitter = (randomFrom(seed, 4) - 0.5) * width * 0.25;
   const x = maxX > minX ? Math.min(maxX, Math.max(minX, minX + (maxX - minX) * t + jitter)) : 50;
