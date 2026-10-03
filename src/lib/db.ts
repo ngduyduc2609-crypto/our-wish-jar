@@ -120,45 +120,23 @@ export const fetchWishes = () =>
 
 export const fetchReactions = () => rows<WishReaction>(db.from("wish_reactions").select("*"));
 
-function readCurrentUserIdentity() {
-  if (typeof window === "undefined") return null;
-
-  const email = (window.localStorage.getItem("wishjar_user_email") ?? "").trim().toLowerCase();
-  const name = window.localStorage.getItem("wishjar_user_name")?.trim() ||
-    (email.includes("duc") ? "Duy Đức" : email.includes("thuy") || email.includes("thu") ? "Thu Thủy" : "Chúng mình");
-
-  if (!email) return null;
-
-  return { email, name };
-}
-
 function isValidUuid(value: unknown) {
   if (typeof value !== "string") return false;
-  const candidate = value.trim();
-  return /^[0-9a-fA-F-]{36}$/.test(candidate);
+  return /^[0-9a-fA-F-]{36}$/.test(value.trim());
 }
 
 function normalizeMemberId(value: unknown) {
   if (typeof value !== "string") return null;
   const candidate = value.trim();
-  if (!candidate || candidate === "null" || candidate === "undefined") return null;
   return isValidUuid(candidate) ? candidate : null;
 }
 
-async function getFallbackMemberId() {
-  try {
-    const members = await fetchMembers();
-    const identity = readCurrentUserIdentity();
-
-    if (identity) {
-      const direct = await resolveMemberIdForEmail(identity.email);
-      if (direct) return direct;
-    }
-
-    return members[0]?.id ?? null;
-  } catch {
-    return null;
-  }
+async function currentMemberId() {
+  const { data } = await supabase.auth.getSession();
+  const uid = data.session?.user.id;
+  if (!uid) return null;
+  const { data: member } = await db.from("members").select("id").eq("user_id", uid).maybeSingle();
+  return (member as { id?: string } | null)?.id ?? null;
 }
 
 export async function resolveMemberIdForEmail(email?: string | null) {
@@ -198,19 +176,8 @@ export const fetchPresence = () => rows<Presence>(db.from("daily_presence").sele
 function sanitizePayload(table: string, values: Record<string, unknown>, memberId: string | null) {
   const resolvedValues = { ...values };
 
-  const validMemberId = normalizeMemberId(memberId) ?? normalizeMemberId(resolvedValues.user_id);
-  if (validMemberId) {
-    resolvedValues.user_id = validMemberId;
-  } else if (resolvedValues.user_id == null || resolvedValues.user_id === "" || resolvedValues.user_id === "null") {
-    resolvedValues.user_id = null;
-  }
-
-  if (table === "activities" || table === "memories" || table === "foods" || table === "wishes") {
-    const ownerId = normalizeMemberId(resolvedValues.user_id) ?? validMemberId ?? normalizeMemberId(resolvedValues.created_by) ?? normalizeMemberId(resolvedValues.added_by) ?? normalizeMemberId(resolvedValues.proposed_by);
-    if (ownerId) {
-      resolvedValues.user_id = ownerId;
-    }
-  }
+  delete resolvedValues.user_id;
+  const validMemberId = normalizeMemberId(memberId);
 
   if (table === "wishes") {
     const safeCategory = String(resolvedValues.category ?? "experience").trim() || "experience";
@@ -284,9 +251,7 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
 }
 
 export async function insertRow<T>(table: string, values: Record<string, unknown>) {
-  const identity = readCurrentUserIdentity();
-  const memberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
-  const fallbackMemberId = memberId ?? (await getFallbackMemberId());
+  const fallbackMemberId = await currentMemberId();
   const resolvedValues = sanitizePayload(table, values, fallbackMemberId);
 
   try {
@@ -300,10 +265,11 @@ export async function insertRow<T>(table: string, values: Record<string, unknown
 }
 
 export async function updateRow<T>(table: string, id: string, values: Record<string, unknown>) {
-  const identity = readCurrentUserIdentity();
-  const memberId = identity ? await resolveMemberIdForEmail(identity.email) : null;
-  const fallbackMemberId = memberId ?? (await getFallbackMemberId());
+  const fallbackMemberId = await currentMemberId();
   const resolvedValues = sanitizePayload(table, values, fallbackMemberId);
+  for (const key of ["proposed_by", "added_by", "created_by"]) {
+    if (!(key in values)) delete resolvedValues[key];
+  }
 
   try {
     const { data, error } = await db.from(table).update(resolvedValues).eq("id", id).select().single();
