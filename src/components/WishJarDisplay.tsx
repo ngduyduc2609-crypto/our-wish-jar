@@ -45,13 +45,13 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
   const width = Math.min(46, 38 * scale * r); // % of zone width
   const height = 19 * scale * (0.85 + randomFrom(seed, 2) * 0.3); // % of zone height
 
-  const yBottom = 80 - height / 2 - 2;
-  const yTop = 46 + height / 2;
+  const yBottom = 72 - height / 2;
+  const yTop = 40 + height / 2;
   const step = rows > 1 ? Math.min(height * 0.75, (yBottom - yTop) / (rows - 1)) : 0;
   const y = yBottom - row * step + (randomFrom(seed, 3) - 0.5) * height * 0.3;
 
   // bottom of the jar curves inward: lower rows get a narrower span
-  const halfSpan = Math.min(44, 30 + row * 5);
+  const halfSpan = Math.min(42, 28 + row * 5);
   const minX = Math.max(50 - halfSpan, 0) + width / 2 + 4;
   const maxX = Math.min(50 + halfSpan, 100) - width / 2 - 4;
   const t = inRow === 1 ? 0.5 : col / (inRow - 1);
