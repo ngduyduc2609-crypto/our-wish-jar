@@ -45,8 +45,8 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
   const width = Math.min(46, 38 * scale * r); // % of zone width
   const height = 19 * scale * (0.85 + randomFrom(seed, 2) * 0.3); // % of zone height
 
-  const yBottom = 72 - height / 2;
-  const yTop = 40 + height / 2;
+  const yBottom = 77 - height / 2;
+  const yTop = 44 + height / 2;
   const step = rows > 1 ? Math.min(height * 0.9, (yBottom - yTop) / (rows - 1)) : 0;
   const y = yBottom - row * step + (randomFrom(seed, 3) - 0.5) * height * 0.3;
 
