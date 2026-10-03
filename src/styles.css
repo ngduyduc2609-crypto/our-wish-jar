@@ -909,7 +909,17 @@ button:not(:disabled):hover {
   .wish-jar-safe-zone { inset-inline: 1.3rem; }
 }
 
-/* Folded horizontal paper strips */
-.wish-note.wish-note-paper { display: flex; align-items: center; gap: 0.2rem; min-width: 0; padding: 0.1rem 0.3rem; }
-.wish-note.wish-note-paper .wish-note-icon { flex: none; width: 0.85rem; height: 0.85rem; font-size: 0.55rem; }
-.wish-note.wish-note-paper .wish-note-title { margin-top: 0; -webkit-line-clamp: 1; font-size: 0.46rem; }
+/* Folded paper notes */
+.wish-note.wish-note-paper {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.15rem;
+  min-width: 0; padding: 0.3rem 0.45rem 0.3rem 0.4rem;
+  border-radius: 0.2rem 0.35rem 0.25rem 0.3rem;
+  clip-path: polygon(0 4%, 6% 0, 30% 3%, 55% 0, 80% 2%, 100% 0, 100% 78%, 84% 100%, 60% 97%, 35% 100%, 12% 97%, 0 100%);
+}
+.wish-note.wish-note-paper::after {
+  content: ""; position: absolute; right: 0; bottom: 0; width: 16%; height: 22%;
+  background: linear-gradient(135deg, rgba(0,0,0,0.08) 0%, rgba(255,255,255,0.7) 50%, transparent 51%);
+  pointer-events: none;
+}
+.wish-note.wish-note-paper .wish-note-icon { flex: none; width: 0.9rem; height: 0.9rem; font-size: 0.58rem; }
+.wish-note.wish-note-paper .wish-note-title { margin-top: 0; -webkit-line-clamp: 2; font-size: 0.48rem; }

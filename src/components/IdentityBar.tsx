@@ -271,7 +271,7 @@ export function IdentityBar() {
 }
 
 export function IdentityGate() {
-  const { members, signedIn, signIn, loginAs, signInWithPassword, signUpWithPassword, signOut, claim } = useIdentity();
+  const { members, signedIn, signIn, signInWithPassword, signUpWithPassword, signOut, claim } = useIdentity();
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -295,11 +295,10 @@ export function IdentityGate() {
     setBusy(true);
     try {
       if (mode === "login") {
-        await loginAs(cleanEmail);
+        await signInWithPassword(cleanEmail, password);
         toast.success("Đăng nhập thành công.");
       } else {
         await signUpWithPassword(cleanEmail, password);
-        await loginAs(cleanEmail);
         toast.success("Tạo tài khoản thành công. Chúng mình đang chuẩn bị mở chiếc lọ cho bạn.");
       }
     } catch (error) {
@@ -385,11 +384,20 @@ export function IdentityGate() {
 
             <button
               type="button"
-              disabled={true}
-              title="Đăng nhập bằng Google đang tắt cho môi trường riêng tư này"
-              className="mt-4 w-full cursor-not-allowed rounded-full border border-border bg-card px-4 py-3 text-base font-medium text-muted-foreground shadow-sm opacity-60"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await signIn();
+                } catch {
+                  toast.error("Không đăng nhập được bằng Google, thử lại nhé");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="mt-4 w-full rounded-full border border-border bg-card px-4 py-3 text-base font-medium shadow-sm disabled:opacity-60"
             >
-              Đăng nhập bằng Google (tắt)
+              Đăng nhập bằng Google
             </button>
           </>
         ) : free.length > 0 ? (

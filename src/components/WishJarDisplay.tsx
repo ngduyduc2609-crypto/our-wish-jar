@@ -42,11 +42,11 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
   const scale = n <= 4 ? 1 : n <= 9 ? 0.9 : n <= 20 ? 0.78 : n <= 40 ? 0.66 : 0.56;
 
   const r = 0.8 + randomFrom(seed, 1) * 0.4; // 80–120% size
-  const width = Math.min(52, 44 * scale * r); // % of zone width
-  const height = 13 * scale * (0.85 + randomFrom(seed, 2) * 0.3); // % of zone height
+  const width = Math.min(46, 38 * scale * r); // % of zone width
+  const height = 19 * scale * (0.85 + randomFrom(seed, 2) * 0.3); // % of zone height
 
   const yBottom = 80 - height / 2 - 2;
-  const yTop = 50 + height / 2;
+  const yTop = 46 + height / 2;
   const step = rows > 1 ? Math.min(height * 0.75, (yBottom - yTop) / (rows - 1)) : 0;
   const y = yBottom - row * step + (randomFrom(seed, 3) - 0.5) * height * 0.3;
 
