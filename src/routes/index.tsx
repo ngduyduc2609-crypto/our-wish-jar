@@ -87,18 +87,52 @@ function HomePage() {
   const streakLit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
   const nextStreakMilestone = STREAK_MILESTONES.find((milestone) => milestone > streak.current);
   const flameLevel = streakLevel(streak.current);
+  const getBangkokMonthKey = () => {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+    });
+    return formatter.format(new Date());
+  };
+
   const [restoresLeft, setRestoresLeft] = useState(() => {
-    if (typeof window === "undefined") return 1;
-    const saved = Number(window.localStorage.getItem("wish-jar-streak-restores"));
-    return Number.isFinite(saved) && saved >= 0 ? saved : 1;
+    if (typeof window === "undefined") return 5;
+
+    const currentMonth = getBangkokMonthKey();
+    const savedMonth = window.localStorage.getItem("wish-jar-streak-restores-month");
+    const savedCount = Number(window.localStorage.getItem("wish-jar-streak-restores-count"));
+
+    if (savedMonth !== currentMonth) {
+      window.localStorage.setItem("wish-jar-streak-restores-month", currentMonth);
+      window.localStorage.setItem("wish-jar-streak-restores-count", "5");
+      return 5;
+    }
+
+    if (Number.isFinite(savedCount) && savedCount >= 0) {
+      return Math.min(savedCount, 5);
+    }
+
+    return 5;
   });
   const [restoreUsed, setRestoreUsed] = useState(false);
   const effectiveStreakLit = streakLit || restoreUsed;
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("wish-jar-streak-restores", String(restoresLeft));
+    if (typeof window === "undefined") return;
+
+    const currentMonth = getBangkokMonthKey();
+    const savedMonth = window.localStorage.getItem("wish-jar-streak-restores-month");
+
+    if (savedMonth !== currentMonth) {
+      window.localStorage.setItem("wish-jar-streak-restores-month", currentMonth);
+      window.localStorage.setItem("wish-jar-streak-restores-count", "5");
+      setRestoresLeft(5);
+      return;
     }
+
+    window.localStorage.setItem("wish-jar-streak-restores-month", currentMonth);
+    window.localStorage.setItem("wish-jar-streak-restores-count", String(restoresLeft));
   }, [restoresLeft]);
 
   function drawWish() {
