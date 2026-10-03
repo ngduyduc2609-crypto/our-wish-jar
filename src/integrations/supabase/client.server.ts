@@ -5,8 +5,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const FALLBACK_SUPABASE_URL = '';
-const FALLBACK_SUPABASE_PUBLISHABLE_KEY = '';
+const FALLBACK_SUPABASE_URL = 'https://c--9eb8642f-c04f-4194-8142-ddbbf1b88786-prod.lovable.cloud';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_H_RhQ_PIDP9b82ZNqqa69w_2juXGuTH';
 
 function sanitizeSupabaseKey(value?: string): string {
   const normalized = (value ?? '').trim();
@@ -64,13 +64,8 @@ function createSupabaseAdminClient(): SupabaseClient<Database> {
   const rawUrl = process.env['SUPABASE_URL'];
   const rawKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
 
-  const SUPABASE_URL = rawUrl ? normalizeSupabaseUrl(rawUrl) : null;
+  const SUPABASE_URL = normalizeSupabaseUrl(rawUrl);
   const SUPABASE_SERVICE_ROLE_KEY = sanitizeSupabaseKey(rawKey);
-
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('[Supabase] Missing or invalid server env values. Update SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the project environment.');
-    return null as unknown as SupabaseClient<Database>;
-  }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     global: {

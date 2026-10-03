@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
-const FALLBACK_SUPABASE_URL = '';
-const FALLBACK_SUPABASE_PUBLISHABLE_KEY = '';
+const FALLBACK_SUPABASE_URL = 'https://c--9eb8642f-c04f-4194-8142-ddbbf1b88786-prod.lovable.cloud';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_H_RhQ_PIDP9b82ZNqqa69w_2juXGuTH';
 
 function sanitizeSupabaseKey(value?: string): string {
   const normalized = (value ?? '').trim();
@@ -71,12 +71,6 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseClient() {
   const { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY } = getSupabaseClientConfig();
   const isBrowser = typeof window !== 'undefined';
-
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error(
-      'Supabase config chưa hợp lệ. Vui lòng cập nhật VITE_SUPABASE_URL và VITE_SUPABASE_PUBLISHABLE_KEY trong Lovable project settings.',
-    );
-  }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
