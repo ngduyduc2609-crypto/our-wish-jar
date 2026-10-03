@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Rules
+- Identity must come from a real Lovable Cloud auth session (Google or email/password) and members.user_id; never fake sign-in with localStorage — RLS rejects unauthenticated writes.
+- Owner columns (proposed_by/added_by/created_by) are filled from the signed-in member on insert only; tables have no user_id column.
