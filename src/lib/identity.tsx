@@ -12,6 +12,20 @@ function cleanEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
+function resolveMemberForEmail(members: Member[], email?: string | null) {
+  const normalized = cleanEmail(email ?? "");
+  if (!normalized) return null;
+
+  const byEmail = Array.from(ALLOWED_EMAILS).find((allowed) => allowed === normalized);
+  if (!byEmail) return null;
+
+  if (byEmail.includes("ngduyduc")) {
+    return members.find((member) => member.name.toLowerCase().includes("duy")) ?? null;
+  }
+
+  return members.find((member) => member.name.toLowerCase().includes("thu") || member.name.toLowerCase().includes("thuy")) ?? null;
+}
+
 type IdentityValue = {
   members: Member[];
   me: Member | null;
@@ -32,15 +46,22 @@ const IdentityContext = createContext<IdentityValue | null>(null);
 export function IdentityProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      setUserId(session?.user.id ?? null);
+      const nextUserId = session?.user.id ?? null;
+      const nextEmail = cleanEmail(session?.user.email ?? "");
+      setUserId(nextUserId);
+      setUserEmail(nextEmail || null);
       if (event === "SIGNED_IN" || event === "USER_UPDATED") void queryClient.invalidateQueries();
     });
     void supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user.id ?? null);
+      const nextUserId = data.session?.user.id ?? null;
+      const nextEmail = cleanEmail(data.session?.user.email ?? "");
+      setUserId(nextUserId);
+      setUserEmail(nextEmail || null);
       setAuthReady(true);
     });
     return () => sub.subscription.unsubscribe();
@@ -52,8 +73,27 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     enabled: !!userId,
   });
 
+  useEffect(() => {
+    if (!userId || !userEmail) return;
+    const member = resolveMemberForEmail(members, userEmail);
+    if (!member) return;
+    if (member.user_id === userId) return;
+
+    void supabase
+      .from("members")
+      .update({ user_id: userId })
+      .eq("id", member.id)
+      .then(({ error }) => {
+        if (!error) {
+          void queryClient.invalidateQueries({ queryKey: ["members"] });
+        }
+      });
+  }, [members, queryClient, userEmail, userId]);
+
   const value = useMemo<IdentityValue>(() => {
-    const me = userId ? members.find((member) => member.user_id === userId) ?? null : null;
+    const me = userId
+      ? members.find((member) => member.user_id === userId) ?? resolveMemberForEmail(members, userEmail) ?? null
+      : resolveMemberForEmail(members, userEmail) ?? null;
 
     const signInWithPassword = async (email: string, password: string) => {
       const address = cleanEmail(email);
