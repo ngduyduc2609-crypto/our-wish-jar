@@ -60,7 +60,13 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       if (!ALLOWED_EMAILS.has(address)) throw new Error(PRIVATE_ACCESS_MESSAGE);
       if (!password.trim()) throw new Error("Vui lòng nhập mật khẩu.");
       const { error } = await supabase.auth.signInWithPassword({ email: address, password });
-      if (error) throw new Error("Email hoặc mật khẩu chưa đúng.");
+      if (error) {
+        const message = error.message?.toLowerCase() ?? "";
+        if (message.includes("invalid api key") || message.includes("invalid supabase") || message.includes("must be a valid http or https url")) {
+          throw new Error("Cấu hình Supabase trong project Lovable chưa đúng. Hãy cập nhật lại URL và API key từ Supabase Dashboard.");
+        }
+        throw new Error("Email hoặc mật khẩu chưa đúng.");
+      }
     };
 
     return {
