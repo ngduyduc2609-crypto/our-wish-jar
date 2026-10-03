@@ -65,6 +65,9 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         if (message.includes("invalid api key") || message.includes("invalid supabase") || message.includes("must be a valid http or https url")) {
           throw new Error("Cấu hình Supabase trong project Lovable chưa đúng. Hãy cập nhật lại URL và API key từ Supabase Dashboard.");
         }
+        if (message.includes("invalid login credentials") || message.includes("email not confirmed") || message.includes("user not found")) {
+          throw new Error("Tài khoản này chưa có mật khẩu / chưa khớp với provider hiện tại. Hãy dùng nút Đăng nhập bằng Google hoặc reset mật khẩu trong Supabase.");
+        }
         throw new Error("Email hoặc mật khẩu chưa đúng.");
       }
     };
