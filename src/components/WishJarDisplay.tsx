@@ -1,10 +1,11 @@
-import type { CSSProperties } from "react";
+import { useState, useCallback, useEffect, type CSSProperties } from "react";
 import { Sparkles } from "lucide-react";
 
 import type { Wish } from "@/lib/db";
 import { WISH_CATEGORIES, labelOf } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-const NOTE_COLORS = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage"];
+const NOTE_COLORS = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage", "wish-note-lavender"];
 
 type NoteStyle = CSSProperties & {
   "--note-x": string;
@@ -30,35 +31,41 @@ function randomFrom(seed: number, salt: number) {
   return value - Math.floor(value);
 }
 
-// Horizontal paper strips piled in the curved bottom (50%–80% of the jar interior).
-function noteStyle(id: string, index: number, total: number): NoteStyle {
-  const seed = hashSeed(id);
+function noteStyle(id: string, index: number, total: number, shuffleSeed: number): NoteStyle {
+  const seed = hashSeed(id) + shuffleSeed;
   const n = Math.max(1, total);
-  const perRow = n <= 4 ? 2 : n <= 9 ? 3 : n <= 20 ? 4 : 5;
-  const rows = Math.ceil(n / perRow);
-  const row = Math.floor(index / perRow); // 0 = bottom row
-  const inRow = Math.min(perRow, n - row * perRow);
+  
+  // Adaptive scaling based on count to prevent massive clutter
+  const scale = n <= 5 ? 1.05 : n <= 12 ? 0.9 : n <= 25 ? 0.75 : n <= 50 ? 0.62 : 0.52;
+  
+  const r = 0.85 + randomFrom(seed, 1) * 0.3;
+  const width = Math.min(48, 42 * scale * r);
+  const height = 20 * scale * (0.9 + randomFrom(seed, 2) * 0.2);
+
+  // Staggered layout logic
+  const perRow = n <= 6 ? 2 : n <= 15 ? 3 : n <= 30 ? 4 : 5;
+  const row = Math.floor(index / perRow);
   const col = index % perRow;
-  const scale = n <= 4 ? 1 : n <= 9 ? 0.9 : n <= 20 ? 0.78 : n <= 40 ? 0.66 : 0.56;
+  const rowCount = Math.ceil(n / perRow);
+  const inRow = Math.min(perRow, n - row * perRow);
 
-  const r = 0.8 + randomFrom(seed, 1) * 0.4; // 80–120% size
-  const width = Math.min(46, 38 * scale * r); // % of zone width
-  const height = 19 * scale * (0.85 + randomFrom(seed, 2) * 0.3); // % of zone height
+  // Vertical distribution from bottom up
+  const yBase = 82;
+  const yGap = Math.min(10, 35 / rowCount);
+  const yJitter = (randomFrom(seed, 3) - 0.5) * 8;
+  const y = yBase - (row * yGap) - yJitter;
 
-  const yBottom = 77 - height / 2;
-  const yTop = 44 + height / 2;
-  const step = rows > 1 ? Math.min(height * 0.9, (yBottom - yTop) / (rows - 1)) : 0;
-  const y = yBottom - row * step + (randomFrom(seed, 3) - 0.5) * height * 0.3;
+  // Horizontal distribution with inward curve awareness
+  const jarCurve = Math.pow(Math.abs((y - 50) / 40), 2) * 12;
+  const minX = 12 + jarCurve + (width / 2);
+  const maxX = 88 - jarCurve - (width / 2);
+  
+  const t = inRow <= 1 ? 0.5 : col / (inRow - 1);
+  const xJitter = (randomFrom(seed, 4) - 0.5) * 6;
+  let x = minX + (maxX - minX) * t + xJitter;
+  x = Math.max(minX, Math.min(maxX, x));
 
-  // bottom of the jar curves inward: lower rows get a narrower span
-  const inset = Math.max(4, 14 - row * 4);
-  const minX = inset + width / 2;
-  const maxX = 100 - inset - width / 2;
-  const t = inRow === 1 ? 0.5 : col / (inRow - 1);
-  const jitter = (randomFrom(seed, 4) - 0.5) * width * 0.25;
-  const x = maxX > minX ? Math.min(maxX, Math.max(minX, minX + (maxX - minX) * t + jitter)) : 50;
-
-  const rotate = -10 + randomFrom(seed, 5) * 20;
+  const rotate = -12 + randomFrom(seed, 5) * 24;
 
   return {
     "--note-x": `${x}%`,
@@ -66,28 +73,44 @@ function noteStyle(id: string, index: number, total: number): NoteStyle {
     "--note-width": `${width}%`,
     "--note-height": `${height}%`,
     "--note-rotate": `${rotate}deg`,
-    "--note-delay": `${-(randomFrom(seed, 6) * 7)}s`,
-    "--note-duration": `${5 + randomFrom(seed, 7) * 3}s`,
-    zIndex: 2 + (index % 2 === 0 ? index : n - index),
-    fontSize: `${Math.max(0.6, scale)}em`,
+    "--note-delay": `${-(randomFrom(seed, 6) * 8)}s`,
+    "--note-duration": `${6 + randomFrom(seed, 7) * 4}s`,
+    zIndex: 2 + index,
   };
 }
 
 const jarParticles = [
-  { left: "26%", top: "40%", size: "6px", delay: "0s" },
-  { left: "42%", top: "32%", size: "4px", delay: "1.2s" },
-  { left: "58%", top: "42%", size: "5px", delay: "2.1s" },
-  { left: "71%", top: "35%", size: "6px", delay: "0.7s" },
-  { left: "33%", top: "54%", size: "5px", delay: "1.8s" },
-  { left: "76%", top: "56%", size: "4px", delay: "2.7s" },
+  { left: "26%", top: "42%", size: "6px", delay: "0s" },
+  { left: "42%", top: "35%", size: "4px", delay: "1.2s" },
+  { left: "58%", top: "45%", size: "5px", delay: "2.1s" },
+  { left: "71%", top: "38%", size: "6px", delay: "0.7s" },
+  { left: "33%", top: "58%", size: "5px", delay: "1.8s" },
+  { left: "76%", top: "60%", size: "4px", delay: "2.7s" },
 ];
 
-export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
-  const visible = [...wishes.filter((wish) => !wish.completed)];
+export function WishJarDisplay({ wishes, isShaking: externalShaking = false }: { wishes: Wish[]; isShaking?: boolean }) {
+  const [internalShaking, setInternalShaking] = useState(false);
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+  const visible = wishes.filter((wish) => !wish.completed);
   const language = typeof window !== "undefined" ? (document.documentElement.dataset.lang as "vi" | "en" | "zh" | undefined) ?? "vi" : "vi";
 
+  const handleShuffle = useCallback(() => {
+    if (internalShaking || visible.length === 0) return;
+    setInternalShaking(true);
+    setTimeout(() => {
+      setShuffleSeed(s => s + 1);
+      setInternalShaking(false);
+    }, 800);
+  }, [internalShaking, visible.length]);
+
+  const shaking = externalShaking || internalShaking;
+
   return (
-    <div className="wish-jar-scene" aria-label={language === "zh" ? `装着 ${visible.length} 个等待中的愿望` : language === "en" ? `Jar holding ${visible.length} wishes waiting` : `Lọ chứa ${visible.length} điều ước đang chờ`}>
+    <div 
+      className={cn("wish-jar-scene", shaking && "jar-shaking")} 
+      onClick={handleShuffle}
+      aria-label={language === "zh" ? `装着 ${visible.length} 个等待中的愿望` : language === "en" ? `Jar holding ${visible.length} wishes waiting` : `Lọ chứa ${visible.length} điều ước đang chờ`}
+    >
       <div className="wish-jar-neck" aria-hidden="true">
         <span className="wish-jar-ribbon" />
       </div>
@@ -118,9 +141,13 @@ export function WishJarDisplay({ wishes }: { wishes: Wish[] }) {
             const category = labelOf(WISH_CATEGORIES, wish.category);
             return (
               <div
-                key={wish.id}
-                style={noteStyle(wish.id, index, visible.length)}
-                className={`wish-note wish-note-paper ${NOTE_COLORS[index % NOTE_COLORS.length]}`}
+                key={`${wish.id}-${shuffleSeed}`}
+                style={noteStyle(wish.id, index, visible.length, shuffleSeed)}
+                className={cn(
+                  "wish-note wish-note-paper", 
+                  NOTE_COLORS[index % NOTE_COLORS.length],
+                  shaking && "wish-note-shuffling"
+                )}
                 title={wish.title}
               >
                 <span className="wish-note-icon" aria-hidden="true">{category.emoji}</span>

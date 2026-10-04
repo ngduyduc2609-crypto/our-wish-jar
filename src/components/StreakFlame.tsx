@@ -1,5 +1,4 @@
 import { Flame } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 const STREAK_LEVELS = [
@@ -44,11 +43,23 @@ export function StreakFlame({
     >
       <span className={cn("streak-flame", lit ? level.className : "streak-flame-cold")} aria-hidden="true">
         <Flame className="streak-flame-back" />
+        <Flame className="streak-flame-mid" />
         <Flame className="streak-flame-front" />
-        {lit && days >= 30 ? <span className="streak-flame-spark streak-flame-spark-one" /> : null}
-        {lit && days >= 100 ? <span className="streak-flame-spark streak-flame-spark-two" /> : null}
-        {restored ? <span className="streak-flame-burst streak-flame-burst-one" /> : null}
-        {restored ? <span className="streak-flame-burst streak-flame-burst-two" /> : null}
+        
+        {lit && (
+          <>
+            {days >= 10 && <span className="streak-flame-spark streak-flame-spark-one" />}
+            {days >= 30 && <span className="streak-flame-spark streak-flame-spark-two" />}
+            {days >= 100 && <span className="streak-flame-spark streak-flame-spark-three" />}
+          </>
+        )}
+        
+        {restored && (
+          <>
+            <span className="streak-flame-burst streak-flame-burst-one" />
+            <span className="streak-flame-burst streak-flame-burst-two" />
+          </>
+        )}
       </span>
       <span className="streak-flame-count">{days}</span>
     </span>
