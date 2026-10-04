@@ -924,3 +924,72 @@ button:not(:disabled):hover {
 }
 .wish-note.wish-note-paper .wish-note-icon { flex: none; width: 0.9rem; height: 0.9rem; font-size: 0.58rem; }
 .wish-note.wish-note-paper .wish-note-title { margin-top: 0; -webkit-line-clamp: 2; font-size: 0.48rem; }
+
+/* --- New Wish Jar Shake & Shuffle Animations --- */
+@keyframes jar-shake {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  20% { transform: translateX(-50%) rotate(-2deg) translateY(-2px); }
+  40% { transform: translateX(-50%) rotate(3deg) translateY(1px); }
+  60% { transform: translateX(-50%) rotate(-3deg) translateY(-1px); }
+  80% { transform: translateX(-50%) rotate(2deg) translateY(0); }
+}
+
+.jar-shaking {
+  animation: jar-shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes wish-shuffle {
+  0% { transform: translate(-50%, -50%) rotate(var(--note-rotate)) scale(1); }
+  50% { transform: translate(-50%, -55%) rotate(calc(var(--note-rotate) * 1.5)) scale(1.1); filter: brightness(1.2) drop-shadow(0 20px 25px rgba(0,0,0,0.15)); }
+  100% { transform: translate(-50%, -50%) rotate(var(--note-rotate)) scale(1); }
+}
+
+.wish-note-shuffling {
+  animation: wish-shuffle 0.6s ease-in-out both !important;
+}
+
+/* --- Improved Flame Animations --- */
+@keyframes flame-dance-enhanced {
+  0%, 100% { transform: rotate(-2deg) scale(0.98, 1.02) translateY(1px); }
+  25% { transform: rotate(2deg) scale(1.04, 0.97) translateY(-2px); }
+  50% { transform: rotate(-3deg) scale(0.96, 1.05) translateY(0); }
+  75% { transform: rotate(1deg) scale(1.02, 0.98) translateY(-1px); }
+}
+
+@keyframes flame-glow-enhanced {
+  0%, 100% { filter: drop-shadow(0 2px 4px var(--flame-outer)) drop-shadow(0 0 8px var(--flame-edge)); opacity: 0.9; }
+  50% { filter: drop-shadow(0 4px 8px var(--flame-outer)) drop-shadow(0 0 16px var(--flame-edge)); opacity: 1; }
+}
+
+.streak-flame-live .streak-flame {
+  animation: flame-dance-enhanced 2s ease-in-out infinite, flame-glow-enhanced 3s ease-in-out infinite;
+}
+
+.streak-flame-mid {
+  transform: translateY(12%) scale(0.72);
+  fill: color-mix(in oklab, var(--flame-outer), var(--flame-inner) 60%);
+  color: transparent;
+  opacity: 0.8;
+}
+
+.streak-flame-front {
+  transform: translateY(22%) scale(0.48);
+  fill: var(--flame-inner);
+  color: var(--flame-inner);
+}
+
+.streak-flame-restored .streak-flame {
+  animation: flame-dance-enhanced 0.8s ease-in-out infinite, flame-glow-enhanced 1.2s ease-in-out infinite;
+}
+
+.streak-flame-cold {
+  animation: idle-breathe 4s ease-in-out infinite !important;
+  filter: grayscale(0.8) contrast(0.8) !important;
+  opacity: 0.4 !important;
+}
+
+.streak-flame-spark-three {
+  left: 50%;
+  top: 10%;
+  animation-delay: -0.3s;
+}
