@@ -79,6 +79,7 @@ function HomePage() {
   const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
 
   const [drawOpen, setDrawOpen] = useState(false);
+  const [jarShaking, setJarShaking] = useState(false);
   const [draw, setDraw] = useState<Wish | null>(null);
 
   const days = daysTogether();
@@ -139,6 +140,8 @@ function HomePage() {
   }, [restoresLeft]);
 
   function drawWish() {
+    setJarShaking(true);
+    setTimeout(() => setJarShaking(false), 800);
     setDraw(pickRandom(pending));
     setDrawOpen(true);
   }
@@ -165,7 +168,7 @@ function HomePage() {
       </section>
 
        <section className="paper section-lift overflow-hidden rounded-3xl px-4 pb-5 pt-3 text-center">
-         <WishJarDisplay wishes={pending} />
+         <WishJarDisplay wishes={pending} isShaking={jarShaking} />
         <h2 className="mt-2 font-display text-xl font-bold">{copy.jar}</h2>
         <p className="text-sm text-muted-foreground">
           {pending.length} {copy.waiting} · {completed} {copy.completed}
