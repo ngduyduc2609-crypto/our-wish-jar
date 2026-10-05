@@ -11,7 +11,7 @@
 - [x] Make sound effects immediate and independent from background music.
 - [x] Compress uploaded images and improve image loading placeholders.
 - [x] Verify natural wish-note placement with small and large wish counts.
-- [ ] Repair Google and email/password sign-in so the same email maps to one member.
-- [ ] Redesign wish-note placement and add an interactive jar shake/shuffle.
-- [ ] Refine streak flame states, depth, and milestone feedback.
-- [ ] Verify authentication and responsive interaction flows.
+- [x] Repair Google and email/password sign-in so the same email maps to one member.
+- [x] Redesign wish-note placement and add an interactive jar shake/shuffle.
+- [x] Refine streak flame states, depth, and milestone feedback.
+- [x] Verify authentication and responsive interaction flows.
