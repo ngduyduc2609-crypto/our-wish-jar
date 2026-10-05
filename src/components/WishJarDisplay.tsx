@@ -32,40 +32,30 @@ function randomFrom(seed: number, salt: number) {
 }
 
 function noteStyle(id: string, index: number, total: number, shuffleSeed: number): NoteStyle {
-  const seed = hashSeed(id) + shuffleSeed;
+  const seed = hashSeed(id) + shuffleSeed * 7919;
   const n = Math.max(1, total);
-  
-  // Adaptive scaling based on count to prevent massive clutter
-  const scale = n <= 5 ? 1.05 : n <= 12 ? 0.9 : n <= 25 ? 0.75 : n <= 50 ? 0.62 : 0.52;
-  
-  const r = 0.85 + randomFrom(seed, 1) * 0.3;
-  const width = Math.min(48, 42 * scale * r);
-  const height = 20 * scale * (0.9 + randomFrom(seed, 2) * 0.2);
+  // Grid of cells inside the jar body; each wish gets its own cell (shuffled order).
+  const cols = n <= 2 ? n : n <= 6 ? 2 : n <= 12 ? 3 : n <= 24 ? 4 : 5;
+  const rows = Math.ceil(n / cols);
+  const order = Array.from({ length: n }, (_, i) => i).sort(
+    (a, b) => randomFrom(a + 1, shuffleSeed + 3) - randomFrom(b + 1, shuffleSeed + 3),
+  );
+  const cell = order[index] ?? index;
+  const row = Math.floor(cell / cols);
+  const inRow = Math.min(cols, n - row * cols);
+  const col = cell % cols;
 
-  // Staggered layout logic
-  const perRow = n <= 6 ? 2 : n <= 15 ? 3 : n <= 30 ? 4 : 5;
-  const row = Math.floor(index / perRow);
-  const col = index % perRow;
-  const rowCount = Math.ceil(n / perRow);
-  const inRow = Math.min(perRow, n - row * perRow);
+  const top = rows <= 3 ? 40 : 14;
+  const bottom = 90;
+  const cellH = (bottom - top) / rows;
+  const inset = 6 + Math.abs(row - (rows - 1) / 2) * 0; // jar body is straight
+  const cellW = (100 - inset * 2) / inRow;
 
-  // Vertical distribution from bottom up
-  const yBase = 82;
-  const yGap = Math.min(10, 35 / rowCount);
-  const yJitter = (randomFrom(seed, 3) - 0.5) * 8;
-  const y = yBase - (row * yGap) - yJitter;
-
-  // Horizontal distribution with inward curve awareness
-  const jarCurve = Math.pow(Math.abs((y - 50) / 40), 2) * 12;
-  const minX = 12 + jarCurve + (width / 2);
-  const maxX = 88 - jarCurve - (width / 2);
-  
-  const t = inRow <= 1 ? 0.5 : col / (inRow - 1);
-  const xJitter = (randomFrom(seed, 4) - 0.5) * 6;
-  let x = minX + (maxX - minX) * t + xJitter;
-  x = Math.max(minX, Math.min(maxX, x));
-
-  const rotate = -12 + randomFrom(seed, 5) * 24;
+  const width = Math.min(46, cellW * 0.86);
+  const height = Math.min(22, cellH * 0.82);
+  const x = inset + cellW * (col + 0.5) + (randomFrom(seed, 4) - 0.5) * cellW * 0.1;
+  const y = bottom - cellH * (row + 0.5) + (randomFrom(seed, 3) - 0.5) * cellH * 0.12;
+  const rotate = -7 + randomFrom(seed, 5) * 14;
 
   return {
     "--note-x": `${x}%`,
@@ -173,6 +163,15 @@ export function WishJarDisplay({ wishes, isShaking: externalShaking = false }: {
       <span className="wish-jar-spark wish-jar-spark-right" aria-hidden="true">
         <Sparkles />
       </span>
+      {visible.length > 0 && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); handleShuffle(); }}
+          className="absolute bottom-1 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-card/90 px-3 py-1 text-xs font-semibold text-foreground shadow-md"
+        >
+          {language === "en" ? "Shake jar ✨" : language === "zh" ? "摇一摇 ✨" : "Lắc lọ ✨"}
+        </button>
+      )}
     </div>
   );
 }

@@ -156,7 +156,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         void logAction(me.id, action, subject ?? null);
       },
     };
-  }, [authReady, isFetched, members, queryClient, userId]);
+  }, [authReady, isFetched, members, queryClient, userId, userEmail]);
 
   return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;
 }
