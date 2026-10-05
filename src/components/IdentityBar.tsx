@@ -383,8 +383,6 @@ export function IdentityGate() {
                   Tài khoản đang dùng Google chưa có mật khẩu. Nhận link qua email để đặt mật khẩu, sau đó đăng nhập bằng email hay Google đều vào cùng một tài khoản.
                 </p>
               )}
-              {false && (<button>
-              </button>
             </div>
 
             <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
