@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ChevronDown, Languages, LogOut, Mail, Music, Palette, Volume2, VolumeX } from "lucide-react";
 
 import { useIdentity } from "@/lib/identity";
+import { supabase } from "@/integrations/supabase/client";
 import { daysTogether, todayKey } from "@/lib/constants";
 import { computeStreak, fetchPresence } from "@/lib/db";
 import { LANGUAGE_OPTIONS, applyLanguage, getLanguageStorageKey, readStoredLanguage, type AppLanguage } from "@/lib/language";
@@ -271,9 +272,9 @@ export function IdentityBar() {
 }
 
 export function IdentityGate() {
-  const { members, signedIn, signIn, signInWithPassword, signUpWithPassword, signOut, claim } = useIdentity();
+  const { members, signedIn, signIn, signInWithPassword, signOut, claim } = useIdentity();
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "setup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -281,8 +282,8 @@ export function IdentityGate() {
 
   const handleEmailAuth = async () => {
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !password.trim()) {
-      toast.error("Vui lòng nhập email và mật khẩu của bạn.");
+    if (!cleanEmail || (mode === "login" && !password.trim())) {
+      toast.error(mode === "login" ? "Vui lòng nhập email và mật khẩu của bạn." : "Vui lòng nhập email của bạn.");
       return;
     }
 
@@ -298,8 +299,11 @@ export function IdentityGate() {
         await signInWithPassword(cleanEmail, password);
         toast.success("Đăng nhập thành công.");
       } else {
-        await signUpWithPassword(cleanEmail, password);
-        toast.success("Tạo tài khoản thành công. Chúng mình đang chuẩn bị mở chiếc lọ cho bạn.");
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw new Error("Chưa gửi được email, thử lại sau ít phút nhé.");
+        toast.success("Đã gửi link đặt mật khẩu vào email của bạn. Mở email và bấm link nhé.");
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đăng nhập không thành công, thử lại nhé.";
@@ -337,7 +341,7 @@ export function IdentityGate() {
                 </div>
               </div>
 
-              <div className="space-y-1">
+              {mode === "login" && <div className="space-y-1">
                 <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Mật khẩu</label>
                 <input
                   type="password"
@@ -345,9 +349,9 @@ export function IdentityGate() {
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="••••••••"
                   className="w-full rounded-full border border-border bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
-                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  autoComplete="current-password"
                 />
-              </div>
+              </div>}
 
               <div className="flex gap-2 rounded-full bg-secondary/60 p-1">
                 <button
@@ -359,10 +363,10 @@ export function IdentityGate() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMode("signup")}
-                  className={`flex-1 rounded-full px-2 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                  onClick={() => setMode("setup")}
+                  className={`flex-1 rounded-full px-2 py-2 text-sm font-medium transition ${mode === "setup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                 >
-                  Đăng ký
+                  Đặt mật khẩu
                 </button>
               </div>
 
@@ -372,7 +376,14 @@ export function IdentityGate() {
                 onClick={() => void handleEmailAuth()}
                 className="w-full rounded-full bg-primary px-4 py-3 text-base font-medium text-primary-foreground shadow disabled:opacity-60"
               >
-                {busy ? "Đang xử lý..." : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}
+                {busy ? "Đang xử lý..." : mode === "login" ? "Đăng nhập" : "Gửi link đặt mật khẩu"}
+              </button>
+              {mode === "setup" && (
+                <p className="px-2 text-xs text-muted-foreground">
+                  Tài khoản đang dùng Google chưa có mật khẩu. Nhận link qua email để đặt mật khẩu, sau đó đăng nhập bằng email hay Google đều vào cùng một tài khoản.
+                </p>
+              )}
+              {false && (<button>
               </button>
             </div>
 

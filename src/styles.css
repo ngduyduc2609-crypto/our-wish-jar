@@ -993,3 +993,72 @@ button:not(:disabled):hover {
   top: 10%;
   animation-delay: -0.3s;
 }
+
+/* --- Interactive wish jar: drag to shake, papers reshuffle --- */
+.wish-jar-interactive { touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+.wish-jar-interactive.is-dragging { cursor: grabbing; }
+.wish-jar-body {
+  position: absolute; inset: 0;
+  transform: translate3d(var(--jar-tx, 0px), var(--jar-ty, 0px), 0) rotate(var(--jar-rot, 0deg));
+  transform-origin: 50% 85%;
+  transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1);
+}
+.wish-jar-interactive.is-dragging .wish-jar-body { transition: transform 0.08s linear; }
+.wish-jar-interactive.is-jolting .wish-jar-shell { animation: jar-jolt 0.26s ease-out, jar-glow 3.8s ease-in-out infinite; }
+@keyframes jar-jolt {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.025, 0.975); }
+  100% { transform: scale(1); }
+}
+
+.jar-paper {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition:
+    left 0.6s cubic-bezier(.34, 1.4, .64, 1) var(--note-lag, 0ms),
+    top 0.6s cubic-bezier(.34, 1.4, .64, 1) var(--note-lag, 0ms);
+  pointer-events: none;
+}
+.jar-paper-inner {
+  position: relative;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; gap: 0.2rem;
+  padding: 0.2rem 0.35rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: var(--wish-note-ink);
+  border-radius: 0.18rem 0.3rem 0.22rem 0.26rem;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 0.42rem, color-mix(in oklab, var(--wish-note-ink) 10%, transparent) 0.42rem 0.46rem),
+    linear-gradient(135deg, rgba(255,255,255,0.75), transparent 40%),
+    linear-gradient(180deg, color-mix(in oklab, var(--wish-note-bg) 88%, white), var(--wish-note-bg));
+  border: 1px solid rgba(255,255,255,0.7);
+  transform: rotate(var(--note-rotate));
+  transition: transform 0.5s cubic-bezier(.34, 1.56, .64, 1);
+  animation:
+    jar-paper-float var(--note-duration, 6s) ease-in-out var(--note-delay, 0s) infinite,
+    jar-paper-glow 3.2s ease-in-out var(--note-delay, 0s) infinite;
+}
+.jar-paper-inner::after {
+  content: ""; position: absolute; right: 0; top: 0; width: 18%; height: 30%;
+  background: linear-gradient(225deg, color-mix(in oklab, var(--wish-note-bg) 60%, white) 0 48%, rgba(0,0,0,0.08) 50%, transparent 52%);
+  pointer-events: none;
+}
+.jar-paper-icon { flex: none; font-size: 0.62rem; line-height: 1; }
+.jar-paper-title {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  font-family: var(--font-display, inherit); font-weight: 700; font-size: 0.56rem; line-height: 1.15;
+  word-break: break-word;
+}
+@keyframes jar-paper-float {
+  0%, 100% { transform: rotate(var(--note-rotate)) translateY(0); }
+  50% { transform: rotate(calc(var(--note-rotate) + 2deg)) translateY(-2px); }
+}
+@keyframes jar-paper-glow {
+  0%, 100% { box-shadow: 0 3px 6px var(--wish-note-shadow), 0 0 8px var(--wish-note-glow); filter: brightness(1); }
+  50% { box-shadow: 0 5px 10px var(--wish-note-shadow), 0 0 16px var(--wish-note-glow), 0 0 26px color-mix(in oklab, var(--wish-note-glow) 70%, transparent); filter: brightness(1.06); }
+}
+.wish-jar-interactive.is-jolting .jar-paper-inner { animation-duration: 0.3s, 0.6s; }
+@media (prefers-reduced-motion: reduce) {
+  .wish-jar-body, .jar-paper, .jar-paper-inner { transition: none; animation: none; }
+}
