@@ -47,7 +47,7 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { members } = useIdentity();
+  const { members, me, track } = useIdentity();
   const language = useAppLanguage();
   const copy = {
     together: language === "vi" ? "Chúng mình đã bên nhau" : language === "zh" ? "我们在一起已经" : "We’ve been together",
@@ -62,7 +62,7 @@ function HomePage() {
     traceDesc: language === "vi" ? "Nhìn lại hành trình và các cột mốc" : language === "zh" ? "回顾旅程和里程碑" : "Look back at the journey and milestones",
     today: language === "vi" ? "Điều ước hôm nay" : language === "zh" ? "今日愿望" : "Today’s wish",
     openList: language === "vi" ? "Mở danh sách" : language === "zh" ? "打开列表" : "Open list",
-    todayStatus: language === "vi" ? "Hôm nay đang chờ cả hai cùng ghé" : language === "zh" ? "今天还在等我们一起来了" : "Waiting for both of us to check in today",
+    todayStatus: language === "vi" ? "Hôm nay chưa có tương tác nào" : language === "zh" ? "今天还没有互动" : "No activity yet today",
     streak: language === "vi" ? "Chuỗi" : language === "zh" ? "连续" : "Streak",
     streakDays: language === "vi" ? "ngày cùng nhau" : language === "zh" ? "天在一起" : "days together",
     daysLabel: language === "vi" ? "ngày, kể từ 22/12/2025 💗" : language === "zh" ? "天，从 2025/12/22 开始 💗" : "days, since 22/12/2025 💗",
@@ -71,7 +71,7 @@ function HomePage() {
     restoreButton: language === "vi" ? "Khôi phục chuỗi" : language === "zh" ? "恢复连击" : "Restore streak",
     doneMarker: language === "vi" ? "✅ Đã ghé" : language === "zh" ? "✅ 已打卡" : "✅ Checked in",
     pendingMarker: language === "vi" ? "⏳ Đang chờ" : language === "zh" ? "⏳ 等待中" : "⏳ Waiting",
-    needBoth: language === "vi" ? "Cần cả hai cùng hoạt động hôm nay để tiếp tục chuỗi!" : language === "zh" ? "今天需要两人都动起来才能继续连击！" : "Both of us need to be active today to keep the streak going!",
+    needBoth: language === "vi" ? (streak.restoredToday ? "Đã khôi phục chuỗi — hôm nay chuỗi sẽ không tăng thêm." : "Thêm kỷ niệm, quán ăn hay rút một điều ước là chuỗi được thắp sáng!") : language === "zh" ? (streak.restoredToday ? "已恢复连击——今天不再增加。" : "添加回忆、美食或抽一个愿望就能点亮连击！") : (streak.restoredToday ? "Streak restored — it won't grow any more today." : "Add a memory, a food spot or draw a wish to light the streak!"),
   } as const;
   const qc = useQueryClient();
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });
