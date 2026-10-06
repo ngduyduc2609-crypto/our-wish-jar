@@ -6,7 +6,6 @@ import { Shuffle, Sparkles, BarChart3, ChevronRight, RotateCcw } from "lucide-re
 import { useAppLanguage } from "@/lib/language";
 
 import { Button } from "@/components/ui/button";
-import { RandomDrawDialog } from "@/components/RandomDraw";
 import { StoredImage } from "@/components/StoredImage";
 import { useIdentity } from "@/lib/identity";
 import {
@@ -48,6 +47,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { members, me, track } = useIdentity();
+  const streak = useStreak(members.length || 2);
   const language = useAppLanguage();
   const copy = {
     together: language === "vi" ? "Chúng mình đã bên nhau" : language === "zh" ? "我们在一起已经" : "We’ve been together",
@@ -80,7 +80,6 @@ function HomePage() {
   const [drawOpen, setDrawOpen] = useState(false);
 
   const days = daysTogether();
-  const streak = useStreak(members.length || 2);
   const pending = useMemo(() => wishes.filter((w) => !w.completed), [wishes]);
   const completed = wishes.length - pending.length;
   const activeToday = streak.activeToday;
