@@ -394,11 +394,34 @@ function WishCard({
     commentPlaceholder: language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó...",
   } as const;
   const [openComments, setOpenComments] = useState(false);
+  const [reactionOpen, setReactionOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Wish | null>(null);
+  const longPressRef = useRef<number | null>(null);
   const category = labelOf(WISH_CATEGORIES, wish.category, language);
   const difficulty = labelOf(DIFFICULTIES, wish.difficulty, language);
   const mine = canManage(me, wish.proposed_by);
+  const reactionMeta = ["❤️", "🤣", "😮", "😭", "😠", "👍"] as const;
+  const summary = reactionMeta
+    .map((emoji) => ({ emoji, count: reactions.filter((r) => r.emoji === emoji).length }))
+    .filter((item) => item.count > 0)
+    .slice(0, 3);
+  const myReaction = me ? reactions.find((r) => r.member_id === me.id) : null;
+  const initials = (name: string) =>
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, 2) || "U";
+  const clearLongPress = () => {
+    if (longPressRef.current) {
+      window.clearTimeout(longPressRef.current);
+      longPressRef.current = null;
+    }
+  };
 
   async function react(emoji: string) {
     if (!me) return;
@@ -467,50 +490,126 @@ function WishCard({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {REACTIONS.map((emoji) => {
-          const list = reactions.filter((r) => r.emoji === emoji);
-          const reacted = me ? list.some((r) => r.member_id === me.id) : false;
-          return (
+      <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1 rounded-full border border-border bg-card/80 px-2 py-1.5 shadow-sm">
+            {summary.length > 0 ? (
+              summary.map((item) => (
+                <span key={item.emoji} className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <span>{item.emoji}</span>
+                  <span className="font-medium text-foreground">{item.count}</span>
+                </span>
+              ))
+            ) : (
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Heart className="size-3.5" /> 0
+              </span>
+            )}
+          </div>
+
+          <div className="relative">
             <button
-              key={emoji}
               type="button"
-              onClick={() => void react(emoji)}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (me) {
+                  void react("❤️");
+                }
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                if (window.matchMedia?.("(pointer: coarse)")?.matches) {
+                  clearLongPress();
+                  longPressRef.current = window.setTimeout(() => {
+                    setReactionOpen(true);
+                  }, 260);
+                }
+              }}
+              onPointerUp={clearLongPress}
+              onPointerLeave={clearLongPress}
+              onMouseEnter={() => setReactionOpen(true)}
+              onMouseLeave={() => setReactionOpen(false)}
               className={cn(
-                "wish-card-button border px-2.5 py-1 text-xs transition-colors",
-                reacted ? "border-primary bg-accent shadow-[0_8px_18px_-10px_rgba(146,116,180,0.32)]" : "border-border bg-card/80",
+                "flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                myReaction ? "border-primary bg-accent text-primary" : "border-border bg-card/80 text-muted-foreground",
               )}
             >
-              {emoji} {list.length > 0 && list.length}
+              <Heart className={cn("size-3.5", myReaction ? "fill-current" : "")} />
+              <span>{myReaction ? (language === "zh" ? "已赞" : language === "en" ? "Liked" : "Đã thích") : language === "zh" ? "赞" : language === "en" ? "Like" : "Thả tim"}</span>
             </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setOpenComments((v) => !v)}
-          className="wish-card-button ml-auto flex items-center gap-1 border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground"
-        >
-          <MessageCircle className="size-3.5" /> {comments.length}
-        </button>
+
+            {reactionOpen && (
+              <div className="absolute bottom-full left-0 z-20 mb-2 rounded-full border border-border bg-background/90 p-1.5 shadow-[0_20px_35px_-18px_rgba(15,23,42,0.45)] backdrop-blur-sm">
+                <div className="flex items-center gap-1">
+                  {reactionMeta.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      aria-label={`Thả cảm xúc ${emoji}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void react(emoji);
+                        setReactionOpen(false);
+                      }}
+                      className="grid size-8 place-items-center rounded-full text-lg transition-transform hover:scale-110"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpenComments((v) => !v)}
+            className="flex items-center gap-1 rounded-full border border-border bg-card/80 px-2.5 py-1.5 text-xs text-muted-foreground"
+          >
+            <MessageCircle className="size-3.5" /> {comments.length}
+          </button>
+        </div>
+
         {mine && (
-          <>
+          <div className="relative">
             <button
               type="button"
-              onClick={onEdit}
-              aria-label={language === "zh" ? "编辑愿望" : language === "en" ? "Edit wish" : "Sửa điều ước"}
-              className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
+              aria-label="Cài đặt"
+              onClick={(event) => {
+                event.stopPropagation();
+                setMenuOpen((v) => !v);
+              }}
+              className="grid size-8 place-items-center rounded-full border border-border bg-card/80 text-muted-foreground"
             >
-              <Pencil className="size-3.5" />
+              <MoreHorizontal className="size-4" />
             </button>
-            <button
-              type="button"
-              onClick={() => setDeleteTarget(wish)}
-              aria-label={language === "zh" ? "删除愿望" : language === "en" ? "Delete wish" : "Xoá điều ước"}
-              className="wish-card-button border border-border bg-card/80 px-2 py-1 text-muted-foreground"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          </>
+            {menuOpen && (
+              <div className="absolute right-0 top-full z-20 mt-2 w-32 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setMenuOpen(false);
+                    onEdit();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
+                >
+                  <Pencil className="size-3.5" /> Sửa
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setMenuOpen(false);
+                    setDeleteTarget(wish);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
+                >
+                  <Trash2 className="size-3.5" /> Xoá
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -528,25 +627,38 @@ function WishCard({
       />
 
       {openComments && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
-          {comments.map((c) => (
-            <div key={c.id} className="rounded-2xl bg-secondary px-3 py-2 text-sm">
-              <span className="font-medium">{memberName(c.member_id)}: </span>
-              {c.content}
-            </div>
-          ))}
-          <div className="flex gap-2">
+        <div className="mt-3 rounded-[22px] border border-border bg-secondary/40 p-3">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-semibold">{language === "zh" ? "评论" : language === "en" ? "Comments" : "Bình luận"}</p>
+            <span className="rounded-full bg-card/80 px-2 py-0.5 text-[11px] text-muted-foreground">{comments.length}</span>
+          </div>
+          <div className="max-h-56 space-y-2 overflow-auto pr-1">
+            {comments.length === 0 ? (
+              <p className="rounded-[18px] bg-background/70 px-3 py-2 text-sm text-muted-foreground">
+                {language === "zh" ? "还没有评论" : language === "en" ? "No comments yet" : "Chưa có bình luận nào"}
+              </p>
+            ) : (
+              comments.map((c) => (
+                <div key={c.id} className="flex items-start gap-2 rounded-[18px] bg-background/70 p-2">
+                  <div className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/25 to-secondary text-[10px] font-semibold text-foreground">
+                    {initials(memberName(c.member_id))}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-muted-foreground">{memberName(c.member_id)}</p>
+                    <p className="text-sm">{c.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="mt-3 flex gap-2">
             <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={copy.commentPlaceholder}
-              className="rounded-2xl"
+              className="flex-1 rounded-full"
             />
-            <Button
-              className="wish-card-pill rounded-full"
-              onClick={() => void sendComment()}
-              disabled={!draft.trim()}
-            >
+            <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
               {copy.send}
             </Button>
           </div>
