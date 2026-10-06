@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, MoreHorizontal, Plus, Check, Trash2, Shuffle, Pencil } from "lucide-react";
+import { Heart, MessageCircle, Plus, Check, Trash2, Shuffle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import {
   fetchWishes,
   insertRow,
   toggleReaction,
+  uniqueMemberReactions,
   updateRow,
   pickRandom,
   type Wish,
@@ -395,7 +396,6 @@ function WishCard({
   } as const;
   const [openComments, setOpenComments] = useState(false);
   const [reactionOpen, setReactionOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Wish | null>(null);
   const [hoveredReactionIndex, setHoveredReactionIndex] = useState<number | null>(null);
@@ -640,55 +640,6 @@ function WishCard({
             {wish.completed ? "✓" : "☆"} {wish.completed ? (language === "zh" ? "已完成" : language === "en" ? "Done" : "Đã xong") : (language === "zh" ? "标记" : language === "en" ? "Mark" : "Đánh dấu")}
           </button>
 
-          {mine && (
-            <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
-              <button
-                type="button"
-                aria-label={language === "zh" ? "设置" : language === "en" ? "Settings" : "Cài đặt"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setMenuOpen((v) => !v);
-                }}
-                onTouchStart={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-                onPointerUp={(event) => event.stopPropagation()}
-                style={noSelectStyle}
-                className="select-none grid size-8 place-items-center rounded-full border border-border bg-card/80 text-muted-foreground transition-all duration-150 active:scale-[0.98]"
-              >
-                <MoreHorizontal className="size-4" />
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 top-full z-20 mt-2 w-32 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setMenuOpen(false);
-                      onEdit();
-                    }}
-                    onTouchStart={(event) => event.stopPropagation()}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
-                  >
-                    <Pencil className="size-3.5" /> {language === "zh" ? "编辑" : language === "en" ? "Edit" : "Sửa"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setMenuOpen(false);
-                      setDeleteTarget(wish);
-                    }}
-                    onTouchStart={(event) => event.stopPropagation()}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
-                  >
-                    <Trash2 className="size-3.5" /> {language === "zh" ? "删除" : language === "en" ? "Delete" : "Xoá"}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
