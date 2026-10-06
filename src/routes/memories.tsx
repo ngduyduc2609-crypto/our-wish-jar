@@ -231,7 +231,7 @@ function MemoryCard({
       onKeyDown={(event) => {
         if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) onView();
       }}
-      className="paper relative cursor-pointer rounded-3xl p-4"
+      className="paper relative cursor-pointer overflow-hidden rounded-[28px] p-4"
     >
       <span className="absolute -left-[26px] top-6 size-3 rounded-full bg-primary" />
       <div className="flex items-start justify-between gap-3">
@@ -274,7 +274,9 @@ function MemoryCard({
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <ImageGallery images={imageAssets(memory.images, memory.image_url, memory.image_pos)} alt={memory.title} className="mt-3 rounded-[22px]" />
+
+      <div className="mt-4 flex flex-wrap items-center gap-1.5">
         {REACTIONS.map((emoji) => {
           const list = reactions.filter((r) => r.emoji === emoji);
           const reacted = me ? list.some((r) => r.member_id === me.id) : false;
@@ -287,7 +289,7 @@ function MemoryCard({
                 void react(emoji);
               }}
               className={cn(
-                "border px-2.5 py-1 text-xs transition-colors",
+                "rounded-full border px-2.5 py-1 text-xs transition-colors",
                 reacted ? "border-primary bg-accent shadow-[0_8px_18px_-10px_rgba(146,116,180,0.32)]" : "border-border bg-card/80",
               )}
             >
@@ -301,7 +303,7 @@ function MemoryCard({
             event.stopPropagation();
             setOpenComments((v) => !v);
           }}
-          className="ml-auto flex items-center gap-1 border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground"
+          className="ml-auto flex items-center gap-1 rounded-full border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground"
         >
           <MessageCircle className="size-3.5" /> {comments.length}
         </button>
@@ -321,23 +323,21 @@ function MemoryCard({
       />
 
       {openComments && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
+        <div className="mt-3 space-y-2 rounded-[22px] border border-border bg-secondary/40 p-3">
           {comments.map((c) => (
-            <div key={c.id} className="rounded-2xl bg-secondary px-3 py-2 text-sm">
+            <div key={c.id} className="rounded-[18px] bg-secondary px-3 py-2 text-sm">
               <span className="font-medium">{memberName(c.member_id)}: </span>
               {c.content}
             </div>
           ))}
           <div className="flex gap-2">
-            <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó..."} className="rounded-2xl" />
+            <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó..."} className="flex-1 rounded-full" />
             <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
               {language === "zh" ? "发送" : language === "en" ? "Send" : "Gửi"}
             </Button>
           </div>
         </div>
       )}
-
-      <ImageGallery images={imageAssets(memory.images, memory.image_url, memory.image_pos)} alt={memory.title} className="mt-3 rounded-2xl" />
     </article>
   );
 }
