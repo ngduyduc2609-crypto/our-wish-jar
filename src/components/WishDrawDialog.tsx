@@ -11,6 +11,7 @@ import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 type Phase = "shake" | "pull" | "open";
+const PAPER_TONES = ["wish-note-rose", "wish-note-honey", "wish-note-sky", "wish-note-sage", "wish-note-lavender"];
 
 /**
  * "Pull a paper from the jar": the jar wobbles, one folded slip rises out,
@@ -32,6 +33,7 @@ export function WishDrawDialog({
   const [wish, setWish] = useState<Wish | null>(null);
   const [phase, setPhase] = useState<Phase>("shake");
   const [round, setRound] = useState(0);
+  const [paperTone, setPaperTone] = useState<string>(PAPER_TONES[0]);
   const timers = useRef<number[]>([]);
   const lastId = useRef<string | null>(null);
 
@@ -51,6 +53,7 @@ export function WishDrawDialog({
     const next = pool[Math.floor(Math.random() * pool.length)]!;
     lastId.current = next.id;
     setWish(next);
+    setPaperTone(PAPER_TONES[Math.floor(Math.random() * PAPER_TONES.length)]!);
     setRound((r) => r + 1);
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduced) { setPhase("open"); return; }
@@ -85,7 +88,7 @@ export function WishDrawDialog({
             </span>
           </div>
 
-          <div className="draw-paper wish-note-honey">
+          <div className={cn("draw-paper", paperTone)}>
             <div className="draw-paper-folded" aria-hidden="true">📜</div>
             <div className="draw-paper-content">
               {wish && category ? (
