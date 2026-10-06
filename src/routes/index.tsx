@@ -71,7 +71,7 @@ function HomePage() {
     restoreButton: language === "vi" ? "Khôi phục chuỗi" : language === "zh" ? "恢复连击" : "Restore streak",
     doneMarker: language === "vi" ? "✅ Đã ghé" : language === "zh" ? "✅ 已打卡" : "✅ Checked in",
     pendingMarker: language === "vi" ? "⏳ Đang chờ" : language === "zh" ? "⏳ 等待中" : "⏳ Waiting",
-    needBoth: language === "vi" ? (streak.restoredToday ? "Đã khôi phục chuỗi — hôm nay chuỗi sẽ không tăng thêm." : "Thêm kỷ niệm, quán ăn hay rút một điều ước là chuỗi được thắp sáng!") : language === "zh" ? (streak.restoredToday ? "已恢复连击——今天不再增加。" : "添加回忆、美食或抽一个愿望就能点亮连击！") : (streak.restoredToday ? "Streak restored — it won't grow any more today." : "Add a memory, a food spot or draw a wish to light the streak!"),
+    needBoth: language === "vi" ? (streak.restoredToday ? "Đã khôi phục chuỗi — hôm nay chuỗi sẽ không tăng thêm." : "Chuỗi chỉ tăng khi cả hai cùng tương tác trong cùng một ngày.") : language === "zh" ? (streak.restoredToday ? "已恢复连击——今天不再增加。" : "只有双方在同一天都互动，连击才会增加。") : (streak.restoredToday ? "Streak restored — it won't grow any more today." : "The streak only grows when both of you interact on the same day."),
   } as const;
   const qc = useQueryClient();
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });

@@ -431,12 +431,28 @@ export function imageAssets(images: ImageAsset[] | null | undefined, legacyPath?
 }
 
 /**
- * Chuỗi ngày liên tiếp có tương tác trong app (bất kỳ thành viên nào).
+ * Chuỗi ngày liên tiếp chỉ tăng khi cả hai thành viên đều có tương tác trong cùng một ngày.
  * Nếu hôm nay đã dùng "khôi phục", hôm nay không được tính thêm.
  */
-export function computeStreak(presence: Presence[], _memberCount: number, restoredToday = false) {
+export function computeStreak(presence: Presence[], memberCount = 2, restoredToday = false) {
+  const requiredCount = Math.max(1, memberCount || 1);
+  const dayMembers = new Map<string, Set<string>>();
+
+  for (const record of presence) {
+    const members = dayMembers.get(record.day) ?? new Set<string>();
+    members.add(record.member_id);
+    dayMembers.set(record.day, members);
+  }
+
+  const qualifiedDays = new Set<string>();
+  for (const [day, members] of dayMembers.entries()) {
+    if (members.size >= requiredCount) {
+      qualifiedDays.add(day);
+    }
+  }
+
   const today = todayKey();
-  const activeDays = new Set(presence.map((p) => p.day).filter((d) => !(restoredToday && d === today)));
+  const activeDays = new Set([...qualifiedDays].filter((d) => !(restoredToday && d === today)));
 
   const sorted = [...activeDays].sort();
   let best = 0;
@@ -460,7 +476,7 @@ export function computeStreak(presence: Presence[], _memberCount: number, restor
 
   const y = new Date(); y.setDate(y.getDate() - 1);
   const y2 = new Date(); y2.setDate(y2.getDate() - 2);
-  const canRestore = !restoredToday && !activeDays.has(todayKey(y)) && activeDays.has(todayKey(y2));
+  const canRestore = !restoredToday && !activeDays.has(todayKey(y)) && qualifiedDays.has(todayKey(y2));
   return { current, best, litToday, canRestore };
 }
 
