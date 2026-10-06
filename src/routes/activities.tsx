@@ -298,13 +298,13 @@ function ActivityCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
+  const [hoveredReactionIndex, setHoveredReactionIndex] = useState<number | null>(null);
   const longPressRef = useRef<number | null>(null);
-  const reactionMeta = ["❤️", "🤣", "😮", "😭", "😠", "👍"] as const;
-  const summary = reactionMeta
-    .map((emoji) => ({ emoji, count: reactions.filter((r) => r.emoji === emoji).length }))
-    .filter((item) => item.count > 0)
-    .slice(0, 3);
+  const reactionBarRef = useRef<HTMLDivElement | null>(null);
+  const reactionMeta = ["👍", "❤️", "😂", "😮", "😢", "😡"] as const;
   const myReaction = me ? reactions.find((r) => r.member_id === me.id) : null;
+  const reactionCount = reactions.length;
+  const noSelectStyle = { userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" } as const;
 
   const initials = (name: string) =>
     name
@@ -320,6 +320,23 @@ function ActivityCard({
       window.clearTimeout(longPressRef.current);
       longPressRef.current = null;
     }
+  };
+
+  const handleReactionMove = (event: { clientX: number; currentTarget: HTMLDivElement }) => {
+    if (!reactionBarRef.current) return;
+    const rect = reactionBarRef.current.getBoundingClientRect();
+    const offset = event.clientX - rect.left;
+    const percent = Math.min(Math.max(offset / rect.width, 0), 1);
+    const index = Math.min(reactionMeta.length - 1, Math.max(0, Math.floor(percent * reactionMeta.length)));
+    setHoveredReactionIndex(index);
+  };
+
+  const handleReactionRelease = () => {
+    if (hoveredReactionIndex !== null) {
+      void react(reactionMeta[hoveredReactionIndex]);
+    }
+    setReactionOpen(false);
+    setHoveredReactionIndex(null);
   };
 
   async function react(emoji: string) {
@@ -419,29 +436,14 @@ function ActivityCard({
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-muted/30 pt-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex min-w-0 items-center gap-1 rounded-full border border-border bg-card/80 px-2 py-1.5 shadow-sm">
-              {summary.length > 0 ? (
-                summary.map((item) => (
-                  <span key={item.emoji} className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <span>{item.emoji}</span>
-                    <span className="font-medium text-foreground">{item.count}</span>
-                  </span>
-                ))
-              ) : (
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Heart className="size-3.5" /> 0
-                </span>
-              )}
-            </div>
-
             <div className="relative">
               <button
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (me) {
+                  if (me && !myReaction) {
                     void react("❤️");
                   }
                 }}
@@ -454,38 +456,68 @@ function ActivityCard({
                     }, 260);
                   }
                 }}
-                onPointerUp={clearLongPress}
-                onPointerLeave={clearLongPress}
+                onPointerUp={(event) => {
+                  event.stopPropagation();
+                  clearLongPress();
+                }}
+                onPointerLeave={(event) => {
+                  event.stopPropagation();
+                  clearLongPress();
+                }}
                 onMouseEnter={() => setReactionOpen(true)}
                 onMouseLeave={() => setReactionOpen(false)}
+                style={noSelectStyle}
                 className={cn(
-                  "flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors",
-                  myReaction ? "border-primary bg-accent text-primary" : "border-border bg-card/80 text-muted-foreground",
+                  "select-none rounded-full border px-2.5 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-[0.98]",
+                  myReaction ? "border-primary/40 bg-primary/5 text-primary" : "border-border bg-card/80 text-muted-foreground",
                 )}
               >
-                <Heart className={cn("size-3.5", myReaction ? "fill-current" : "")} />
-                <span>{myReaction ? (language === "zh" ? "已赞" : language === "en" ? "Liked" : "Đã thích") : language === "zh" ? "赞" : language === "en" ? "Like" : "Thả tim"}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="text-sm">{myReaction ? myReaction.emoji : "🤍"}</span>
+                  <span>{reactionCount}</span>
+                </span>
               </button>
 
               {reactionOpen && (
-                <div className="absolute bottom-full left-0 z-20 mb-2 rounded-full border border-border bg-background/90 p-1.5 shadow-[0_20px_35px_-18px_rgba(15,23,42,0.45)] backdrop-blur-sm">
-                  <div className="flex items-center gap-1">
-                    {reactionMeta.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        aria-label={`Thả cảm xúc ${emoji}`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void react(emoji);
-                          setReactionOpen(false);
-                        }}
-                        className="grid size-8 place-items-center rounded-full text-lg transition-transform hover:scale-110"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+                <div
+                  ref={reactionBarRef}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onPointerMove={handleReactionMove}
+                  onPointerUp={(event) => {
+                    event.stopPropagation();
+                    handleReactionRelease();
+                  }}
+                  onPointerLeave={(event) => {
+                    event.stopPropagation();
+                    handleReactionRelease();
+                  }}
+                  className="absolute bottom-full left-0 z-20 mb-2 flex items-center gap-1 rounded-full border border-border/40 bg-white/95 px-1.5 py-1 shadow-xl backdrop-blur-md dark:bg-card/95"
+                >
+                  {reactionMeta.map((emoji, index) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      aria-label={`Thả cảm xúc ${emoji}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void react(emoji);
+                        setReactionOpen(false);
+                      }}
+                      onPointerEnter={() => setHoveredReactionIndex(index)}
+                      onPointerMove={handleReactionMove}
+                      onPointerUp={(event) => {
+                        event.stopPropagation();
+                        handleReactionRelease();
+                      }}
+                      style={noSelectStyle}
+                      className={cn(
+                        "select-none rounded-full p-1 text-lg transition-all duration-150 ease-out",
+                        hoveredReactionIndex === index && "scale-150",
+                      )}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -496,53 +528,83 @@ function ActivityCard({
                 event.stopPropagation();
                 setOpenComments((v) => !v);
               }}
-              className="flex items-center gap-1 rounded-full border border-border bg-card/80 px-2.5 py-1.5 text-xs text-muted-foreground"
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              style={noSelectStyle}
+              className="select-none rounded-full border border-border bg-card/80 px-2.5 py-1.5 text-xs text-muted-foreground transition-all duration-150 active:scale-[0.98]"
             >
-              <MessageCircle className="size-3.5" /> {comments.length}
+              <span className="inline-flex items-center gap-1.5">
+                <MessageCircle className="size-3.5" />
+                <span>{comments.length}</span>
+              </span>
             </button>
           </div>
 
-          {mine && (
-            <div className="relative">
-              <button
-                type="button"
-                aria-label="Cài đặt"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setMenuOpen((v) => !v);
-                }}
-                className="grid size-8 place-items-center rounded-full border border-border bg-card/80 text-muted-foreground"
-              >
-                <MoreHorizontal className="size-4" />
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 top-full z-20 mt-2 w-32 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setMenuOpen(false);
-                      onEdit();
-                    }}
-                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
-                  >
-                    <Pencil className="size-3.5" /> Sửa
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setMenuOpen(false);
-                      setDeleteTarget(activity);
-                    }}
-                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
-                  >
-                    <Trash2 className="size-3.5" /> Xoá
-                  </button>
-                </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onComplete();
+              }}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              style={noSelectStyle}
+              className={cn(
+                "select-none grid size-9 place-items-center rounded-full border transition-all duration-150 active:scale-[0.98]",
+                activity.done ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card/80 text-muted-foreground",
               )}
-            </div>
-          )}
+            >
+              <Check className="size-4" />
+            </button>
+
+            {mine && (
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Cài đặt"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setMenuOpen((v) => !v);
+                  }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onPointerUp={(event) => event.stopPropagation()}
+                  style={noSelectStyle}
+                  className="select-none grid size-8 place-items-center rounded-full border border-border bg-card/80 text-muted-foreground transition-all duration-150 active:scale-[0.98]"
+                >
+                  <MoreHorizontal className="size-4" />
+                </button>
+                {menuOpen && (
+                  <div className="absolute right-0 top-full z-20 mt-2 w-32 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMenuOpen(false);
+                        onEdit();
+                      }}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
+                    >
+                      <Pencil className="size-3.5" /> Sửa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMenuOpen(false);
+                        setDeleteTarget(activity);
+                      }}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
+                    >
+                      <Trash2 className="size-3.5" /> Xoá
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <ConfirmDeleteDialog
