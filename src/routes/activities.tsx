@@ -15,7 +15,7 @@ import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ContentDetailDialog } from "@/components/ContentDetailDialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
-import { RandomDrawDialog } from "@/components/RandomDraw";
+import { ShuffleDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
@@ -65,7 +65,7 @@ function ActivitiesPage() {
     add: language === "vi" ? "Thêm hoạt động" : language === "zh" ? "添加活动" : "Add activity",
     draw: language === "vi" ? "Quay" : language === "zh" ? "随机" : "Draw",
     empty: language === "vi" ? "Chưa có hoạt động nào. Thêm một ý tưởng nhé ✨" : language === "zh" ? "还没有活动，添加一个想法吧 ✨" : "No activities yet. Add an idea ✨",
-    randomTitle: language === "vi" ? "Hôm nay mình đi..." : language === "zh" ? "今天去哪里..." : "Where should we go...",
+    randomTitle: language === "vi" ? "Làm gì hôm nay…" : language === "zh" ? "今天做什么…" : "What shall we do today…",
     randomEmpty: language === "vi" ? "Không có hoạt động nào hợp bộ lọc" : language === "zh" ? "没有符合筛选条件的活动" : "No activities match the filter",
     markDone: language === "vi" ? "Đánh dấu đã làm" : language === "zh" ? "标记已完成" : "Mark as done",
     detailDone: language === "vi" ? " · Đã làm" : language === "zh" ? " · 已完成" : " · Done",
@@ -74,7 +74,7 @@ function ActivitiesPage() {
   const [tab, setTab] = useState<"all" | "done">("all");
   const [filter, setFilter] = useState<string | null>(null);
   const [drawOpen, setDrawOpen] = useState(false);
-  const [drawn, setDrawn] = useState<Activity | null>(null);
+  const [drawToken, setDrawToken] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Activity | null>(null);
   const [viewing, setViewing] = useState<Activity | null>(null);
@@ -98,7 +98,7 @@ function ActivitiesPage() {
   );
 
   function draw() {
-    setDrawn(pickRandom(pool, drawn ?? undefined));
+    setDrawToken((t) => t + 1);
     setDrawOpen(true);
   }
 
@@ -287,37 +287,37 @@ function ActivitiesPage() {
         }}
       />
 
-      <RandomDrawDialog
+      <ShuffleDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
         title={copy.randomTitle}
-        emoji="🎡"
-        onDrawAgain={draw}
-        result={
-          drawn ? (
-            <div>
-              <p className="font-display text-xl font-bold">{drawn.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {drawn.place ?? "Chưa ghi địa điểm"}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{copy.randomEmpty}</p>
+        emoji="✨"
+        items={pool}
+        drawToken={drawToken}
+        getKey={(a) => a.id}
+        againLabel={language === "vi" ? "Hoạt động khác 🎈" : language === "zh" ? "换个活动 🎈" : "Another activity 🎈"}
+        emptyLabel={copy.randomEmpty}
+        renderItem={(a) => (
+          <div>
+            <p className="font-display text-xl font-bold">{a.name}</p>
+            {a.place ? <p className="mt-1 text-sm text-muted-foreground">📍 {a.place}</p> : null}
+            {a.note ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{a.note}</p> : null}
+          </div>
+        )}
+        actions={(a) =>
+          a.done ? null : (
+            <Button
+              className="rounded-full"
+              onClick={() => {
+                complete.mutate(a);
+                setDrawOpen(false);
+              }}
+            >
+              {copy.markDone}
+            </Button>
           )
         }
-      >
-        {drawn && !drawn.done && (
-          <Button
-            className="rounded-full"
-            onClick={() => {
-              complete.mutate(drawn);
-              setDrawOpen(false);
-            }}
-          >
-            {copy.markDone}
-          </Button>
-        )}
-      </RandomDrawDialog>
+      />
 
       <ContentDetailDialog
         open={!!viewing}

@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Chip } from "@/components/Chip";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
-import { RandomDrawDialog } from "@/components/RandomDraw";
+import { WishDrawDialog } from "@/components/WishDrawDialog";
 import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
 import { useIdentity } from "@/lib/identity";
@@ -84,7 +84,6 @@ function WishesPage() {
   const [category, setCategory] = useState<string>("all");
   const [showDone, setShowDone] = useState(false);
   const [drawOpen, setDrawOpen] = useState(false);
-  const [drawn, setDrawn] = useState<Wish | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Wish | null>(null);
 
@@ -111,9 +110,9 @@ function WishesPage() {
   const pending = wishes.filter((w) => !w.completed);
 
   function draw() {
-    const next = pickRandom(pending, drawn ?? undefined);
-    setDrawn(next);
+    if (!pending.length) return;
     setDrawOpen(true);
+    track("rút điều ước");
   }
 
   const completeWish = useMutation({
@@ -212,26 +211,7 @@ function WishesPage() {
         )}
       </div>
 
-      <RandomDrawDialog
-        open={drawOpen}
-        onOpenChange={setDrawOpen}
-        title={copy.drawTitle}
-        emoji="🫙"
-        onDrawAgain={draw}
-        result={
-          drawn ? (
-            <div>
-              <p className="font-display text-xl font-bold">{drawn.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {labelOf(WISH_CATEGORIES, drawn.category, language).label} ·{" "}
-                {labelOf(DIFFICULTIES, drawn.difficulty, language).label}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{copy.emptyJar}</p>
-          )
-        }
-      />
+      <WishDrawDialog open={drawOpen} onOpenChange={setDrawOpen} wishes={pending} showOpenList={false} />
     </div>
   );
 }
