@@ -405,8 +405,9 @@ function WishCard({
   const difficulty = labelOf(DIFFICULTIES, wish.difficulty, language);
   const mine = canManage(me, wish.proposed_by);
   const reactionMeta = ["👍", "❤️", "😂", "😮", "😢", "😡"] as const;
-  const myReaction = me ? reactions.find((r) => r.member_id === me.id) : null;
-  const reactionCount = reactions.length;
+  const dedupedReactions = uniqueMemberReactions(reactions);
+  const myReaction = me ? dedupedReactions.find((r) => r.member_id === me.id) : null;
+  const reactionCount = dedupedReactions.length;
   const noSelectStyle = { userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" } as const;
   const initials = (name: string) =>
     name
@@ -636,14 +637,14 @@ function WishCard({
               wish.completed ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card/80 text-muted-foreground",
             )}
           >
-            {wish.completed ? "✓" : "☆"} {wish.completed ? "Done" : "Mark"}
+            {wish.completed ? "✓" : "☆"} {wish.completed ? (language === "zh" ? "已完成" : language === "en" ? "Done" : "Đã xong") : (language === "zh" ? "标记" : language === "en" ? "Mark" : "Đánh dấu")}
           </button>
 
           {mine && (
             <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
               <button
                 type="button"
-                aria-label="Cài đặt"
+                aria-label={language === "zh" ? "设置" : language === "en" ? "Settings" : "Cài đặt"}
                 onClick={(event) => {
                   event.stopPropagation();
                   setMenuOpen((v) => !v);
@@ -669,7 +670,7 @@ function WishCard({
                     onPointerDown={(event) => event.stopPropagation()}
                     className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
                   >
-                    <Pencil className="size-3.5" /> Sửa
+                    <Pencil className="size-3.5" /> {language === "zh" ? "编辑" : language === "en" ? "Edit" : "Sửa"}
                   </button>
                   <button
                     type="button"
@@ -682,7 +683,7 @@ function WishCard({
                     onPointerDown={(event) => event.stopPropagation()}
                     className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
                   >
-                    <Trash2 className="size-3.5" /> Xoá
+                    <Trash2 className="size-3.5" /> {language === "zh" ? "删除" : language === "en" ? "Delete" : "Xoá"}
                   </button>
                 </div>
               )}

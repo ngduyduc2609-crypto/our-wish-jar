@@ -217,6 +217,20 @@ export const fetchActivities = () =>
 export const fetchMemories = () =>
   rows<Memory>(db.from("memories").select("*").order("happened_on", { ascending: false }));
 
+export function uniqueMemberReactions<T extends { member_id: string }>(rows: T[]) {
+  const seen = new Set<string>();
+  const unique: T[] = [];
+
+  for (const row of rows) {
+    if (seen.has(row.member_id)) continue;
+    seen.add(row.member_id);
+    unique.push(row);
+    if (unique.length >= 2) break;
+  }
+
+  return unique;
+}
+
 export const fetchLog = () =>
   rows<LogEntry>(
     db.from("activity_log").select("*").order("created_at", { ascending: false }).limit(25),

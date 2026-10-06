@@ -26,6 +26,7 @@ import {
   insertEntityComment,
   insertRow,
   toggleEntityReaction,
+  uniqueMemberReactions,
   updateRow,
   type Memory,
   type ImageAsset,
@@ -205,8 +206,9 @@ function MemoryCard({
   const reactionBarRef = useRef<HTMLDivElement | null>(null);
   const mine = canManage(me, memory.created_by);
   const reactionMeta = ["👍", "❤️", "😂", "😮", "😢", "😡"] as const;
-  const myReaction = me ? reactions.find((r) => r.member_id === me.id) : null;
-  const reactionCount = reactions.length;
+  const dedupedReactions = uniqueMemberReactions(reactions);
+  const myReaction = me ? dedupedReactions.find((r) => r.member_id === me.id) : null;
+  const reactionCount = dedupedReactions.length;
   const noSelectStyle = { userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" } as const;
 
   const initials = (name: string) =>
@@ -437,7 +439,7 @@ function MemoryCard({
           <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
             <button
               type="button"
-              aria-label="Cài đặt"
+              aria-label={language === "zh" ? "设置" : language === "en" ? "Settings" : "Cài đặt"}
               onClick={(event) => {
                 event.stopPropagation();
                 setMenuOpen((v) => !v);
@@ -463,7 +465,7 @@ function MemoryCard({
                   onPointerDown={(event) => event.stopPropagation()}
                   className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
                 >
-                  <Pencil className="size-3.5" /> Sửa
+                  <Pencil className="size-3.5" /> {language === "zh" ? "编辑" : language === "en" ? "Edit" : "Sửa"}
                 </button>
                 <button
                   type="button"
@@ -476,7 +478,7 @@ function MemoryCard({
                   onPointerDown={(event) => event.stopPropagation()}
                   className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
                 >
-                  <Trash2 className="size-3.5" /> Xoá
+                  <Trash2 className="size-3.5" /> {language === "zh" ? "删除" : language === "en" ? "Delete" : "Xoá"}
                 </button>
               </div>
             )}

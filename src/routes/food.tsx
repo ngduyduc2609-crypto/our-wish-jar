@@ -29,6 +29,7 @@ import {
   insertRow,
   pickRandom,
   toggleEntityReaction,
+  uniqueMemberReactions,
   updateRow,
   type Food,
   type ImageAsset,
@@ -266,6 +267,21 @@ function FoodDialog({
     setImages(imageAssets(food?.images, food?.image_url, food?.image_pos));
   }, [open, food]);
 
+  const language = useAppLanguage();
+  const copy = {
+    editTitle: language === "zh" ? "编辑美食" : language === "en" ? "Edit food" : "Sửa món",
+    addTitle: language === "zh" ? "新美食" : language === "en" ? "New food" : "Món mới",
+    nameLabel: language === "zh" ? "美食/店铺名" : language === "en" ? "Dish / place name" : "Tên món / quán",
+    placeLabel: language === "zh" ? "店名" : language === "en" ? "Place" : "Quán",
+    addressLabel: language === "zh" ? "地址" : language === "en" ? "Address" : "Địa chỉ",
+    priceLabel: language === "zh" ? "价位" : language === "en" ? "Price" : "Mức giá",
+    noteLabel: language === "zh" ? "备注" : language === "en" ? "Note" : "Ghi chú",
+    saveChanges: language === "zh" ? "保存修改" : language === "en" ? "Save changes" : "Lưu thay đổi",
+    saveAdd: language === "zh" ? "保存" : language === "en" ? "Save" : "Lưu lại",
+    updateSuccess: language === "zh" ? "已更新 🍽️" : language === "en" ? "Updated 🍽️" : "Đã cập nhật 🍽️",
+    createSuccess: language === "zh" ? "已加入美食清单 🍽️" : language === "en" ? "Added to the food list 🍽️" : "Đã thêm vào danh sách ăn uống 🍽️",
+  } as const;
+
   const save = useMutation({
     mutationFn: async () => {
       const values = {
@@ -289,7 +305,7 @@ function FoodDialog({
     onSuccess: () => {
       onOpenChange(false);
       onDone();
-      toast.success(food ? "Đã cập nhật 🍽️" : "Đã thêm vào danh sách ăn uống 🍽️");
+      toast.success(food ? copy.updateSuccess : copy.createSuccess);
     },
   });
 
@@ -297,27 +313,27 @@ function FoodDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85svh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-display">{food ? "Sửa món" : "Món mới"}</DialogTitle>
+          <DialogTitle className="font-display">{food ? copy.editTitle : copy.addTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Tên món / quán</Label>
+            <Label>{copy.nameLabel}</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Bún chả Hương Liên"
+              placeholder={language === "zh" ? "扬州炒饭" : language === "en" ? "Bun cha Huong Lien" : "Bún chả Hương Liên"}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Quán</Label>
+            <Label>{copy.placeLabel}</Label>
             <Input value={place} onChange={(e) => setPlace(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Địa chỉ</Label>
+            <Label>{copy.addressLabel}</Label>
             <Input value={address} onChange={(e) => setAddress(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Mức giá</Label>
+            <Label>{copy.priceLabel}</Label>
             <div className="flex gap-2">
               {PRICE_LEVELS.map((p) => (
                 <Chip key={p.value} active={price === p.value} onClick={() => setPrice(p.value)}>
@@ -327,7 +343,7 @@ function FoodDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Ghi chú</Label>
+            <Label>{copy.noteLabel}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
           <MultiImagePicker value={images} onChange={setImages} />
@@ -336,7 +352,7 @@ function FoodDialog({
             disabled={!name.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            {food ? "Lưu thay đổi" : "Lưu lại"}
+            {food ? copy.saveChanges : copy.saveAdd}
           </Button>
         </div>
       </DialogContent>
@@ -380,8 +396,9 @@ function FoodCard({
   const reactionBarRef = useRef<HTMLDivElement | null>(null);
   const mine = canManage(me, food.added_by);
   const reactionMeta = ["👍", "❤️", "😂", "😮", "😢", "😡"] as const;
-  const myReaction = me ? reactions.find((r) => r.member_id === me.id) : null;
-  const reactionCount = reactions.length;
+  const dedupedReactions = uniqueMemberReactions(reactions);
+  const myReaction = me ? dedupedReactions.find((r) => r.member_id === me.id) : null;
+  const reactionCount = dedupedReactions.length;
   const noSelectStyle = { userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" } as const;
 
   const initials = (name: string) =>
@@ -467,10 +484,10 @@ function FoodCard({
           </div>
           {mine && (
             <div className="flex shrink-0 flex-col gap-2">
-              <button type="button" aria-label="Sửa món" onClick={onEdit} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground">
+              <button type="button" aria-label={language === "zh" ? "编辑美食" : language === "en" ? "Edit food" : "Sửa món"} onClick={onEdit} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground">
                 <Pencil className="size-4" />
               </button>
-              <button type="button" aria-label="Xoá món" onClick={() => setDeleteTarget(food)} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground">
+              <button type="button" aria-label={language === "zh" ? "删除美食" : language === "en" ? "Delete food" : "Xoá món"} onClick={() => setDeleteTarget(food)} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground">
                 <Trash2 className="size-4" />
               </button>
             </div>
@@ -603,14 +620,14 @@ function FoodCard({
               style={noSelectStyle}
               className="select-none rounded-full border border-border bg-card/80 px-2.5 py-1.5 text-xs text-muted-foreground transition-all duration-150 active:scale-[0.98]"
             >
-              {food.tried ? "Cập nhật" : "Đánh dấu"}
+              {food.tried ? (language === "zh" ? "更新" : language === "en" ? "Update" : "Cập nhật") : (language === "zh" ? "标记" : language === "en" ? "Mark" : "Đánh dấu")}
             </button>
 
             {mine && (
               <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
                 <button
                   type="button"
-                  aria-label="Cài đặt"
+                  aria-label={language === "zh" ? "设置" : language === "en" ? "Settings" : "Cài đặt"}
                   onClick={(event) => {
                     event.stopPropagation();
                     setMenuOpen((v) => !v);
@@ -636,7 +653,7 @@ function FoodCard({
                       onPointerDown={(event) => event.stopPropagation()}
                       className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
                     >
-                      <Pencil className="size-3.5" /> Sửa
+                      <Pencil className="size-3.5" /> {language === "zh" ? "编辑" : language === "en" ? "Edit" : "Sửa"}
                     </button>
                     <button
                       type="button"
@@ -649,7 +666,7 @@ function FoodCard({
                       onPointerDown={(event) => event.stopPropagation()}
                       className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
                     >
-                      <Trash2 className="size-3.5" /> Xoá
+                      <Trash2 className="size-3.5" /> {language === "zh" ? "删除" : language === "en" ? "Delete" : "Xoá"}
                     </button>
                   </div>
                 )}
@@ -719,9 +736,17 @@ function TriedDialog({
   onDone: () => void;
 }) {
   const { track } = useIdentity();
+  const language = useAppLanguage();
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState("");
   const [images, setImages] = useState<ImageAsset[]>([]);
+
+  const copy = {
+    ratingLabel: language === "zh" ? "评分" : language === "en" ? "Rating" : "Chấm điểm",
+    noteLabel: language === "zh" ? "感受" : language === "en" ? "Note" : "Cảm nhận",
+    save: language === "zh" ? "保存评价" : language === "en" ? "Save rating" : "Lưu đánh giá",
+    success: language === "zh" ? "已保存评价 🍜" : language === "en" ? "Saved review 🍜" : "Đã lưu đánh giá món ăn 🍜",
+  } as const;
 
   const save = useMutation({
     mutationFn: async () => {
@@ -744,7 +769,7 @@ function TriedDialog({
       setRating(5);
       onClose();
       onDone();
-      toast.success("Đã lưu đánh giá món ăn 🍜");
+      toast.success(copy.success);
     },
   });
 
@@ -756,7 +781,7 @@ function TriedDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Chấm điểm</Label>
+            <Label>{copy.ratingLabel}</Label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button key={n} type="button" onClick={() => setRating(n)} className="text-2xl">
@@ -766,7 +791,7 @@ function TriedDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Cảm nhận</Label>
+            <Label>{copy.noteLabel}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           </div>
           <MultiImagePicker value={images} onChange={setImages} />
@@ -775,7 +800,7 @@ function TriedDialog({
             disabled={save.isPending}
             onClick={() => save.mutate()}
           >
-            Lưu đánh giá
+            {copy.save}
           </Button>
         </div>
       </DialogContent>

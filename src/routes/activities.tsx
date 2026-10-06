@@ -29,6 +29,7 @@ import {
   imageAssets,
   pickRandom,
   toggleEntityReaction,
+  uniqueMemberReactions,
   updateRow,
   type Activity,
   type ImageAsset,
@@ -302,8 +303,9 @@ function ActivityCard({
   const longPressRef = useRef<number | null>(null);
   const reactionBarRef = useRef<HTMLDivElement | null>(null);
   const reactionMeta = ["👍", "❤️", "😂", "😮", "😢", "😡"] as const;
-  const myReaction = me ? reactions.find((r) => r.member_id === me.id) : null;
-  const reactionCount = reactions.length;
+  const dedupedReactions = uniqueMemberReactions(reactions);
+  const myReaction = me ? dedupedReactions.find((r) => r.member_id === me.id) : null;
+  const reactionCount = dedupedReactions.length;
   const noSelectStyle = { userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" } as const;
 
   const initials = (name: string) =>
@@ -411,7 +413,7 @@ function ActivityCard({
               <>
                 <button
                   type="button"
-                  aria-label="Sửa hoạt động"
+                  aria-label={language === "zh" ? "编辑活动" : language === "en" ? "Edit activity" : "Sửa hoạt động"}
                   onClick={(event) => {
                     event.stopPropagation();
                     onEdit();
@@ -422,7 +424,7 @@ function ActivityCard({
                 </button>
                 <button
                   type="button"
-                  aria-label="Xoá hoạt động"
+                  aria-label={language === "zh" ? "删除活动" : language === "en" ? "Delete activity" : "Xoá hoạt động"}
                   onClick={(event) => {
                     event.stopPropagation();
                     setDeleteTarget(activity);
@@ -572,7 +574,7 @@ function ActivityCard({
               <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
                 <button
                   type="button"
-                  aria-label="Cài đặt"
+                  aria-label={language === "zh" ? "设置" : language === "en" ? "Settings" : "Cài đặt"}
                   onClick={(event) => {
                     event.stopPropagation();
                     setMenuOpen((v) => !v);
@@ -598,7 +600,7 @@ function ActivityCard({
                       onPointerDown={(event) => event.stopPropagation()}
                       className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
                     >
-                      <Pencil className="size-3.5" /> Sửa
+                      <Pencil className="size-3.5" /> {language === "zh" ? "编辑" : language === "en" ? "Edit" : "Sửa"}
                     </button>
                     <button
                       type="button"
@@ -611,7 +613,7 @@ function ActivityCard({
                       onPointerDown={(event) => event.stopPropagation()}
                       className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
                     >
-                      <Trash2 className="size-3.5" /> Xoá
+                      <Trash2 className="size-3.5" /> {language === "zh" ? "删除" : language === "en" ? "Delete" : "Xoá"}
                     </button>
                   </div>
                 )}
@@ -724,29 +726,39 @@ function ActivityDialog({
     onSuccess: () => {
       onOpenChange(false);
       onDone();
-      toast.success(activity ? "Đã cập nhật 🎈" : "Đã thêm hoạt động 🎈");
+      toast.success(language === "zh" ? (activity ? "已更新 🎈" : "已添加活动 🎈") : language === "en" ? (activity ? "Updated 🎈" : "Added activity 🎈") : (activity ? "Đã cập nhật 🎈" : "Đã thêm hoạt động 🎈"));
     },
   });
+
+  const copy = {
+    editTitle: language === "zh" ? "编辑活动" : language === "en" ? "Edit activity" : "Sửa hoạt động",
+    addTitle: language === "zh" ? "新活动" : language === "en" ? "New activity" : "Hoạt động mới",
+    nameLabel: language === "zh" ? "活动名称" : language === "en" ? "Activity name" : "Tên hoạt động",
+    groupLabel: language === "zh" ? "类别" : language === "en" ? "Category" : "Nhóm",
+    tagsLabel: language === "zh" ? "适合心情" : language === "en" ? "Suitable mood" : "Tâm trạng phù hợp",
+    placeLabel: language === "zh" ? "地点" : language === "en" ? "Place" : "Địa điểm",
+    noteLabel: language === "zh" ? "备注" : language === "en" ? "Note" : "Ghi chú",
+    saveChanges: language === "zh" ? "保存修改" : language === "en" ? "Save changes" : "Lưu thay đổi",
+    saveAdd: language === "zh" ? "保存" : language === "en" ? "Save" : "Lưu lại",
+  } as const;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-display">
-            {activity ? "Sửa hoạt động" : "Hoạt động mới"}
-          </DialogTitle>
+          <DialogTitle className="font-display">{activity ? copy.editTitle : copy.addTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Tên hoạt động</Label>
+            <Label>{copy.nameLabel}</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Cafe sách cuối tuần"
+              placeholder={language === "zh" ? "周末书店咖啡" : language === "en" ? "Weekend coffee and books" : "Cafe sách cuối tuần"}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Nhóm</Label>
+            <Label>{copy.groupLabel}</Label>
             <div className="flex flex-wrap gap-2">
               {ACTIVITY_CATEGORIES.map((c) => {
                 const item = labelOf(ACTIVITY_CATEGORIES, c.value, language);
@@ -763,7 +775,7 @@ function ActivityDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Tâm trạng phù hợp</Label>
+            <Label>{copy.tagsLabel}</Label>
             <div className="flex flex-wrap gap-2">
               {ACTIVITY_TAGS.map((t) => {
                 const item = labelOf(ACTIVITY_TAGS, t.value, language);
@@ -786,11 +798,11 @@ function ActivityDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Địa điểm</Label>
+            <Label>{copy.placeLabel}</Label>
             <Input value={place} onChange={(e) => setPlace(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Ghi chú</Label>
+            <Label>{copy.noteLabel}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
           <MultiImagePicker value={images} onChange={setImages} />
@@ -799,7 +811,7 @@ function ActivityDialog({
             disabled={!name.trim() || save.isPending}
             onClick={() => save.mutate()}
           >
-            {activity ? "Lưu thay đổi" : "Lưu lại"}
+            {activity ? copy.saveChanges : copy.saveAdd}
           </Button>
         </div>
       </DialogContent>
