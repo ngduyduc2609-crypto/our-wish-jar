@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { MessageCircle, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { useAppLanguage } from "@/lib/language";
 import { toast } from "sonner";
@@ -17,8 +17,21 @@ import { ContentDetailDialog } from "@/components/ContentDetailDialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
-import { deleteRow, fetchMemories, imageAssets, insertRow, updateRow, type Memory, type ImageAsset } from "@/lib/db";
-import { formatDate, todayKey } from "@/lib/constants";
+import {
+  deleteRow,
+  fetchMemories,
+  fetchMemoryComments,
+  fetchMemoryReactions,
+  imageAssets,
+  insertEntityComment,
+  insertRow,
+  toggleEntityReaction,
+  updateRow,
+  type Memory,
+  type ImageAsset,
+} from "@/lib/db";
+import { REACTIONS, formatDate, todayKey } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const SOURCE_LABEL: Record<string, Record<"vi" | "en" | "zh", string>> = {
   wish: { vi: "Từ điều ước", en: "From a wish", zh: "来自愿望" },
@@ -70,6 +83,8 @@ function MemoriesPage() {
   } as const;
   const qc = useQueryClient();
   const { data: memories = [] } = useQuery({ queryKey: ["memories"], queryFn: fetchMemories });
+  const { data: memoryReactions = [] } = useQuery({ queryKey: ["memory-reactions"], queryFn: fetchMemoryReactions });
+  const { data: memoryComments = [] } = useQuery({ queryKey: ["memory-comments"], queryFn: fetchMemoryComments });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Memory | null>(null);
   const [viewing, setViewing] = useState<Memory | null>(null);
@@ -77,6 +92,8 @@ function MemoriesPage() {
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["memories"] });
+    void qc.invalidateQueries({ queryKey: ["memory-reactions"] });
+    void qc.invalidateQueries({ queryKey: ["memory-comments"] });
     void qc.invalidateQueries({ queryKey: ["log"] });
   };
 
@@ -98,65 +115,21 @@ function MemoriesPage() {
       </Button>
 
       <div className="relative space-y-4 border-l border-dashed border-border pl-5">
-        {memories.map((memory) => {
-          const mine = canManage(me, memory.created_by);
-          return (
-            <article
-              key={memory.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`Xem chi tiết ${memory.title}`}
-              onClick={() => setViewing(memory)}
-              onKeyDown={(event) => {
-                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(memory);
-              }}
-              className="paper relative cursor-pointer rounded-3xl p-4"
-            >
-              <span className="absolute -left-[26px] top-6 size-3 rounded-full bg-primary" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] text-muted-foreground">
-                    {formatDate(memory.happened_on)} · {SOURCE_LABEL[memory.source_type]?.[language] ?? SOURCE_LABEL["manual"]?.[language]}
-                  </p>
-                  <h2 className="mt-0.5 font-display text-lg font-semibold">{memory.title}</h2>
-                  {memory.rating ? <p className="text-sm">{"⭐".repeat(memory.rating)}</p> : null}
-                  {memory.note && <p className="mt-1 text-sm text-muted-foreground">{memory.note}</p>}
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {members.find((m) => m.id === memory.created_by)?.name ?? (language === "zh" ? "我们" : language === "en" ? "We" : "Chúng mình")} {copy.saved}
-                  </p>
-                </div>
-                {mine && (
-                  <div className="flex shrink-0 flex-col gap-2">
-                    <button
-                      type="button"
-                      aria-label={copy.edit}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setEditing(memory);
-                        setDialogOpen(true);
-                      }}
-                      className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
-                    >
-                      <Pencil className="size-4" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={copy.delete}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setDeleteTarget(memory);
-                      }}
-                      className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <ImageGallery images={imageAssets(memory.images, memory.image_url, memory.image_pos)} alt={memory.title} className="mt-3 rounded-2xl" />
-            </article>
-          );
-        })}
+        {memories.map((memory) => (
+          <MemoryCard
+            key={memory.id}
+            memory={memory}
+            reactions={memoryReactions.filter((r) => r.memory_id === memory.id)}
+            comments={memoryComments.filter((c) => c.memory_id === memory.id)}
+            memberName={(id: string | null) => members.find((m) => m.id === id)?.name ?? (language === "zh" ? "我们" : language === "en" ? "We" : "Chúng mình")}
+            onChanged={refresh}
+            onEdit={() => {
+              setEditing(memory);
+              setDialogOpen(true);
+            }}
+            onView={() => setViewing(memory)}
+          />
+        ))}
         {memories.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
             {copy.empty}
@@ -200,6 +173,172 @@ function MemoriesPage() {
         {viewing && <p className="text-xs text-muted-foreground">{members.find((member) => member.id === viewing.created_by)?.name ?? (language === "zh" ? "我们" : language === "en" ? "We" : "Chúng mình")} {copy.saved}</p>}
       </ContentDetailDialog>
     </div>
+  );
+}
+
+function MemoryCard({
+  memory,
+  reactions,
+  comments,
+  memberName,
+  onChanged,
+  onEdit,
+  onView,
+}: {
+  memory: Memory;
+  reactions: { id: string; emoji: string; member_id: string }[];
+  comments: { id: string; member_id: string; content: string; created_at: string }[];
+  memberName: (id: string | null) => string;
+  onChanged: () => void;
+  onEdit: () => void;
+  onView: () => void;
+}) {
+  const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const [openComments, setOpenComments] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Memory | null>(null);
+  const mine = canManage(me, memory.created_by);
+
+  async function react(emoji: string) {
+    if (!me) return;
+    const added = await toggleEntityReaction("memory", memory.id, me.id, emoji);
+    if (added) track("thả cảm xúc " + emoji, memory.title);
+    onChanged();
+  }
+
+  async function sendComment() {
+    if (!me || !draft.trim()) return;
+    await insertEntityComment("memory", memory.id, me.id, draft.trim());
+    track("bình luận", memory.title);
+    setDraft("");
+    onChanged();
+  }
+
+  async function remove() {
+    await deleteRow("memories", memory.id);
+    track("xoá kỷ niệm", memory.title);
+    onChanged();
+    toast.success(language === "zh" ? "已删除" : language === "en" ? "Deleted" : "Đã xoá");
+  }
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      aria-label={`Xem chi tiết ${memory.title}`}
+      onClick={onView}
+      onKeyDown={(event) => {
+        if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) onView();
+      }}
+      className="paper relative cursor-pointer rounded-3xl p-4"
+    >
+      <span className="absolute -left-[26px] top-6 size-3 rounded-full bg-primary" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] text-muted-foreground">
+            {formatDate(memory.happened_on)} · {SOURCE_LABEL[memory.source_type]?.[language] ?? SOURCE_LABEL["manual"]?.[language]}
+          </p>
+          <h2 className="mt-0.5 font-display text-lg font-semibold">{memory.title}</h2>
+          {memory.rating ? <p className="text-sm">{"⭐".repeat(memory.rating)}</p> : null}
+          {memory.note && <p className="mt-1 text-sm text-muted-foreground">{memory.note}</p>}
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {memberName(memory.created_by)} {language === "zh" ? "保存了" : language === "en" ? "saved" : "lưu lại"}
+          </p>
+        </div>
+        {mine && (
+          <div className="flex shrink-0 flex-col gap-2">
+            <button
+              type="button"
+              aria-label={language === "zh" ? "编辑回忆" : language === "en" ? "Edit memory" : "Sửa kỷ niệm"}
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit();
+              }}
+              className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
+            >
+              <Pencil className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label={language === "zh" ? "删除回忆" : language === "en" ? "Delete memory" : "Xoá kỷ niệm"}
+              onClick={(event) => {
+                event.stopPropagation();
+                setDeleteTarget(memory);
+              }}
+              className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {REACTIONS.map((emoji) => {
+          const list = reactions.filter((r) => r.emoji === emoji);
+          const reacted = me ? list.some((r) => r.member_id === me.id) : false;
+          return (
+            <button
+              key={emoji}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void react(emoji);
+              }}
+              className={cn(
+                "border px-2.5 py-1 text-xs transition-colors",
+                reacted ? "border-primary bg-accent shadow-[0_8px_18px_-10px_rgba(146,116,180,0.32)]" : "border-border bg-card/80",
+              )}
+            >
+              {emoji} {list.length > 0 && list.length}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpenComments((v) => !v);
+          }}
+          className="ml-auto flex items-center gap-1 border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground"
+        >
+          <MessageCircle className="size-3.5" /> {comments.length}
+        </button>
+      </div>
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        itemName={deleteTarget?.title ?? "mục"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          void remove();
+          setDeleteTarget(null);
+        }}
+      />
+
+      {openComments && (
+        <div className="mt-3 space-y-2 border-t border-border pt-3">
+          {comments.map((c) => (
+            <div key={c.id} className="rounded-2xl bg-secondary px-3 py-2 text-sm">
+              <span className="font-medium">{memberName(c.member_id)}: </span>
+              {c.content}
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó..."} className="rounded-2xl" />
+            <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
+              {language === "zh" ? "发送" : language === "en" ? "Send" : "Gửi"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <ImageGallery images={imageAssets(memory.images, memory.image_url, memory.image_pos)} alt={memory.title} className="mt-3 rounded-2xl" />
+    </article>
   );
 }
 

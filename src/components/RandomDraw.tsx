@@ -68,7 +68,7 @@ export function ShuffleDrawDialog<T>({
       timers.current.push(window.setTimeout(() => { setShown(pick); setTick((t) => t + 1); playSound("tap-soft"); }, at));
     }
     at += steps ? 220 : 0;
-    timers.current.push(window.setTimeout(() => { setShown(final); setTick((t) => t + 1); setSettled(true); playSound("sparkle"); }, at));
+    timers.current.push(window.setTimeout(() => { setShown(final); setTick((t) => t + 1); setSettled(true); playSound("add"); }, at));
   };
 
   useEffect(() => {

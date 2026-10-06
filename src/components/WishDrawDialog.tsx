@@ -60,7 +60,7 @@ export function WishDrawDialog({
     setPhase("shake");
     playSound("swipe");
     timers.current.push(window.setTimeout(() => { setPhase("pull"); playSound("open"); }, 520));
-    timers.current.push(window.setTimeout(() => { setPhase("open"); playSound("sparkle"); }, 1050));
+    timers.current.push(window.setTimeout(() => { setPhase("open"); playSound("add"); }, 1050));
   };
 
   // Draw once per opening; closing keeps the current result untouched.

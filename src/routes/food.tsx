@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Shuffle, Star, Trash2, MapPin, Pencil } from "lucide-react";
+import { Plus, Shuffle, Star, Trash2, MapPin, Pencil, MessageCircle } from "lucide-react";
 
 import { useAppLanguage } from "@/lib/language";
 import { toast } from "sonner";
@@ -19,8 +19,22 @@ import { ShuffleDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
-import { deleteRow, fetchFoods, imageAssets, insertRow, pickRandom, updateRow, type Food, type ImageAsset } from "@/lib/db";
-import { PRICE_LEVELS } from "@/lib/constants";
+import {
+  deleteRow,
+  fetchFoodComments,
+  fetchFoodReactions,
+  fetchFoods,
+  imageAssets,
+  insertEntityComment,
+  insertRow,
+  pickRandom,
+  toggleEntityReaction,
+  updateRow,
+  type Food,
+  type ImageAsset,
+} from "@/lib/db";
+import { PRICE_LEVELS, REACTIONS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/food")({
   head: () => ({
@@ -43,7 +57,7 @@ export const Route = createFileRoute("/food")({
 });
 
 function FoodPage() {
-  const { me, track } = useIdentity();
+  const { me, members, track } = useIdentity();
   const language = useAppLanguage();
   const copy = {
     title: language === "vi" ? "Ăn gì đây ta" : language === "zh" ? "今天吃什么" : "What’s for food?",
@@ -73,9 +87,13 @@ function FoodPage() {
   const [deleteTarget, setDeleteTarget] = useState<Food | null>(null);
 
   const { data: foods = [] } = useQuery({ queryKey: ["foods"], queryFn: fetchFoods });
+  const { data: foodReactions = [] } = useQuery({ queryKey: ["food-reactions"], queryFn: fetchFoodReactions });
+  const { data: foodComments = [] } = useQuery({ queryKey: ["food-comments"], queryFn: fetchFoodComments });
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["foods"] });
+    void qc.invalidateQueries({ queryKey: ["food-reactions"] });
+    void qc.invalidateQueries({ queryKey: ["food-comments"] });
     void qc.invalidateQueries({ queryKey: ["memories"] });
     void qc.invalidateQueries({ queryKey: ["log"] });
     void qc.invalidateQueries({ queryKey: ["presence"] });
@@ -133,82 +151,22 @@ function FoodPage() {
       <FoodDialog open={formOpen} onOpenChange={setFormOpen} food={editing} onDone={refresh} />
 
       <div className="grid gap-3">
-        {visible.map((food) => {
-          const mine = canManage(me, food.added_by);
-          return (
-            <article
-              key={food.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`Xem chi tiết ${food.name}`}
-              onClick={() => setViewing(food)}
-              onKeyDown={(event) => {
-                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(food);
-              }}
-              className="paper cursor-pointer overflow-hidden rounded-3xl"
-            >
-              <ImageGallery images={imageAssets(food.images, food.image_url, food.image_pos)} alt={food.name} className="h-40" />
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="font-display text-lg font-semibold">{food.name}</h2>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                      {food.place && (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="size-3" /> {food.place}
-                        </span>
-                      )}
-                      <span>
-                        · {PRICE_LEVELS.find((p) => p.value === food.price_level)?.label ?? "₫₫"}
-                      </span>
-                      {food.rating ? <span>· {"⭐".repeat(food.rating)}</span> : null}
-                      {food.tried && <span>· đã thử</span>}
-                    </p>
-                    {food.note && <p className="mt-1 text-sm text-muted-foreground">{food.note}</p>}
-                  </div>
-                  {mine && (
-                    <div className="flex shrink-0 flex-col gap-2">
-                      <button
-                        type="button"
-                        aria-label="Sửa món"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setEditing(food);
-                          setFormOpen(true);
-                        }}
-                        className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
-                      >
-                        <Pencil className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Xoá món"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setDeleteTarget(food);
-                        }}
-                        className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <Button
-                  variant="secondary"
-                  className="mt-3 w-full rounded-2xl"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setRatingTarget(food);
-                  }}
-                >
-                  <Star className="size-4" />{" "}
-                  {food.tried ? copy.update : copy.mark}
-                </Button>
-              </div>
-            </article>
-          );
-        })}
+        {visible.map((food) => (
+          <FoodCard
+            key={food.id}
+            food={food}
+            reactions={foodReactions.filter((r) => r.food_id === food.id)}
+            comments={foodComments.filter((c) => c.food_id === food.id)}
+            memberName={(id: string | null) => members.find((m) => m.id === id)?.name ?? "Ai đó"}
+            onChanged={refresh}
+            onEdit={() => {
+              setEditing(food);
+              setFormOpen(true);
+            }}
+            onMarkTried={() => setRatingTarget(food)}
+            onView={() => setViewing(food)}
+          />
+        ))}
         {visible.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
             {copy.empty}
@@ -383,6 +341,157 @@ function FoodDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FoodCard({
+  food,
+  reactions,
+  comments,
+  memberName,
+  onChanged,
+  onEdit,
+  onMarkTried,
+  onView,
+}: {
+  food: Food;
+  reactions: { id: string; emoji: string; member_id: string }[];
+  comments: { id: string; member_id: string; content: string; created_at: string }[];
+  memberName: (id: string | null) => string;
+  onChanged: () => void;
+  onEdit: () => void;
+  onMarkTried: () => void;
+  onView: () => void;
+}) {
+  const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const copy = {
+    send: language === "zh" ? "发送" : language === "en" ? "Send" : "Gửi",
+    commentPlaceholder: language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó...",
+    deleted: language === "zh" ? "已删除" : language === "en" ? "Deleted" : "Đã xoá",
+  } as const;
+  const [openComments, setOpenComments] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Food | null>(null);
+  const mine = canManage(me, food.added_by);
+
+  async function react(emoji: string) {
+    if (!me) return;
+    const added = await toggleEntityReaction("food", food.id, me.id, emoji);
+    if (added) track("thả cảm xúc " + emoji, food.name);
+    onChanged();
+  }
+
+  async function sendComment() {
+    if (!me || !draft.trim()) return;
+    await insertEntityComment("food", food.id, me.id, draft.trim());
+    track("bình luận", food.name);
+    setDraft("");
+    onChanged();
+  }
+
+  async function remove() {
+    await deleteRow("foods", food.id);
+    track("xoá món", food.name);
+    onChanged();
+    toast.success(copy.deleted);
+  }
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      aria-label={`Xem chi tiết ${food.name}`}
+      onClick={onView}
+      onKeyDown={(event) => {
+        if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) {
+          onView();
+        }
+      }}
+      className="paper cursor-pointer overflow-hidden rounded-3xl"
+    >
+      <ImageGallery images={imageAssets(food.images, food.image_url, food.image_pos)} alt={food.name} className="h-40" />
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold">{food.name}</h2>
+            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+              {food.place && <span className="inline-flex items-center gap-1"><MapPin className="size-3" /> {food.place}</span>}
+              <span>· {PRICE_LEVELS.find((p) => p.value === food.price_level)?.label ?? "₫₫"}</span>
+              {food.rating ? <span>· {"⭐".repeat(food.rating)}</span> : null}
+              {food.tried && <span>· đã thử</span>}
+            </p>
+            {food.note && <p className="mt-1 text-sm text-muted-foreground">{food.note}</p>}
+          </div>
+          {mine && (
+            <div className="flex shrink-0 flex-col gap-2">
+              <button type="button" aria-label="Sửa món" onClick={onEdit} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground">
+                <Pencil className="size-4" />
+              </button>
+              <button type="button" aria-label="Xoá món" onClick={() => setDeleteTarget(food)} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground">
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {REACTIONS.map((emoji) => {
+            const list = reactions.filter((r) => r.emoji === emoji);
+            const reacted = me ? list.some((r) => r.member_id === me.id) : false;
+            return (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => void react(emoji)}
+                className={cn(
+                  "border px-2.5 py-1 text-xs transition-colors",
+                  reacted ? "border-primary bg-accent shadow-[0_8px_18px_-10px_rgba(146,116,180,0.32)]" : "border-border bg-card/80",
+                )}
+              >
+                {emoji} {list.length > 0 && list.length}
+              </button>
+            );
+          })}
+          <button type="button" onClick={() => setOpenComments((v) => !v)} className="ml-auto flex items-center gap-1 border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground">
+            <MessageCircle className="size-3.5" /> {comments.length}
+          </button>
+          <button type="button" onClick={onMarkTried} className="border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground">
+            {food.tried ? "Cập nhật" : "Đánh dấu"}
+          </button>
+        </div>
+
+        <ConfirmDeleteDialog
+          open={!!deleteTarget}
+          itemName={deleteTarget?.name ?? "mục"}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          onConfirm={() => {
+            if (!deleteTarget) return;
+            void remove();
+            setDeleteTarget(null);
+          }}
+        />
+
+        {openComments && (
+          <div className="mt-3 space-y-2 border-t border-border pt-3">
+            {comments.map((c) => (
+              <div key={c.id} className="rounded-2xl bg-secondary px-3 py-2 text-sm">
+                <span className="font-medium">{memberName(c.member_id)}: </span>
+                {c.content}
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={copy.commentPlaceholder} className="flex-1 rounded-2xl border border-border bg-background px-3 py-2 text-sm outline-none" />
+              <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
+                {copy.send}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 

@@ -40,6 +40,51 @@ export type WishComment = {
   created_at: string;
 };
 
+export type FoodReaction = {
+  id: string;
+  food_id: string;
+  member_id: string;
+  emoji: string;
+};
+
+export type FoodComment = {
+  id: string;
+  food_id: string;
+  member_id: string;
+  content: string;
+  created_at: string;
+};
+
+export type ActivityReaction = {
+  id: string;
+  activity_id: string;
+  member_id: string;
+  emoji: string;
+};
+
+export type ActivityComment = {
+  id: string;
+  activity_id: string;
+  member_id: string;
+  content: string;
+  created_at: string;
+};
+
+export type MemoryReaction = {
+  id: string;
+  memory_id: string;
+  member_id: string;
+  emoji: string;
+};
+
+export type MemoryComment = {
+  id: string;
+  memory_id: string;
+  member_id: string;
+  content: string;
+  created_at: string;
+};
+
 export type Food = {
   id: string;
   name: string;
@@ -119,6 +164,12 @@ export const fetchWishes = () =>
   rows<Wish>(db.from("wishes").select("*").order("created_at", { ascending: false }));
 
 export const fetchReactions = () => rows<WishReaction>(db.from("wish_reactions").select("*"));
+export const fetchFoodReactions = () => rows<FoodReaction>(db.from("food_reactions").select("*"));
+export const fetchFoodComments = () => rows<FoodComment>(db.from("food_comments").select("*").order("created_at"));
+export const fetchActivityReactions = () => rows<ActivityReaction>(db.from("activity_reactions").select("*"));
+export const fetchActivityComments = () => rows<ActivityComment>(db.from("activity_comments").select("*").order("created_at"));
+export const fetchMemoryReactions = () => rows<MemoryReaction>(db.from("memory_reactions").select("*"));
+export const fetchMemoryComments = () => rows<MemoryComment>(db.from("memory_comments").select("*").order("created_at"));
 
 function isValidUuid(value: unknown) {
   if (typeof value !== "string") return false;
@@ -304,23 +355,45 @@ export async function restoreYesterdayStreak(memberIds: string[], actorId?: stri
   await db.from("activity_log").insert({ member_id: actorId ?? uniqueMemberIds[0], action: STREAK_RESTORE_ACTION, subject: todayKey(y) });
 }
 
-export async function toggleReaction(wishId: string, memberId: string, emoji: string) {
+export async function toggleEntityReaction(
+  entity: "wish" | "food" | "activity" | "memory",
+  targetId: string,
+  memberId: string,
+  emoji: string,
+) {
+  const table = `${entity}_reactions` as const;
+  const idKey = `${entity}_id` as const;
   const { data } = await db
-    .from("wish_reactions")
+    .from(table)
     .select("id")
-    .eq("wish_id", wishId)
+    .eq(idKey, targetId)
     .eq("member_id", memberId)
     .eq("emoji", emoji)
     .maybeSingle();
   if (data?.id) {
-    await db.from("wish_reactions").delete().eq("id", data.id);
+    await db.from(table).delete().eq("id", data.id);
     return false;
   }
-  const { error } = await db
-    .from("wish_reactions")
-    .insert({ wish_id: wishId, member_id: memberId, emoji });
+
+  const { error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, emoji });
   if (error) throw error;
   return true;
+}
+
+export async function toggleReaction(wishId: string, memberId: string, emoji: string) {
+  return toggleEntityReaction("wish", wishId, memberId, emoji);
+}
+
+export async function insertEntityComment(
+  entity: "wish" | "food" | "activity" | "memory",
+  targetId: string,
+  memberId: string,
+  content: string,
+) {
+  const table = `${entity}_comments` as const;
+  const idKey = `${entity}_id` as const;
+  const { error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, content });
+  if (error) throw error;
 }
 
 async function safeFileDataUrl(file: File) {

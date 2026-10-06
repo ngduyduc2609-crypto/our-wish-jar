@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Shuffle, Trash2, MapPin, Check, Pencil } from "lucide-react";
+import { Plus, Shuffle, Trash2, MapPin, Check, Pencil, MessageCircle } from "lucide-react";
 
 import { useAppLanguage } from "@/lib/language";
 import { toast } from "sonner";
@@ -22,14 +22,18 @@ import { canManage } from "@/lib/ownership";
 import {
   deleteRow,
   fetchActivities,
+  fetchActivityComments,
+  fetchActivityReactions,
+  insertEntityComment,
   insertRow,
   imageAssets,
   pickRandom,
+  toggleEntityReaction,
   updateRow,
   type Activity,
   type ImageAsset,
 } from "@/lib/db";
-import { ACTIVITY_CATEGORIES, ACTIVITY_TAGS, labelOf } from "@/lib/constants";
+import { ACTIVITY_CATEGORIES, ACTIVITY_TAGS, REACTIONS, labelOf } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/activities")({
@@ -53,7 +57,7 @@ export const Route = createFileRoute("/activities")({
 });
 
 function ActivitiesPage() {
-  const { me, track } = useIdentity();
+  const { me, members, track } = useIdentity();
   const language = useAppLanguage();
   const copy = {
     title: language === "vi" ? "Làm gì hôm nay" : language === "zh" ? "今天做什么" : "What to do today",
@@ -81,9 +85,13 @@ function ActivitiesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
 
   const { data: activities = [] } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
+  const { data: activityReactions = [] } = useQuery({ queryKey: ["activity-reactions"], queryFn: fetchActivityReactions });
+  const { data: activityComments = [] } = useQuery({ queryKey: ["activity-comments"], queryFn: fetchActivityComments });
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["activities"] });
+    void qc.invalidateQueries({ queryKey: ["activity-reactions"] });
+    void qc.invalidateQueries({ queryKey: ["activity-comments"] });
     void qc.invalidateQueries({ queryKey: ["memories"] });
     void qc.invalidateQueries({ queryKey: ["log"] });
     void qc.invalidateQueries({ queryKey: ["presence"] });
@@ -164,98 +172,22 @@ function ActivitiesPage() {
       </Button>
 
       <div className="grid gap-3">
-        {visible.map((activity) => {
-          const category = labelOf(ACTIVITY_CATEGORIES, activity.category, language);
-          const mine = canManage(me, activity.added_by);
-          return (
-            <article
-              key={activity.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`Xem chi tiết ${activity.name}`}
-              onClick={() => setViewing(activity)}
-              onKeyDown={(event) => {
-                if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) setViewing(activity);
-              }}
-              className="paper cursor-pointer overflow-hidden rounded-3xl"
-            >
-              <ImageGallery images={imageAssets(activity.images, activity.image_url, activity.image_pos)} alt={activity.name} className="h-40" />
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">
-                      {category.emoji} {category.label}
-                    </p>
-                    <h2 className="mt-0.5 font-display text-lg font-semibold">{activity.name}</h2>
-                    {activity.place && (
-                      <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="size-3" /> {activity.place}
-                      </p>
-                    )}
-                    {activity.note && (
-                      <p className="mt-1 text-sm text-muted-foreground">{activity.note}</p>
-                    )}
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {activity.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground"
-                        >
-                          {labelOf(ACTIVITY_TAGS, tag, language).label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-2">
-                    <button
-                      type="button"
-                      aria-label="Đánh dấu đã làm"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        complete.mutate(activity);
-                      }}
-                      className={cn(
-                        "grid size-9 place-items-center rounded-full border transition-colors",
-                        activity.done
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border",
-                      )}
-                    >
-                      <Check className="size-4" />
-                    </button>
-                    {mine && (
-                      <>
-                        <button
-                          type="button"
-                          aria-label="Sửa hoạt động"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setEditing(activity);
-                            setDialogOpen(true);
-                          }}
-                          className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
-                        >
-                          <Pencil className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Xoá hoạt động"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setDeleteTarget(activity);
-                          }}
-                          className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+        {visible.map((activity) => (
+          <ActivityCard
+            key={activity.id}
+            activity={activity}
+            reactions={activityReactions.filter((r) => r.activity_id === activity.id)}
+            comments={activityComments.filter((c) => c.activity_id === activity.id)}
+            memberName={(id: string | null) => members.find((m) => m.id === id)?.name ?? "Ai đó"}
+            onChanged={refresh}
+            onEdit={() => {
+              setEditing(activity);
+              setDialogOpen(true);
+            }}
+            onComplete={() => complete.mutate(activity)}
+            onView={() => setViewing(activity)}
+          />
+        ))}
         {visible.length === 0 && (
           <p className="paper rounded-3xl p-6 text-center text-sm text-muted-foreground">
             {copy.empty}
@@ -335,6 +267,197 @@ function ActivitiesPage() {
         {viewing?.note && <p className="whitespace-pre-wrap text-muted-foreground">{viewing.note}</p>}
       </ContentDetailDialog>
     </div>
+  );
+}
+
+function ActivityCard({
+  activity,
+  reactions,
+  comments,
+  memberName,
+  onChanged,
+  onEdit,
+  onComplete,
+  onView,
+}: {
+  activity: Activity;
+  reactions: { id: string; emoji: string; member_id: string }[];
+  comments: { id: string; member_id: string; content: string; created_at: string }[];
+  memberName: (id: string | null) => string;
+  onChanged: () => void;
+  onEdit: () => void;
+  onComplete: () => void;
+  onView: () => void;
+}) {
+  const { me, track } = useIdentity();
+  const language = useAppLanguage();
+  const category = labelOf(ACTIVITY_CATEGORIES, activity.category, language);
+  const mine = canManage(me, activity.added_by);
+  const [openComments, setOpenComments] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
+
+  async function react(emoji: string) {
+    if (!me) return;
+    const added = await toggleEntityReaction("activity", activity.id, me.id, emoji);
+    if (added) track("thả cảm xúc " + emoji, activity.name);
+    onChanged();
+  }
+
+  async function sendComment() {
+    if (!me || !draft.trim()) return;
+    await insertEntityComment("activity", activity.id, me.id, draft.trim());
+    track("bình luận", activity.name);
+    setDraft("");
+    onChanged();
+  }
+
+  async function remove() {
+    await deleteRow("activities", activity.id);
+    track("xoá hoạt động", activity.name);
+    onChanged();
+    toast.success(language === "zh" ? "已删除" : language === "en" ? "Deleted" : "Đã xoá");
+  }
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      aria-label={`Xem chi tiết ${activity.name}`}
+      onClick={onView}
+      onKeyDown={(event) => {
+        if (event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) onView();
+      }}
+      className="paper cursor-pointer overflow-hidden rounded-3xl"
+    >
+      <ImageGallery images={imageAssets(activity.images, activity.image_url, activity.image_pos)} alt={activity.name} className="h-40" />
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">{category.emoji} {category.label}</p>
+            <h2 className="mt-0.5 font-display text-lg font-semibold">{activity.name}</h2>
+            {activity.place && (
+              <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="size-3" /> {activity.place}
+              </p>
+            )}
+            {activity.note && <p className="mt-1 text-sm text-muted-foreground">{activity.note}</p>}
+            <div className="mt-2 flex flex-wrap gap-1">
+              {activity.tags.map((tag) => (
+                <span key={tag} className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground">
+                  {labelOf(ACTIVITY_TAGS, tag, language).label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2">
+            <button
+              type="button"
+              aria-label="Đánh dấu đã làm"
+              onClick={(event) => {
+                event.stopPropagation();
+                onComplete();
+              }}
+              className={cn(
+                "grid size-9 place-items-center rounded-full border transition-colors",
+                activity.done ? "border-primary bg-primary text-primary-foreground" : "border-border",
+              )}
+            >
+              <Check className="size-4" />
+            </button>
+            {mine && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Sửa hoạt động"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onEdit();
+                  }}
+                  className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
+                >
+                  <Pencil className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Xoá hoạt động"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setDeleteTarget(activity);
+                  }}
+                  className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {REACTIONS.map((emoji) => {
+            const list = reactions.filter((r) => r.emoji === emoji);
+            const reacted = me ? list.some((r) => r.member_id === me.id) : false;
+            return (
+              <button
+                key={emoji}
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void react(emoji);
+                }}
+                className={cn(
+                  "border px-2.5 py-1 text-xs transition-colors",
+                  reacted ? "border-primary bg-accent shadow-[0_8px_18px_-10px_rgba(146,116,180,0.32)]" : "border-border bg-card/80",
+                )}
+              >
+                {emoji} {list.length > 0 && list.length}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setOpenComments((v) => !v);
+            }}
+            className="ml-auto flex items-center gap-1 border border-border bg-card/80 px-2.5 py-1 text-xs text-muted-foreground"
+          >
+            <MessageCircle className="size-3.5" /> {comments.length}
+          </button>
+        </div>
+
+        <ConfirmDeleteDialog
+          open={!!deleteTarget}
+          itemName={deleteTarget?.name ?? "mục"}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          onConfirm={() => {
+            if (!deleteTarget) return;
+            void remove();
+            setDeleteTarget(null);
+          }}
+        />
+
+        {openComments && (
+          <div className="mt-3 space-y-2 border-t border-border pt-3">
+            {comments.map((c) => (
+              <div key={c.id} className="rounded-2xl bg-secondary px-3 py-2 text-sm">
+                <span className="font-medium">{memberName(c.member_id)}: </span>
+                {c.content}
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó..."} className="rounded-2xl" />
+              <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
+                {language === "zh" ? "发送" : language === "en" ? "Send" : "Gửi"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
