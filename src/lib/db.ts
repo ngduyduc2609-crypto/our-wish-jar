@@ -363,16 +363,27 @@ export async function toggleEntityReaction(
 ) {
   const table = `${entity}_reactions` as const;
   const idKey = `${entity}_id` as const;
-  const { data } = await db
+
+  const { data: existingRows, error: selectError } = await db
     .from(table)
-    .select("id")
+    .select("id, emoji")
     .eq(idKey, targetId)
-    .eq("member_id", memberId)
-    .eq("emoji", emoji)
-    .maybeSingle();
-  if (data?.id) {
-    await db.from(table).delete().eq("id", data.id);
+    .eq("member_id", memberId);
+
+  if (selectError) throw selectError;
+
+  const rows = existingRows ?? [];
+  const sameEmojiRow = rows.find((row) => row.emoji === emoji);
+
+  if (sameEmojiRow) {
+    const { error: deleteError } = await db.from(table).delete().in("id", rows.map((row) => row.id));
+    if (deleteError) throw deleteError;
     return false;
+  }
+
+  if (rows.length > 0) {
+    const { error: deleteError } = await db.from(table).delete().in("id", rows.map((row) => row.id));
+    if (deleteError) throw deleteError;
   }
 
   const { error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, emoji });

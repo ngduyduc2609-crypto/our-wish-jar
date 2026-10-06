@@ -320,9 +320,13 @@ function MemoryCard({
 
       <ImageGallery images={imageAssets(memory.images, memory.image_url, memory.image_pos)} alt={memory.title} className="mt-3 rounded-[22px]" />
 
-      <div className="mt-4 flex items-center justify-between gap-2 border-t border-muted/30 pt-2">
+      <div
+        className="mt-4 flex items-center justify-between gap-2 border-t border-muted/30 pt-2"
+        onClick={(event) => event.stopPropagation()}
+        onTouchStart={(event) => event.stopPropagation()}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <div className="relative">
+          <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
             <button
               type="button"
               onClick={(event) => {
@@ -331,6 +335,7 @@ function MemoryCard({
                   void react("❤️");
                 }
               }}
+              onTouchStart={(event) => event.stopPropagation()}
               onPointerDown={(event) => {
                 event.stopPropagation();
                 if (window.matchMedia?.("(pointer: coarse)")?.matches) {
@@ -357,7 +362,7 @@ function MemoryCard({
               )}
             >
               <span className="inline-flex items-center gap-1.5">
-                <span className="text-sm">{myReaction ? myReaction.emoji : "🤍"}</span>
+                {myReaction ? <span className="text-sm">{myReaction.emoji}</span> : <Heart className="h-4 w-4 text-muted-foreground stroke-[1.75]" />}
                 <span>{reactionCount}</span>
               </span>
             </button>
@@ -365,6 +370,8 @@ function MemoryCard({
             {reactionOpen && (
               <div
                 ref={reactionBarRef}
+                onClick={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
                 onPointerMove={handleReactionMove}
                 onPointerUp={(event) => {
@@ -387,6 +394,7 @@ function MemoryCard({
                       void react(emoji);
                       closeReactionMenu();
                     }}
+                    onTouchStart={(event) => event.stopPropagation()}
                     onPointerEnter={() => setHoveredReactionIndex(index)}
                     onPointerMove={handleReactionMove}
                     onPointerUp={(event) => {
@@ -412,6 +420,7 @@ function MemoryCard({
               event.stopPropagation();
               setOpenComments((v) => !v);
             }}
+            onTouchStart={(event) => event.stopPropagation()}
             onPointerDown={(event) => event.stopPropagation()}
             onPointerUp={(event) => event.stopPropagation()}
             style={noSelectStyle}
@@ -425,7 +434,7 @@ function MemoryCard({
         </div>
 
         {mine && (
-          <div className="relative">
+          <div className="relative" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
             <button
               type="button"
               aria-label="Cài đặt"
@@ -433,6 +442,7 @@ function MemoryCard({
                 event.stopPropagation();
                 setMenuOpen((v) => !v);
               }}
+              onTouchStart={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onPointerUp={(event) => event.stopPropagation()}
               style={noSelectStyle}
@@ -441,7 +451,7 @@ function MemoryCard({
               <MoreHorizontal className="size-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-2 w-32 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
+              <div className="absolute right-0 top-full z-20 mt-2 w-32 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm" onClick={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -449,6 +459,7 @@ function MemoryCard({
                     setMenuOpen(false);
                     onEdit();
                   }}
+                  onTouchStart={(event) => event.stopPropagation()}
                   onPointerDown={(event) => event.stopPropagation()}
                   className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-secondary"
                 >
@@ -461,6 +472,7 @@ function MemoryCard({
                     setMenuOpen(false);
                     setDeleteTarget(memory);
                   }}
+                  onTouchStart={(event) => event.stopPropagation()}
                   onPointerDown={(event) => event.stopPropagation()}
                   className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm text-destructive hover:bg-secondary"
                 >
