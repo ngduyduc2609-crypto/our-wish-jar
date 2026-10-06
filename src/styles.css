@@ -464,7 +464,6 @@ html[data-theme="matcha-pure"] {
     inset 0 -24px 26px rgba(142, 172, 220, 0.12),
     0 30px 42px -22px var(--jar-shadow),
     0 0 26px var(--jar-glow);
-  animation: jar-glow 3.8s ease-in-out infinite;
 }
 
 .wish-jar-shell::before {
@@ -1004,7 +1003,8 @@ button:not(:disabled):hover {
   transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1);
 }
 .wish-jar-interactive.is-dragging .wish-jar-body { transition: transform 0.08s linear; }
-.wish-jar-interactive.is-jolting .wish-jar-shell { animation: jar-jolt 0.26s ease-out, jar-glow 3.8s ease-in-out infinite; }
+.wish-jar-interactive.is-jolting .wish-jar-shell { animation: jar-jolt 0.26s ease-out; }
+.wish-jar-interactive.is-jolting .jar-paper-inner { animation: none; }
 @keyframes jar-jolt {
   0% { transform: scale(1); }
   40% { transform: scale(1.025, 0.975); }
@@ -1105,7 +1105,14 @@ button:not(:disabled):hover {
 .draw-paper {
   position: absolute; left: 50%; top: 50%; width: 3rem; height: 1.6rem; z-index: 2;
   border-radius: .35rem; color: var(--wish-note-ink);
-  background: linear-gradient(180deg, color-mix(in oklab, var(--wish-note-bg) 86%, white), var(--wish-note-bg));
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 0.42rem,
+      rgba(92, 95, 110, 0.09) 0.42rem 0.48rem,
+      transparent 0.48rem 0.72rem
+    ),
+    linear-gradient(180deg, color-mix(in oklab, var(--wish-note-bg) 86%, white), var(--wish-note-bg));
   box-shadow: 0 4px 10px var(--wish-note-shadow), 0 0 14px var(--wish-note-glow);
   filter: drop-shadow(0 0 12px var(--wish-note-glow));
   transform: translate(-50%, 2.6rem) rotate(-8deg) scale(.6);
@@ -1118,7 +1125,7 @@ button:not(:disabled):hover {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.6), transparent 34%, rgba(255,255,255,0.12) 65%, transparent 100%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.68), transparent 34%, rgba(255,255,255,0.12) 65%, transparent 100%);
   pointer-events: none;
 }
 .draw-stage.is-pull .draw-paper { opacity: 1; transform: translate(-50%, -3.2rem) rotate(7deg) scale(1); }
