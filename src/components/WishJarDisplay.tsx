@@ -165,7 +165,7 @@ export function WishJarDisplay({ wishes, isShaking: externalShaking = false }: {
 
   return (
     <div
-      className={cn("wish-jar-scene wish-jar-interactive", dragging && "is-dragging", jolt && "is-jolting")}
+      className={cn("wish-jar-scene wish-jar-interactive", dragging && "is-dragging")}
       ref={sceneRef}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -174,70 +174,72 @@ export function WishJarDisplay({ wishes, isShaking: externalShaking = false }: {
       role="img"
       aria-label={language === "zh" ? `装着 ${visible.length} 个等待中的愿望` : language === "en" ? `Jar holding ${visible.length} wishes waiting` : `Lọ chứa ${visible.length} điều ước đang chờ`}
     >
-      <div className="wish-jar-body">
-        <div className="wish-jar-neck" aria-hidden="true">
-          <span className="wish-jar-ribbon" />
-        </div>
-
-        <div className="wish-jar-shell">
-          <div className="wish-jar-glass-shine" aria-hidden="true" />
-          <div className="wish-jar-glass-highlight" aria-hidden="true" />
-
-          <div className="wish-jar-particles" aria-hidden="true">
-            {jarParticles.map((particle, index) => (
-              <span
-                key={index}
-                className="wish-jar-particle"
-                style={{ left: particle.left, top: particle.top, width: particle.size, height: particle.size, animationDelay: particle.delay }}
-              />
-            ))}
+      <div className={cn("wish-jar-illustration", jolt && "is-jolting")}>
+        <div className="wish-jar-body">
+          <div className="wish-jar-neck" aria-hidden="true">
+            <span className="wish-jar-ribbon" />
           </div>
 
-          <div className="wish-jar-safe-zone">
-            {visible.map((wish, index) => {
-              const category = labelOf(WISH_CATEGORIES, wish.category);
-              const l = layout[index];
-              if (!l) return null;
-              const seed = hashSeed(wish.id);
-              const style = {
-                left: `${l.x}%`,
-                top: `${l.y}%`,
-                width: `${l.w}%`,
-                height: `${l.h}%`,
-                zIndex: l.z,
-                "--note-rotate": `${l.rotate}deg`,
-                "--note-delay": `${-((seed % 800) / 100)}s`,
-                "--note-duration": `${5 + (seed % 400) / 100}s`,
-                "--note-lag": `${(seed % 9) * 18}ms`,
-              } as CSSProperties;
-              return (
-                <div key={wish.id} style={style} className={cn("jar-paper", NOTE_COLORS[seed % NOTE_COLORS.length])} title={wish.title}>
-                  <div className="jar-paper-inner">
-                    <span className="jar-paper-icon" aria-hidden="true">{category.emoji}</span>
-                    <span className="jar-paper-title">{wish.title}</span>
+          <div className="wish-jar-shell">
+            <div className="wish-jar-glass-shine" aria-hidden="true" />
+            <div className="wish-jar-glass-highlight" aria-hidden="true" />
+
+            <div className="wish-jar-particles" aria-hidden="true">
+              {jarParticles.map((particle, index) => (
+                <span
+                  key={index}
+                  className="wish-jar-particle"
+                  style={{ left: particle.left, top: particle.top, width: particle.size, height: particle.size, animationDelay: particle.delay }}
+                />
+              ))}
+            </div>
+
+            <div className="wish-jar-safe-zone">
+              {visible.map((wish, index) => {
+                const category = labelOf(WISH_CATEGORIES, wish.category);
+                const l = layout[index];
+                if (!l) return null;
+                const seed = hashSeed(wish.id);
+                const style = {
+                  left: `${l.x}%`,
+                  top: `${l.y}%`,
+                  width: `${l.w}%`,
+                  height: `${l.h}%`,
+                  zIndex: l.z,
+                  "--note-rotate": `${l.rotate}deg`,
+                  "--note-delay": `${-((seed % 800) / 100)}s`,
+                  "--note-duration": `${5 + (seed % 400) / 100}s`,
+                  "--note-lag": `${(seed % 9) * 18}ms`,
+                } as CSSProperties;
+                return (
+                  <div key={wish.id} style={style} className={cn("jar-paper", NOTE_COLORS[seed % NOTE_COLORS.length])} title={wish.title}>
+                    <div className="jar-paper-inner">
+                      <span className="jar-paper-icon" aria-hidden="true">{category.emoji}</span>
+                      <span className="jar-paper-title">{wish.title}</span>
+                    </div>
                   </div>
+                );
+              })}
+
+              {visible.length === 0 ? (
+                <div className="wish-jar-empty">
+                  <span>💌</span>
+                  <p>{language === "zh" ? "等待新的愿望进入" : language === "en" ? "The jar is waiting for a new wish" : "Lọ đang chờ điều ước mới"}</p>
                 </div>
-              );
-            })}
+              ) : null}
+            </div>
 
-            {visible.length === 0 ? (
-              <div className="wish-jar-empty">
-                <span>💌</span>
-                <p>{language === "zh" ? "等待新的愿望进入" : language === "en" ? "The jar is waiting for a new wish" : "Lọ đang chờ điều ước mới"}</p>
-              </div>
-            ) : null}
+            <div className="wish-jar-base-glow" aria-hidden="true" />
           </div>
-
-          <div className="wish-jar-base-glow" aria-hidden="true" />
         </div>
-      </div>
 
-      <span className="wish-jar-spark wish-jar-spark-left" aria-hidden="true">
-        <Sparkles />
-      </span>
-      <span className="wish-jar-spark wish-jar-spark-right" aria-hidden="true">
-        <Sparkles />
-      </span>
+        <span className="wish-jar-spark wish-jar-spark-left" aria-hidden="true">
+          <Sparkles />
+        </span>
+        <span className="wish-jar-spark wish-jar-spark-right" aria-hidden="true">
+          <Sparkles />
+        </span>
+      </div>
     </div>
   );
 }

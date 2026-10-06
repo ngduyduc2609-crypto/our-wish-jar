@@ -996,6 +996,12 @@ button:not(:disabled):hover {
 /* --- Interactive wish jar: drag to shake, papers reshuffle --- */
 .wish-jar-interactive { touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
 .wish-jar-interactive.is-dragging { cursor: grabbing; }
+.wish-jar-illustration {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
 .wish-jar-body {
   position: absolute; inset: 0;
   transform: translate3d(var(--jar-tx, 0px), var(--jar-ty, 0px), 0) rotate(var(--jar-rot, 0deg));
@@ -1003,12 +1009,14 @@ button:not(:disabled):hover {
   transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1);
 }
 .wish-jar-interactive.is-dragging .wish-jar-body { transition: transform 0.08s linear; }
-.wish-jar-interactive.is-jolting .wish-jar-shell { animation: jar-jolt 0.26s ease-out; }
-.wish-jar-interactive.is-jolting .jar-paper-inner { animation: none; }
+.wish-jar-illustration.is-jolting .wish-jar-shell {
+  animation: jar-jolt 0.2s cubic-bezier(.3, 1.5, .6, 1) 2 alternate;
+}
+.wish-jar-illustration.is-jolting .jar-paper-inner { animation: none; }
 @keyframes jar-jolt {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.025, 0.975); }
-  100% { transform: scale(1); }
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(2px, -1px, 0) rotate(1.5deg); }
+  100% { transform: translate3d(-2px, 0, 0) rotate(-1.2deg); }
 }
 
 .jar-paper {

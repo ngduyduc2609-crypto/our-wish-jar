@@ -61,13 +61,13 @@ export function ShuffleDrawDialog<T>({
     let at = 0;
     let prev: T | null = null;
     for (let i = 0; i < steps; i += 1) {
-      at += 45 + i * i * 2.6; // ease-out: gaps grow from ~45ms to ~250ms
+      at += 80 + i * i * 4.5; // slower rotation, more deliberate spin and settle
       const others = list.filter((x) => x !== prev && x !== final);
       const pick = others.length ? others[Math.floor(Math.random() * others.length)]! : final;
       prev = pick;
       timers.current.push(window.setTimeout(() => { setShown(pick); setTick((t) => t + 1); playSound("tap-soft"); }, at));
     }
-    at += steps ? 280 : 0;
+    at += steps ? 420 : 0;
     timers.current.push(window.setTimeout(() => { setShown(final); setTick((t) => t + 1); setSettled(true); playSound("sparkle"); }, at));
   };
 
