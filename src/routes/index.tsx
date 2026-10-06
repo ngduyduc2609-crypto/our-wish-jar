@@ -10,9 +10,7 @@ import { RandomDrawDialog } from "@/components/RandomDraw";
 import { StoredImage } from "@/components/StoredImage";
 import { useIdentity } from "@/lib/identity";
 import {
-  computeStreak,
   fetchMemories,
-  fetchPresence,
   fetchWishes,
   pickRandom,
   imageAssets,
@@ -23,6 +21,8 @@ import { WISH_CATEGORIES, daysTogether, formatDate, labelOf, todayKey } from "@/
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { StreakFlame, STREAK_MILESTONES, streakLevel } from "@/components/StreakFlame";
 import { WishJarDisplay } from "@/components/WishJarDisplay";
+import { WishDrawDialog } from "@/components/WishDrawDialog";
+import { useStreak } from "@/lib/streak";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -76,86 +76,37 @@ function HomePage() {
   const qc = useQueryClient();
   const { data: wishes = [] } = useQuery({ queryKey: ["wishes"], queryFn: fetchWishes });
   const { data: memories = [] } = useQuery({ queryKey: ["memories"], queryFn: fetchMemories });
-  const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
 
   const [drawOpen, setDrawOpen] = useState(false);
-  const [jarShaking, setJarShaking] = useState(false);
-  const [draw, setDraw] = useState<Wish | null>(null);
 
   const days = daysTogether();
-  const streak = computeStreak(presence, members.length || 2);
+  const streak = useStreak(members.length || 2);
   const pending = useMemo(() => wishes.filter((w) => !w.completed), [wishes]);
   const completed = wishes.length - pending.length;
-  const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
-  const streakLit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
+  const activeToday = streak.activeToday;
   const nextStreakMilestone = STREAK_MILESTONES.find((milestone) => milestone > streak.current);
   const flameLevel = streakLevel(streak.current);
-  const getBangkokMonthKey = () => {
-    const formatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Bangkok",
-      year: "numeric",
-      month: "2-digit",
-    });
-    return formatter.format(new Date());
-  };
-
-  const [restoresLeft, setRestoresLeft] = useState(() => {
-    if (typeof window === "undefined") return 5;
-
-    const currentMonth = getBangkokMonthKey();
-    const savedMonth = window.localStorage.getItem("wish-jar-streak-restores-month");
-    const savedCount = Number(window.localStorage.getItem("wish-jar-streak-restores-count"));
-
-    if (savedMonth !== currentMonth) {
-      window.localStorage.setItem("wish-jar-streak-restores-month", currentMonth);
-      window.localStorage.setItem("wish-jar-streak-restores-count", "5");
-      return 5;
-    }
-
-    if (Number.isFinite(savedCount) && savedCount >= 0) {
-      return Math.min(savedCount, 5);
-    }
-
-    return 5;
-  });
-  const [restoreUsed, setRestoreUsed] = useState(false);
-  const effectiveStreakLit = streakLit || restoreUsed;
-  const canRestoreStreak = streak.current === 0 && streak.best > 0 && restoresLeft > 0;
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const currentMonth = getBangkokMonthKey();
-    const savedMonth = window.localStorage.getItem("wish-jar-streak-restores-month");
-
-    if (savedMonth !== currentMonth) {
-      window.localStorage.setItem("wish-jar-streak-restores-month", currentMonth);
-      window.localStorage.setItem("wish-jar-streak-restores-count", "5");
-      setRestoresLeft(5);
-      return;
-    }
-
-    window.localStorage.setItem("wish-jar-streak-restores-month", currentMonth);
-    window.localStorage.setItem("wish-jar-streak-restores-count", String(restoresLeft));
-  }, [restoresLeft]);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const effectiveStreakLit = streak.lit;
+  const restoreUsed = streak.restoredToday;
+  const canRestoreStreak = streak.canRestore;
 
   function drawWish() {
-    setJarShaking(true);
-    setTimeout(() => setJarShaking(false), 800);
-    setDraw(pickRandom(pending));
+    if (!pending.length) return;
     setDrawOpen(true);
+    track("rút điều ước");
   }
 
   async function restoreStreak() {
-    if (!canRestoreStreak) return;
-
+    if (!canRestoreStreak || restoreBusy) return;
+    setRestoreBusy(true);
     try {
-      await restoreYesterdayStreak(members.map((member) => member.id));
-      setRestoreUsed(true);
-      setRestoresLeft((current) => Math.max(0, current - 1));
+      await restoreYesterdayStreak(members.map((member) => member.id), me?.id);
       await qc.invalidateQueries({ queryKey: ["presence"] });
     } catch (error) {
       console.error("Failed to restore streak:", error);
+    } finally {
+      setRestoreBusy(false);
     }
   }
 
@@ -168,7 +119,7 @@ function HomePage() {
       </section>
 
        <section className="paper section-lift overflow-hidden rounded-3xl px-4 pb-5 pt-3 text-center">
-         <WishJarDisplay wishes={pending} isShaking={jarShaking} />
+         <WishJarDisplay wishes={pending} />
         <h2 className="mt-2 font-display text-xl font-bold">{copy.jar}</h2>
         <p className="text-sm text-muted-foreground">
           {pending.length} {copy.waiting} · {completed} {copy.completed}
@@ -215,9 +166,9 @@ function HomePage() {
             variant="outline"
             className="mt-3 rounded-full"
             onClick={() => void restoreStreak()}
-            disabled={effectiveStreakLit}
+            disabled={restoreBusy}
           >
-            <RotateCcw className="size-4" /> {copy.restoreButton} ({restoresLeft})
+            <RotateCcw className="size-4" /> {copy.restoreButton}
           </Button>
         ) : null}
       </section>
@@ -272,34 +223,7 @@ function HomePage() {
         <ChevronRight className="size-5 text-muted-foreground" />
       </Link>
 
-      <RandomDrawDialog
-        open={drawOpen}
-        onOpenChange={setDrawOpen}
-        title={copy.today}
-        emoji="🫙"
-        onDrawAgain={drawWish}
-        result={
-          draw ? (
-            <div>
-              <p className="font-display text-xl font-bold">{draw.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {labelOf(WISH_CATEGORIES, draw.category, language).label}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Danh sách còn trống</p>
-          )
-        }
-      >
-        <Link
-          to="/wishes"
-          onClick={() => setDrawOpen(false)}
-        >
-          <Button variant="outline" className="rounded-full">
-            <Shuffle className="size-4" /> {copy.openList}
-          </Button>
-        </Link>
-      </RandomDrawDialog>
+      <WishDrawDialog open={drawOpen} onOpenChange={setDrawOpen} wishes={pending} />
       <MilestoneCelebration daysTogether={days} streak={streak.current} />
     </div>
   );
