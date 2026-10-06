@@ -153,7 +153,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       },
       track: (action: string, subject?: string | null) => {
         if (!me) return;
-        void logAction(me.id, action, subject ?? null);
+        void logAction(me.id, action, subject ?? null).then(() => queryClient.invalidateQueries({ queryKey: ["presence"] }));
       },
     };
   }, [authReady, isFetched, members, queryClient, userId, userEmail]);

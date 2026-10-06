@@ -6,7 +6,7 @@ import { ChevronDown, Languages, LogOut, Mail, Music, Palette, Volume2, VolumeX 
 import { useIdentity } from "@/lib/identity";
 import { supabase } from "@/integrations/supabase/client";
 import { daysTogether, todayKey } from "@/lib/constants";
-import { computeStreak, fetchPresence } from "@/lib/db";
+import { useStreak } from "@/lib/streak";
 import { LANGUAGE_OPTIONS, applyLanguage, getLanguageStorageKey, readStoredLanguage, type AppLanguage } from "@/lib/language";
 import {
   DropdownMenu,
@@ -75,7 +75,6 @@ function applyTheme(themeId: ThemeId) {
 
 export function IdentityBar() {
   const { me, members, signOut } = useIdentity();
-  const { data: presence = [] } = useQuery({ queryKey: ["presence"], queryFn: fetchPresence });
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const [musicEnabled, setMusicEnabled] = useMusicEnabled();
   const [musicVolume, setMusicVolume] = useMusicVolume();
@@ -83,7 +82,7 @@ export function IdentityBar() {
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage>("vi");
-  const streak = computeStreak(presence, members.length || 2);
+  const streak = useStreak(members.length || 2);
   const themeMenuLabel = selectedLanguage === "zh" ? "主题" : selectedLanguage === "en" ? "Theme" : "Màu sắc";
   const languageMenuLabel = selectedLanguage === "vi" ? "Ngôn ngữ" : selectedLanguage === "zh" ? "语言" : "Language";
   const themePickerHeading =
@@ -95,8 +94,7 @@ export function IdentityBar() {
   const logoutLabel = selectedLanguage === "vi" ? "Đăng xuất" : selectedLanguage === "zh" ? "退出登录" : "Log out";
   const accountMenuAria = selectedLanguage === "vi" ? "Mở menu tài khoản" : selectedLanguage === "zh" ? "打开账户菜单" : "Open account menu";
   const currentThemeLabel = THEME_OPTIONS.find((theme) => theme.id === selectedTheme)?.label[selectedLanguage] ?? "Lilac Dream";
-  const activeToday = new Set(presence.filter((entry) => entry.day === todayKey()).map((entry) => entry.member_id));
-  const lit = members.length >= 2 && members.every((member) => activeToday.has(member.id));
+  const lit = streak.lit;
 
   useEffect(() => {
     if (typeof window === "undefined") return;

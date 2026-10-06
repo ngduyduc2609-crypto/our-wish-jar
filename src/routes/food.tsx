@@ -15,7 +15,7 @@ import { MultiImagePicker } from "@/components/MultiImagePicker";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ContentDetailDialog } from "@/components/ContentDetailDialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
-import { RandomDrawDialog } from "@/components/RandomDraw";
+import { ShuffleDrawDialog } from "@/components/RandomDraw";
 import { Chip } from "@/components/Chip";
 import { useIdentity } from "@/lib/identity";
 import { canManage } from "@/lib/ownership";
@@ -65,7 +65,7 @@ function FoodPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "tried">("all");
   const [drawOpen, setDrawOpen] = useState(false);
-  const [drawn, setDrawn] = useState<Food | null>(null);
+  const [drawToken, setDrawToken] = useState(0);
   const [ratingTarget, setRatingTarget] = useState<Food | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Food | null>(null);
@@ -85,7 +85,7 @@ function FoodPage() {
   const visible = tab === "all" ? foods : triedList;
 
   function draw() {
-    setDrawn(pickRandom(foods, drawn ?? undefined));
+    setDrawToken((t) => t + 1);
     setDrawOpen(true);
   }
 
@@ -229,35 +229,35 @@ function FoodPage() {
         }}
       />
 
-      <RandomDrawDialog
+      <ShuffleDrawDialog
         open={drawOpen}
         onOpenChange={setDrawOpen}
         title={copy.randomTitle}
         emoji="🍜"
-        onDrawAgain={draw}
-        result={
-          drawn ? (
-            <div>
-              <p className="font-display text-xl font-bold">{drawn.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{drawn.place ?? "Chưa ghi quán"}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{copy.randomEmpty}</p>
-          )
-        }
-      >
-        {drawn && (
+        items={foods}
+        drawToken={drawToken}
+        getKey={(f) => f.id}
+        againLabel={language === "vi" ? "Đổi món 🍜" : language === "zh" ? "换一道 🍜" : "Another dish 🍜"}
+        emptyLabel={copy.randomEmpty}
+        renderItem={(f) => (
+          <div>
+            <p className="font-display text-xl font-bold">{f.name}</p>
+            {f.place ? <p className="mt-1 text-sm text-muted-foreground">📍 {f.place}</p> : null}
+            {f.note ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{f.note}</p> : null}
+          </div>
+        )}
+        actions={(f) => (
           <Button
             className="rounded-full"
             onClick={() => {
               setDrawOpen(false);
-              setRatingTarget(drawn);
+              setRatingTarget(f);
             }}
           >
             {copy.markEaten}
           </Button>
         )}
-      </RandomDrawDialog>
+      />
 
       <TriedDialog food={ratingTarget} onClose={() => setRatingTarget(null)} onDone={refresh} />
 

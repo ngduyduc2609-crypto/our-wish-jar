@@ -293,30 +293,15 @@ export async function logAction(memberId: string, action: string, subject?: stri
     .upsert({ member_id: memberId, day: todayKey() }, { onConflict: "member_id,day" });
 }
 
-export async function restoreYesterdayStreak(memberIds: string[]) {
+export async function restoreYesterdayStreak(memberIds: string[], actorId?: string | null) {
   const uniqueMemberIds = [...new Set(memberIds.filter(Boolean))];
   if (uniqueMemberIds.length === 0) return;
-
-  const bangkokNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
-  bangkokNow.setDate(bangkokNow.getDate() - 1);
-
-  const dayParts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Bangkok",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(bangkokNow);
-
-  const partsMap = Object.fromEntries(
-    dayParts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
-  );
-
-  const yesterdayKey = `${partsMap.year}-${partsMap.month}-${partsMap.day}`;
-
-  const rows = uniqueMemberIds.map((member_id) => ({ member_id, day: yesterdayKey }));
-
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const rows = uniqueMemberIds.map((member_id) => ({ member_id, day: todayKey(y) }));
   const { error } = await db.from("daily_presence").upsert(rows, { onConflict: "member_id,day" });
   if (error) throw error;
+  await db.from("activity_log").insert({ member_id: actorId ?? uniqueMemberIds[0], action: STREAK_RESTORE_ACTION, subject: todayKey(y) });
 }
 
 export async function toggleReaction(wishId: string, memberId: string, emoji: string) {
@@ -445,18 +430,15 @@ export function imageAssets(images: ImageAsset[] | null | undefined, legacyPath?
   return legacyPath ? [{ path: legacyPath, position: legacyPosition ?? "50% 50%" }] : [];
 }
 
-/** Số ngày liên tiếp gần nhất mà CẢ HAI người đều có hoạt động. */
-export function computeStreak(presence: Presence[], memberCount: number) {
-  const byDay = new Map<string, Set<string>>();
-  for (const p of presence) {
-    if (!byDay.has(p.day)) byDay.set(p.day, new Set());
-    byDay.get(p.day)!.add(p.member_id);
-  }
-  const fullDays = new Set(
-    [...byDay.entries()].filter(([, s]) => s.size >= Math.max(2, memberCount)).map(([d]) => d),
-  );
+/**
+ * Chuỗi ngày liên tiếp có tương tác trong app (bất kỳ thành viên nào).
+ * Nếu hôm nay đã dùng "khôi phục", hôm nay không được tính thêm.
+ */
+export function computeStreak(presence: Presence[], _memberCount: number, restoredToday = false) {
+  const today = todayKey();
+  const activeDays = new Set(presence.map((p) => p.day).filter((d) => !(restoredToday && d === today)));
 
-  const sorted = [...fullDays].sort();
+  const sorted = [...activeDays].sort();
   let best = 0;
   let run = 0;
   let prev: string | null = null;
@@ -467,14 +449,28 @@ export function computeStreak(presence: Presence[], memberCount: number) {
     prev = day;
   }
 
-  let current = 0;
   const cursor = new Date();
-  if (!fullDays.has(todayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
-  while (fullDays.has(todayKey(cursor))) {
+  const litToday = activeDays.has(today);
+  if (!litToday) cursor.setDate(cursor.getDate() - 1);
+  let current = 0;
+  while (activeDays.has(todayKey(cursor))) {
     current += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
-  return { current, best };
+
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const y2 = new Date(); y2.setDate(y2.getDate() - 2);
+  const canRestore = !restoredToday && !activeDays.has(todayKey(y)) && activeDays.has(todayKey(y2));
+  return { current, best, litToday, canRestore };
+}
+
+export const STREAK_RESTORE_ACTION = "khôi phục chuỗi";
+
+/** Ngày (todayKey) mà chuỗi đã được khôi phục, lưu trong nhật ký chung để cả hai máy cùng thấy. */
+export async function fetchStreakRestoreDays(): Promise<string[]> {
+  const { data, error } = await db.from("activity_log").select("created_at").eq("action", STREAK_RESTORE_ACTION).order("created_at", { ascending: false }).limit(60);
+  if (error) throw error;
+  return (data ?? []).map((r: { created_at: string }) => todayKey(new Date(r.created_at)));
 }
 
 function dayDiff(a: string, b: string) {

@@ -87,7 +87,22 @@ export function WishJarDisplay({ wishes, isShaking: externalShaking = false }: {
   const ids = useMemo(() => visible.map((wish) => wish.id), [visible]);
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const raf = useRef(0);
+  const pending = useRef({ x: 0, y: 0 });
+  const setTilt = (v: { x: number; y: number }) => {
+    pending.current = v;
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      const el = sceneRef.current;
+      if (!el) return;
+      const { x, y } = pending.current;
+      el.style.setProperty("--jar-tx", `${x}px`);
+      el.style.setProperty("--jar-ty", `${y}px`);
+      el.style.setProperty("--jar-rot", `${x * 0.22}deg`);
+    });
+  };
   const [jolt, setJolt] = useState(false);
   const drag = useRef({ active: false, startX: 0, startY: 0, lastX: 0, lastY: 0, dir: 0, lastShuffle: 0, moved: false, pointerId: -1 });
   const language = typeof document !== "undefined" ? (document.documentElement.dataset.lang as "vi" | "en" | "zh" | undefined) ?? "vi" : "vi";
@@ -147,16 +162,11 @@ export function WishJarDisplay({ wishes, isShaking: externalShaking = false }: {
     if (!d.moved && visible.length > 0) shuffle();
   };
 
-  const sceneStyle = {
-    "--jar-tx": `${tilt.x}px`,
-    "--jar-ty": `${tilt.y}px`,
-    "--jar-rot": `${tilt.x * 0.22}deg`,
-  } as CSSProperties;
 
   return (
     <div
       className={cn("wish-jar-scene wish-jar-interactive", dragging && "is-dragging", jolt && "is-jolting")}
-      style={sceneStyle}
+      ref={sceneRef}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
