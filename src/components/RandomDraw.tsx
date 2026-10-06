@@ -57,17 +57,17 @@ export function ShuffleDrawDialog<T>({
     setSettled(false);
 
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const steps = reduced || list.length === 1 ? 0 : 9;
+    const steps = reduced || list.length === 1 ? 0 : 16;
     let at = 0;
     let prev: T | null = null;
     for (let i = 0; i < steps; i += 1) {
-      at += 80 + i * i * 4.5; // slower rotation, more deliberate spin and settle
+      at += 85 + i * 7.5; // faster spin with more card flips in roughly 2.5–3s
       const others = list.filter((x) => x !== prev && x !== final);
       const pick = others.length ? others[Math.floor(Math.random() * others.length)]! : final;
       prev = pick;
       timers.current.push(window.setTimeout(() => { setShown(pick); setTick((t) => t + 1); playSound("tap-soft"); }, at));
     }
-    at += steps ? 420 : 0;
+    at += steps ? 220 : 0;
     timers.current.push(window.setTimeout(() => { setShown(final); setTick((t) => t + 1); setSettled(true); playSound("sparkle"); }, at));
   };
 
