@@ -443,17 +443,6 @@ function FoodCard({
             setDeleteTarget(null);
           }}
         />
-
-        
-            </div>
-            <div className="mt-3 flex gap-2">
-              <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={copy.commentPlaceholder} className="flex-1 rounded-full border border-border bg-background px-3 py-2 text-sm outline-none" />
-              <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
-                {copy.send}
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </article>
   );

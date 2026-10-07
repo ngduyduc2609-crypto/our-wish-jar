@@ -251,18 +251,6 @@ function MemoryCard({
           setDeleteTarget(null);
         }}
       />
-
-      
-          </div>
-
-          <div className="mt-3 flex gap-2">
-            <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={language === "zh" ? "说点什么..." : language === "en" ? "Say something..." : "Nhắn gì đó..."} className="flex-1 rounded-full" />
-            <Button className="rounded-full" onClick={() => void sendComment()} disabled={!draft.trim()}>
-              {language === "zh" ? "发送" : language === "en" ? "Send" : "Gửi"}
-            </Button>
-          </div>
-        </div>
-      )}
     </article>
   );
 }
