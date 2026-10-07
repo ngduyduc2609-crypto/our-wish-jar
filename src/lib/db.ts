@@ -417,8 +417,11 @@ export async function insertEntityComment(
 ) {
   const table = `${entity}_comments` as const;
   const idKey = `${entity}_id` as const;
-  const { error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, content });
+  const trimmed = content.trim();
+  if (!trimmed) throw new Error("Nội dung bình luận không được để trống.");
+  const { data, error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, content: trimmed }).select().single();
   if (error) throw error;
+  return data as WishComment;
 }
 
 async function safeFileDataUrl(file: File) {
