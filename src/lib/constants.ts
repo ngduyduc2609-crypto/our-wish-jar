@@ -23,7 +23,7 @@ export const DIFFICULTIES = [
   { value: "hard", label: { vi: "Khó đấy", en: "Challenging", zh: "有挑战" }, emoji: "🔥" },
 ] as const;
 
-export const REACTIONS = ["❤️", "😍", "😂", "🤔", "👍"] as const;
+export const REACTIONS = ["❤️", "🤣", "😮", "😭", "😠", "👍"] as const;
 
 export const ACTIVITY_CATEGORIES = [
   { value: "cafe", label: { vi: "Cafe", en: "Cafe", zh: "咖啡" }, emoji: "☕" },
