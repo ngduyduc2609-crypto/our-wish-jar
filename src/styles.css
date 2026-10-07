@@ -4,6 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.post-interactions { touch-action: pan-y; }
+.post-reaction-trigger, .post-reaction-popover { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.post-reaction-popover { will-change: transform, opacity; box-shadow: 0 9px 26px var(--depth-shadow), inset 0 2px 0 var(--depth-highlight); }
+.post-reaction-popover button { transform: none; animation: none; box-shadow: none; }
+.post-sheet-overlay { background: color-mix(in oklab, var(--foreground) 55%, transparent); backdrop-filter: blur(5px); }
+.post-comment-sheet { will-change: transform; }
+.post-comment-scroll { -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.post-comment-composer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
 @theme inline {
   --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Quicksand", "Be Vietnam Pro", ui-sans-serif, sans-serif;

@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Replace duplicated reactions with a shared floating, spring-animated picker across all four lists.
+- [ ] Add swipe-dismiss comment sheets and compact owner-only action menus.
+- [ ] Fix and verify reaction/comment persistence, tap toggles, and touch interactions.
+
 - [x] Validate and finish the existing audio and notification work.
 - [x] Expand the Home wish jar with many varied, gently moving wish notes.
 - [x] Add an animated, milestone-aware streak flame and celebration states.
