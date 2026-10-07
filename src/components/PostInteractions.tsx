@@ -137,9 +137,8 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const stopCommentAction = () => { clearHold(); };
 
   const replyToComment = (comment: Comment) => {
-    const name = memberName(comment.member_id);
     setReplyTarget(comment);
-    setDraft(`@${name} `);
+    setDraft("");
     setCommentActionsFor(null);
     setSheet(true);
   };
@@ -212,8 +211,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     if (!me || !content || sendBusy.current) return;
     sendBusy.current = true; setSending(true);
     try {
-      const finalContent = replyTarget ? `${content}` : content;
-      const comment = await insertEntityComment(entity, targetId, me.id, finalContent);
+      const comment = await insertEntityComment(entity, targetId, me.id, content);
       setLocalComments((rows) => [...rows, comment]);
       setDraft("");
       setReplyTarget(null);
@@ -241,15 +239,22 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const unique = uniqueMemberReactions(localReactions);
   const mine = unique.find((r) => r.member_id === me?.id);
   const spring = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 450, damping: 25 };
+  const getCommentMenuPlacement = (commentId: string) => {
+    if (typeof document === "undefined") return true;
+    const node = document.getElementById(`comment-bubble-${commentId}`);
+    if (!node) return true;
+    const rect = node.getBoundingClientRect();
+    return rect.top > 180;
+  };
 
   return <div className="post-interactions mt-4 border-t border-border pt-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-    <div className="mb-2 flex items-center justify-between gap-2">
+    <div className="mb-2 flex items-center justify-start gap-2">
       <div className="flex min-h-5 items-center gap-1.5 text-[11px] text-muted-foreground" aria-label={`${unique.length} ${copy.heart}`}>
         <span className="flex -space-x-1.5">{[...new Set(unique.map((r) => r.emoji))].map((emoji) => <span key={emoji} className="grid size-4 place-items-center rounded-full bg-card ring-1 ring-card">{emoji}</span>)}</span>
         {unique.length > 0 && <span className="font-medium">{unique.length}</span>}
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="ml-1 flex items-center gap-1">
         <Button ref={button} variant="ghost" size="sm" disabled={reacting} className={cn("post-reaction-trigger h-8 min-w-0 touch-pan-y rounded-full px-2.5 py-1 text-muted-foreground", mine && "text-primary")} aria-expanded={open} aria-haspopup="dialog" aria-label={copy.heart}
           onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } close(); void react(mine?.emoji ?? "❤️"); }}
           onPointerEnter={(e) => { if (e.pointerType === "mouse") show(); }}
@@ -293,11 +298,12 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
             const reaction = commentReactions[c.id];
             const owner = me?.id === c.member_id;
             const selectedComment = commentActionsFor === c.id;
+            const placeAbove = selectedComment ? getCommentMenuPlacement(c.id) : true;
             return <div key={c.id} className="relative flex items-start gap-2.5" onContextMenu={(e) => { e.preventDefault(); setCommentActionsFor(c.id); }} onMouseDown={() => startCommentAction(c.id)} onMouseUp={stopCommentAction} onMouseLeave={stopCommentAction} onTouchStart={() => startCommentAction(c.id)} onTouchEnd={stopCommentAction}>
-              {selectedComment && <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" onClick={() => setCommentActionsFor(null)} />}
-              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
+              {selectedComment && <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={() => setCommentActionsFor(null)} />}
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium shadow-sm ring-1 ring-border/60" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
               <div className="relative min-w-0 flex-1">
-                <div className={cn("relative inline-block max-w-[84%] rounded-[18px] bg-muted px-3 py-2 shadow-sm transition-all", selectedComment && "z-50 bg-muted/95 ring-1 ring-primary/15 shadow-lg")}>
+                <div id={`comment-bubble-${c.id}`} className={cn("relative inline-block max-w-[84%] rounded-[18px] bg-muted px-3 py-2 shadow-sm transition-all duration-200 ease-out", selectedComment && "z-50 bg-muted/95 ring-1 ring-primary/20 shadow-[0_14px_30px_rgba(15,23,42,0.18)]") }>
                   <p className="text-[11px] font-semibold text-foreground/80">{memberName(c.member_id)}</p>
                   {editingCommentId === c.id ? (
                     <div className="mt-2 space-y-2">
@@ -314,20 +320,18 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
                   {reaction && <div className="mt-2 inline-flex items-center rounded-full border border-border bg-background/80 px-1.5 py-0.5 text-[11px] shadow-sm">{reaction}</div>}
 
                   {selectedComment && (
-                    <div className="absolute left-0 top-0 z-[60] -translate-y-[calc(100%+8px)]">
-                      <div className="flex items-center gap-1 rounded-full border border-border bg-background/95 p-1 shadow-lg backdrop-blur-sm">
-                        {EMOJIS.map((emoji) => (
-                          <button key={emoji} type="button" className="grid size-7 place-items-center rounded-full text-base transition hover:bg-secondary" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
+                    <div className={cn("absolute left-0 z-[70] flex w-max max-w-[220px] items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1 shadow-[0_12px_24px_rgba(15,23,42,0.18)] backdrop-blur-sm ring-1 ring-white/60", placeAbove ? "-translate-y-[calc(100%+12px)] top-0" : "top-full mt-2") }>
+                      {EMOJIS.map((emoji) => (
+                        <button key={emoji} type="button" className="grid size-7 place-items-center rounded-full text-base transition hover:scale-105 hover:bg-secondary active:scale-95" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
+                          {emoji}
+                        </button>
+                      ))}
                     </div>
                   )}
 
                   {selectedComment && (
-                    <div className="absolute left-0 top-full z-[60] mt-2">
-                      <div className="flex min-w-[186px] flex-col rounded-2xl border border-border bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:bg-card">
+                    <div className={cn("absolute left-0 z-[70] mt-2 w-[190px]", placeAbove ? "top-0 -translate-y-[calc(100%+12px)]" : "top-full") }>
+                      <div className="flex min-w-[190px] flex-col rounded-2xl border border-border/80 bg-white/95 p-1.5 shadow-[0_18px_34px_rgba(15,23,42,0.18)] backdrop-blur-md dark:bg-card">
                         <button type="button" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-foreground transition hover:bg-secondary" onClick={() => replyToComment(c)}>
                           <Reply className="size-3.5" /> {copy.reply}
                         </button>
@@ -349,6 +353,12 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
                   )}
                 </div>
 
+                {replyTarget?.id === c.id && !editingCommentId && (
+                  <div className="mt-2 border-l border-primary/50 pl-2 text-[10px] text-muted-foreground">
+                    {copy.reply} · {memberName(c.member_id)}
+                  </div>
+                )}
+
                 <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
                   <time>{new Date(c.created_at).toLocaleString(language === "vi" ? "vi-VN" : language === "zh" ? "zh-CN" : "en-US", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</time>
                   <button type="button" className="font-medium text-foreground/80" onClick={() => replyToComment(c)}>{copy.reply}</button>
@@ -359,7 +369,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
         </div>
 
         <form className="post-comment-composer flex shrink-0 items-center gap-2 border-t border-border px-4 pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
-          <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply} ${memberName(replyTarget.member_id)}` : copy.input) : copy.login} aria-label={copy.input} disabled={!me || sending} className="h-11 min-w-0 flex-1 rounded-full" />
+          <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply}` : copy.input) : copy.login} aria-label={copy.input} disabled={!me || sending} className="h-11 min-w-0 flex-1 rounded-full" />
           <Button type="submit" disabled={!me || !draft.trim() || sending} aria-label={copy.send} className="h-11 rounded-full"><Send /><span>{copy.send}</span></Button>
         </form>
       </DrawerContent>
