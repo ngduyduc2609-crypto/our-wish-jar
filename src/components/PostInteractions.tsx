@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Heart, MessageCircle, Send, Trash2, X } from "lucide-react";
+import { Copy, Edit3, Heart, MessageCircle, Reply, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription, DrawerClose } from "@/components/ui/drawer";
 import { useIdentity } from "@/lib/identity";
 import { useAppLanguage } from "@/lib/language";
-import { deleteRow, insertEntityComment, toggleEntityReaction, uniqueMemberReactions } from "@/lib/db";
+import { deleteRow, insertEntityComment, toggleEntityReaction, uniqueMemberReactions, updateRow } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 const EMOJIS = ["❤️", "🤣", "😮", "😭", "😠", "👍"] as const;
@@ -32,6 +32,8 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null);
   const [commentActionsFor, setCommentActionsFor] = useState<string | null>(null);
   const [commentReactions, setCommentReactions] = useState<Record<string, string>>({});
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [reacting, setReacting] = useState(false);
   const [sending, setSending] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -44,7 +46,61 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const selected = useRef<number | null>(null);
   const busy = useRef(false);
   const sendBusy = useRef(false);
-  const copy = language === "vi" ? { heart: "Cảm xúc", comments: "Bình luận", input: "Viết bình luận…", send: "Gửi", empty: "Chưa có bình luận", close: "Đóng", error: "Không thể lưu. Vui lòng thử lại.", login: "Vui lòng đăng nhập để tương tác.", reply: "Phản hồi", reactToComment: "Thả cảm xúc", describeComment: "Bình luận của" } : language === "zh" ? { heart: "反应", comments: "评论", input: "写评论…", send: "发送", empty: "还没有评论", close: "关闭", error: "无法保存，请重试。", login: "请先登录。", reply: "回复", reactToComment: "添加反应", describeComment: "评论" } : { heart: "React", comments: "Comments", input: "Write a comment…", send: "Send", empty: "No comments yet", close: "Close", error: "Could not save. Please try again.", login: "Please sign in first.", reply: "Reply", reactToComment: "React", describeComment: "Comment" };
+  const copy = language === "vi" ? {
+    heart: "Cảm xúc",
+    comments: "Bình luận",
+    input: "Viết bình luận…",
+    send: "Gửi",
+    empty: "Chưa có bình luận",
+    close: "Đóng",
+    error: "Không thể lưu. Vui lòng thử lại.",
+    login: "Vui lòng đăng nhập để tương tác.",
+    reply: "Phản hồi",
+    reactToComment: "Thả cảm xúc",
+    edit: "Chỉnh sửa",
+    delete: "Xóa",
+    copy: "Sao chép",
+    save: "Lưu",
+    cancel: "Hủy",
+    deleted: "Đã xóa bình luận",
+    copied: "Đã sao chép"
+  } : language === "zh" ? {
+    heart: "反应",
+    comments: "评论",
+    input: "写评论…",
+    send: "发送",
+    empty: "还没有评论",
+    close: "关闭",
+    error: "无法保存，请重试。",
+    login: "请先登录。",
+    reply: "回复",
+    reactToComment: "添加反应",
+    edit: "编辑",
+    delete: "删除",
+    copy: "复制",
+    save: "保存",
+    cancel: "取消",
+    deleted: "评论已删除",
+    copied: "已复制"
+  } : {
+    heart: "React",
+    comments: "Comments",
+    input: "Write a comment…",
+    send: "Send",
+    empty: "No comments yet",
+    close: "Close",
+    error: "Could not save. Please try again.",
+    login: "Please sign in first.",
+    reply: "Reply",
+    reactToComment: "React",
+    edit: "Edit",
+    delete: "Delete",
+    copy: "Copy",
+    save: "Save",
+    cancel: "Cancel",
+    deleted: "Comment deleted",
+    copied: "Copied"
+  };
 
   useEffect(() => { if (!busy.current) setLocalReactions(reactions); }, [reactions]);
   useEffect(() => { if (!sendBusy.current) setLocalComments(comments); }, [comments]);
@@ -98,7 +154,38 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       await deleteRow(`${entity}_comments`, commentId);
       setLocalComments((rows) => rows.filter((comment) => comment.id !== commentId));
       setCommentActionsFor(null);
+      toast.success(copy.deleted);
       onChanged();
+    } catch {
+      toast.error(copy.error);
+    }
+  };
+
+  const editComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditDraft(comment.content);
+    setCommentActionsFor(null);
+  };
+
+  const saveEditedComment = async (commentId: string) => {
+    const content = editDraft.trim();
+    if (!content) return;
+    try {
+      const updated = await updateRow<Comment>(`${entity}_comments`, commentId, { content });
+      setLocalComments((rows) => rows.map((row) => row.id === commentId ? { ...row, content: updated.content } : row));
+      setEditingCommentId(null);
+      setEditDraft("");
+      onChanged();
+    } catch {
+      toast.error(copy.error);
+    }
+  };
+
+  const copyCommentContent = async (comment: Comment) => {
+    try {
+      await navigator.clipboard.writeText(comment.content);
+      toast.success(copy.copied);
+      setCommentActionsFor(null);
     } catch {
       toast.error(copy.error);
     }
@@ -156,38 +243,38 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const spring = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 450, damping: 25 };
 
   return <div className="post-interactions mt-4 border-t border-border pt-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-    <div className="mb-2 flex min-h-6 items-center gap-1.5 text-xs text-muted-foreground" aria-label={`${unique.length} ${copy.heart}`}>
-      <span className="flex -space-x-1">{[...new Set(unique.map((r) => r.emoji))].map((emoji) => <span key={emoji} className="grid size-5 place-items-center rounded-full bg-card ring-2 ring-card">{emoji}</span>)}</span>
-      {unique.length > 0 && <span>{unique.length}</span>}
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="flex min-h-5 items-center gap-1.5 text-[11px] text-muted-foreground" aria-label={`${unique.length} ${copy.heart}`}>
+        <span className="flex -space-x-1.5">{[...new Set(unique.map((r) => r.emoji))].map((emoji) => <span key={emoji} className="grid size-4 place-items-center rounded-full bg-card ring-1 ring-card">{emoji}</span>)}</span>
+        {unique.length > 0 && <span className="font-medium">{unique.length}</span>}
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Button ref={button} variant="ghost" size="sm" disabled={reacting} className={cn("post-reaction-trigger h-8 min-w-0 touch-pan-y rounded-full px-2.5 py-1 text-muted-foreground", mine && "text-primary")} aria-expanded={open} aria-haspopup="dialog" aria-label={copy.heart}
+          onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } close(); void react(mine?.emoji ?? "❤️"); }}
+          onPointerEnter={(e) => { if (e.pointerType === "mouse") show(); }}
+          onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}
+          onContextMenu={(e) => e.preventDefault()}
+          onTouchStart={(e) => { const t = e.touches[0]; if (!t) return; suppressClick.current = false; touchStart.current = { x: t.clientX, y: t.clientY }; clearHold(); hold.current = setTimeout(() => { held.current = true; suppressClick.current = true; show(); }, 200); }}
+          onTouchMove={(e) => { const t = e.touches[0]; const start = touchStart.current; if (!held.current && t && start && Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) { clearHold(); suppressClick.current = true; } }}
+          onTouchEnd={() => { clearHold(); held.current = false; }}
+          onTouchCancel={() => { clearHold(); held.current = false; close(); }}
+          onKeyDown={(e) => { if (e.key === "ArrowUp") { e.preventDefault(); show(); requestAnimationFrame(() => picker.current?.querySelector<HTMLButtonElement>("button")?.focus()); } }}>
+          <Heart className={cn("size-[15px] stroke-[2.2]", mine ? "fill-primary text-primary" : "fill-none text-muted-foreground")} />
+          {unique.length > 0 && <span className="ml-1 text-[11px] font-medium">{unique.length}</span>}
+        </Button>
+
+        <Button variant="ghost" size="sm" className="h-8 min-w-0 touch-pan-y rounded-full px-2.5 py-1 text-muted-foreground" onClick={() => { close(); setSheet(true); }} aria-label={copy.comments}>
+          <MessageCircle className="size-[15px]" />
+          {localComments.length > 0 && <span className="ml-1 text-[11px] font-medium">{localComments.length}</span>}
+        </Button>
+      </div>
     </div>
 
-    <div className="grid grid-cols-2 gap-2">
-      <Button ref={button} variant="ghost" disabled={reacting} className={cn("post-reaction-trigger h-10 min-w-10 touch-pan-y px-2", mine && "text-primary")} aria-expanded={open} aria-haspopup="dialog" aria-label={copy.heart}
-        onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } close(); void react(mine?.emoji ?? "❤️"); }}
-        onPointerEnter={(e) => { if (e.pointerType === "mouse") show(); }}
-        onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}
-        onContextMenu={(e) => e.preventDefault()}
-        onTouchStart={(e) => { const t = e.touches[0]; if (!t) return; suppressClick.current = false; touchStart.current = { x: t.clientX, y: t.clientY }; clearHold(); hold.current = setTimeout(() => { held.current = true; suppressClick.current = true; show(); }, 200); }}
-        onTouchMove={(e) => { const t = e.touches[0]; const start = touchStart.current; if (!held.current && t && start && Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) { clearHold(); suppressClick.current = true; } }}
-        onTouchEnd={() => { clearHold(); held.current = false; }}
-        onTouchCancel={() => { clearHold(); held.current = false; close(); }}
-        onKeyDown={(e) => { if (e.key === "ArrowUp") { e.preventDefault(); show(); requestAnimationFrame(() => picker.current?.querySelector<HTMLButtonElement>("button")?.focus()); } }}>
-        <Heart className={cn("size-4 stroke-[2.2]", mine ? "fill-primary text-primary" : "fill-none text-muted-foreground")} />
-        {unique.length > 0 && <span className="ml-1 text-xs">{unique.length}</span>}
-      </Button>
-
-      <Button variant="ghost" className="h-10 min-w-10 touch-pan-y px-2" onClick={() => { close(); setSheet(true); }} aria-label={copy.comments}>
-        <MessageCircle className="size-4" />
-        {localComments.length > 0 && <span className="ml-1 text-xs">{localComments.length}</span>}
-      </Button>
-    </div>
-
-    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[80] flex h-12 w-[220px] items-center justify-center gap-1 rounded-full border border-border bg-popover/95 p-1.5 text-popover-foreground shadow-lg backdrop-blur-sm"
-      style={position} initial={{ opacity: 0, y: 10, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.9 }} transition={spring}
-      onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}>
+    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[80] flex h-11 w-[220px] items-center justify-center gap-1 rounded-full border border-border bg-popover/95 p-1.5 text-popover-foreground shadow-lg backdrop-blur-sm" style={position} initial={{ opacity: 0, y: 10, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.9 }} transition={spring} onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}>
       {EMOJIS.map((emoji, index) => <motion.div key={emoji} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: reduced ? 0 : index * 0.02 }}>
-        <motion.div animate={{ scale: hovered === index ? 1.25 : 1, y: hovered === index ? -4 : 0, x: hovered !== null && hovered !== index ? (index < hovered ? -2 : 2) : 0 }} transition={spring}>
-          <Button data-reaction-index={index} variant="ghost" size="icon" className="size-9 rounded-full text-xl" aria-label={`${copy.heart} ${emoji}`} aria-pressed={mine?.emoji === emoji}
+        <motion.div animate={{ scale: hovered === index ? 1.2 : 1, y: hovered === index ? -3 : 0, x: hovered !== null && hovered !== index ? (index < hovered ? -2 : 2) : 0 }} transition={spring}>
+          <Button data-reaction-index={index} variant="ghost" size="icon" className="size-8 rounded-full text-lg" aria-label={`${copy.heart} ${emoji}`} aria-pressed={mine?.emoji === emoji}
             onPointerEnter={() => { selected.current = index; setHovered(index); }} onFocus={() => setHovered(index)}
             onClick={() => { if (held.current) return; suppressClick.current = true; close(); void react(emoji); }}>{emoji}</Button>
         </motion.div>
@@ -204,32 +291,69 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
         <div className="post-comment-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5">
           {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : localComments.map((c) => {
             const reaction = commentReactions[c.id];
-            return <div key={c.id} className="relative flex items-start gap-2.5" onMouseDown={() => startCommentAction(c.id)} onMouseUp={stopCommentAction} onMouseLeave={stopCommentAction} onTouchStart={() => startCommentAction(c.id)} onTouchEnd={stopCommentAction} onContextMenu={(e) => { e.preventDefault(); setCommentActionsFor(c.id); }}>
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-sm" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
-              <div className="min-w-0 flex-1">
-                <div className="rounded-2xl bg-muted px-3 py-2">
-                  <p className="text-xs font-semibold">{memberName(c.member_id)}</p>
-                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm">{c.content}</p>
-                  {reaction && <div className="mt-2 inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-xs">{reaction}</div>}
+            const owner = me?.id === c.member_id;
+            const selectedComment = commentActionsFor === c.id;
+            return <div key={c.id} className="relative flex items-start gap-2.5" onContextMenu={(e) => { e.preventDefault(); setCommentActionsFor(c.id); }} onMouseDown={() => startCommentAction(c.id)} onMouseUp={stopCommentAction} onMouseLeave={stopCommentAction} onTouchStart={() => startCommentAction(c.id)} onTouchEnd={stopCommentAction}>
+              {selectedComment && <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" onClick={() => setCommentActionsFor(null)} />}
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
+              <div className="relative min-w-0 flex-1">
+                <div className={cn("relative inline-block max-w-[84%] rounded-[18px] bg-muted px-3 py-2 shadow-sm transition-all", selectedComment && "z-50 bg-muted/95 ring-1 ring-primary/15 shadow-lg")}>
+                  <p className="text-[11px] font-semibold text-foreground/80">{memberName(c.member_id)}</p>
+                  {editingCommentId === c.id ? (
+                    <div className="mt-2 space-y-2">
+                      <Input value={editDraft} onChange={(e) => setEditDraft(e.target.value)} className="min-w-[200px] rounded-full" aria-label={copy.edit} />
+                      <div className="flex items-center justify-end gap-2">
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCommentId(null)}>{copy.cancel}</Button>
+                        <Button type="button" size="sm" onClick={() => void saveEditedComment(c.id)}>{copy.save}</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">{c.content}</p>
+                  )}
+
+                  {reaction && <div className="mt-2 inline-flex items-center rounded-full border border-border bg-background/80 px-1.5 py-0.5 text-[11px] shadow-sm">{reaction}</div>}
+
+                  {selectedComment && (
+                    <div className="absolute left-0 top-0 z-[60] -translate-y-[calc(100%+8px)]">
+                      <div className="flex items-center gap-1 rounded-full border border-border bg-background/95 p-1 shadow-lg backdrop-blur-sm">
+                        {EMOJIS.map((emoji) => (
+                          <button key={emoji} type="button" className="grid size-7 place-items-center rounded-full text-base transition hover:bg-secondary" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedComment && (
+                    <div className="absolute left-0 top-full z-[60] mt-2">
+                      <div className="flex min-w-[186px] flex-col rounded-2xl border border-border bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:bg-card">
+                        <button type="button" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-foreground transition hover:bg-secondary" onClick={() => replyToComment(c)}>
+                          <Reply className="size-3.5" /> {copy.reply}
+                        </button>
+                        {owner && (
+                          <button type="button" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-foreground transition hover:bg-secondary" onClick={() => editComment(c)}>
+                            <Edit3 className="size-3.5" /> {copy.edit}
+                          </button>
+                        )}
+                        {owner && (
+                          <button type="button" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-destructive transition hover:bg-destructive/10" onClick={() => void deleteComment(c.id)}>
+                            <Trash2 className="size-3.5" /> {copy.delete}
+                          </button>
+                        )}
+                        <button type="button" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-foreground transition hover:bg-secondary" onClick={() => void copyCommentContent(c)}>
+                          <Copy className="size-3.5" /> {copy.copy}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
                 <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
                   <time>{new Date(c.created_at).toLocaleString(language === "vi" ? "vi-VN" : language === "zh" ? "zh-CN" : "en-US", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</time>
                   <button type="button" className="font-medium text-foreground/80" onClick={() => replyToComment(c)}>{copy.reply}</button>
                 </div>
               </div>
-
-              {commentActionsFor === c.id && (
-                <div className="absolute right-0 top-0 z-10 flex items-center gap-1 rounded-full border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
-                  {EMOJIS.map((emoji) => (
-                    <button key={emoji} type="button" className="grid size-7 place-items-center rounded-full text-base transition hover:bg-secondary" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
-                      {emoji}
-                    </button>
-                  ))}
-                  <button type="button" className="grid size-7 place-items-center rounded-full text-base text-destructive transition hover:bg-secondary" onClick={() => void deleteComment(c.id)} aria-label="Xoá bình luận">
-                    <Trash2 className="size-3.5" />
-                  </button>
-                </div>
-              )}
             </div>;
           })}
         </div>
