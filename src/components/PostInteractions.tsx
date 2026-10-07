@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Heart, MessageCircle, Reply, Send, X } from "lucide-react";
+import { Heart, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription, DrawerClose } from "@/components/ui/drawer";
 import { useIdentity } from "@/lib/identity";
 import { useAppLanguage } from "@/lib/language";
-import { insertEntityComment, toggleEntityReaction, uniqueMemberReactions } from "@/lib/db";
+import { deleteRow, insertEntityComment, toggleEntityReaction, uniqueMemberReactions } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 const EMOJIS = ["❤️", "🤣", "😮", "😭", "😠", "👍"] as const;
@@ -93,6 +93,17 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     setCommentActionsFor(null);
   };
 
+  const deleteComment = async (commentId: string) => {
+    try {
+      await deleteRow(`${entity}_comments`, commentId);
+      setLocalComments((rows) => rows.filter((comment) => comment.id !== commentId));
+      setCommentActionsFor(null);
+      onChanged();
+    } catch {
+      toast.error(copy.error);
+    }
+  };
+
   async function react(emoji: string) {
     if (!me) { toast.error(copy.login); return; }
     if (busy.current) return;
@@ -154,13 +165,14 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       <Button ref={button} variant="ghost" disabled={reacting} className={cn("post-reaction-trigger h-10 min-w-10 touch-pan-y px-2", mine && "text-primary")} aria-expanded={open} aria-haspopup="dialog" aria-label={copy.heart}
         onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } close(); void react(mine?.emoji ?? "❤️"); }}
         onPointerEnter={(e) => { if (e.pointerType === "mouse") show(); }}
-        onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 180); }}
+        onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}
         onContextMenu={(e) => e.preventDefault()}
-        onTouchStart={(e) => { const t = e.touches[0]; if (!t) return; suppressClick.current = false; touchStart.current = { x: t.clientX, y: t.clientY }; clearHold(); hold.current = setTimeout(() => { held.current = true; suppressClick.current = true; show(); }, 250); }}
-        onTouchMove={(e) => { const t = e.touches[0]; const start = touchStart.current; if (!held.current && t && start && Math.hypot(t.clientX - start.x, t.clientY - start.y) > 8) { clearHold(); suppressClick.current = true; } }}
-        onTouchEnd={clearHold} onTouchCancel={() => { clearHold(); held.current = false; close(); }}
+        onTouchStart={(e) => { const t = e.touches[0]; if (!t) return; suppressClick.current = false; touchStart.current = { x: t.clientX, y: t.clientY }; clearHold(); hold.current = setTimeout(() => { held.current = true; suppressClick.current = true; show(); }, 200); }}
+        onTouchMove={(e) => { const t = e.touches[0]; const start = touchStart.current; if (!held.current && t && start && Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) { clearHold(); suppressClick.current = true; } }}
+        onTouchEnd={() => { clearHold(); held.current = false; }}
+        onTouchCancel={() => { clearHold(); held.current = false; close(); }}
         onKeyDown={(e) => { if (e.key === "ArrowUp") { e.preventDefault(); show(); requestAnimationFrame(() => picker.current?.querySelector<HTMLButtonElement>("button")?.focus()); } }}>
-        <span className="text-lg">{mine ? mine.emoji : "❤️"}</span>
+        <Heart className={cn("size-4 stroke-[2.2]", mine ? "fill-primary text-primary" : "fill-none text-muted-foreground")} />
         {unique.length > 0 && <span className="ml-1 text-xs">{unique.length}</span>}
       </Button>
 
@@ -170,12 +182,12 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       </Button>
     </div>
 
-    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[80] flex h-16 w-[320px] items-center justify-center rounded-full border border-border bg-popover text-popover-foreground"
+    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[80] flex h-12 w-[220px] items-center justify-center gap-1 rounded-full border border-border bg-popover/95 p-1.5 text-popover-foreground shadow-lg backdrop-blur-sm"
       style={position} initial={{ opacity: 0, y: 10, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.9 }} transition={spring}
-      onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 180); }}>
-      {EMOJIS.map((emoji, index) => <motion.div key={emoji} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: reduced ? 0 : index * 0.03 }}>
-        <motion.div animate={{ scale: hovered === index ? 1.35 : 1, y: hovered === index ? -6 : 0, x: hovered !== null && hovered !== index ? (index < hovered ? -3 : 3) : 0 }} transition={spring}>
-          <Button data-reaction-index={index} variant="ghost" size="icon" className="size-11 rounded-full text-2xl" aria-label={`${copy.heart} ${emoji}`} aria-pressed={mine?.emoji === emoji}
+      onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}>
+      {EMOJIS.map((emoji, index) => <motion.div key={emoji} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: reduced ? 0 : index * 0.02 }}>
+        <motion.div animate={{ scale: hovered === index ? 1.25 : 1, y: hovered === index ? -4 : 0, x: hovered !== null && hovered !== index ? (index < hovered ? -2 : 2) : 0 }} transition={spring}>
+          <Button data-reaction-index={index} variant="ghost" size="icon" className="size-9 rounded-full text-xl" aria-label={`${copy.heart} ${emoji}`} aria-pressed={mine?.emoji === emoji}
             onPointerEnter={() => { selected.current = index; setHovered(index); }} onFocus={() => setHovered(index)}
             onClick={() => { if (held.current) return; suppressClick.current = true; close(); void react(emoji); }}>{emoji}</Button>
         </motion.div>
@@ -207,12 +219,15 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
               </div>
 
               {commentActionsFor === c.id && (
-                <div className="absolute left-10 top-1 z-10 flex items-center gap-1 rounded-full border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
+                <div className="absolute right-0 top-0 z-10 flex items-center gap-1 rounded-full border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur-sm">
                   {EMOJIS.map((emoji) => (
-                    <button key={emoji} type="button" className="grid size-8 place-items-center rounded-full text-lg transition hover:bg-secondary" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
+                    <button key={emoji} type="button" className="grid size-7 place-items-center rounded-full text-base transition hover:bg-secondary" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
                       {emoji}
                     </button>
                   ))}
+                  <button type="button" className="grid size-7 place-items-center rounded-full text-base text-destructive transition hover:bg-secondary" onClick={() => void deleteComment(c.id)} aria-label="Xoá bình luận">
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
               )}
             </div>;
