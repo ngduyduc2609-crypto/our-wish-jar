@@ -390,7 +390,7 @@ export async function toggleEntityReaction(
   const sameEmojiRow = rows.find((row) => row.emoji === emoji);
 
   if (sameEmojiRow) {
-    const { error: deleteError } = await db.from(table).delete().in("id", rows.map((row) => row.id));
+    const { error: deleteError } = await db.from(table).delete().eq("id", sameEmojiRow.id);
     if (deleteError) throw deleteError;
     return false;
   }

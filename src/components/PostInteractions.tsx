@@ -12,6 +12,14 @@ import { deleteRow, insertEntityComment, toggleEntityReaction, uniqueMemberReact
 import { cn } from "@/lib/utils";
 
 const EMOJIS = ["❤️", "🤣", "😮", "😭", "😠", "👍"] as const;
+const REACTION_META: Record<string, { glow: string; ring: string; accent: string; bg: string }> = {
+  "❤️": { glow: "shadow-[0_12px_24px_rgba(244,63,94,0.38)]", ring: "ring-pink-200/70", accent: "text-pink-500", bg: "from-pink-400 via-rose-500 to-red-500" },
+  "🤣": { glow: "shadow-[0_12px_24px_rgba(251,146,60,0.34)]", ring: "ring-amber-200/80", accent: "text-amber-500", bg: "from-amber-300 via-orange-400 to-yellow-500" },
+  "😮": { glow: "shadow-[0_12px_24px_rgba(96,165,250,0.34)]", ring: "ring-sky-200/80", accent: "text-sky-500", bg: "from-sky-300 via-blue-400 to-indigo-500" },
+  "😭": { glow: "shadow-[0_12px_24px_rgba(59,130,246,0.34)]", ring: "ring-blue-200/80", accent: "text-blue-500", bg: "from-cyan-300 via-sky-400 to-blue-500" },
+  "😠": { glow: "shadow-[0_12px_24px_rgba(249,115,22,0.32)]", ring: "ring-orange-200/80", accent: "text-orange-500", bg: "from-orange-300 via-orange-500 to-red-500" },
+  "👍": { glow: "shadow-[0_12px_24px_rgba(16,185,129,0.32)]", ring: "ring-emerald-200/80", accent: "text-emerald-500", bg: "from-emerald-300 via-green-400 to-teal-500" },
+};
 type Reaction = { id: string; emoji: string; member_id: string };
 type Comment = { id: string; member_id: string; content: string; created_at: string };
 
@@ -276,14 +284,17 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       </div>
     </div>
 
-    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[80] flex h-11 w-[220px] items-center justify-center gap-1 rounded-full border border-border bg-popover/95 p-1.5 text-popover-foreground shadow-lg backdrop-blur-sm" style={position} initial={{ opacity: 0, y: 10, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.9 }} transition={spring} onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}>
-      {EMOJIS.map((emoji, index) => <motion.div key={emoji} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: reduced ? 0 : index * 0.02 }}>
-        <motion.div animate={{ scale: hovered === index ? 1.2 : 1, y: hovered === index ? -3 : 0, x: hovered !== null && hovered !== index ? (index < hovered ? -2 : 2) : 0 }} transition={spring}>
-          <Button data-reaction-index={index} variant="ghost" size="icon" className="size-8 rounded-full text-lg" aria-label={`${copy.heart} ${emoji}`} aria-pressed={mine?.emoji === emoji}
-            onPointerEnter={() => { selected.current = index; setHovered(index); }} onFocus={() => setHovered(index)}
-            onClick={() => { if (held.current) return; suppressClick.current = true; close(); void react(emoji); }}>{emoji}</Button>
-        </motion.div>
-      </motion.div>)}
+    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[90] flex h-12 w-[250px] items-center justify-center gap-1.5 rounded-full border border-white/40 bg-white/85 p-1.5 text-popover-foreground shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:bg-slate-900/85" style={position} initial={{ opacity: 0, y: 12, scale: 0.82 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.92 }} transition={spring} onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 120); }}>
+      {EMOJIS.map((emoji, index) => {
+        const meta = REACTION_META[emoji];
+        return <motion.div key={emoji} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: reduced ? 0 : index * 0.03 }}>
+          <motion.div animate={{ scale: hovered === index ? 1.28 : 1, y: hovered === index ? -4 : 0, x: hovered !== null && hovered !== index ? (index < hovered ? -3 : 3) : 0 }} transition={spring}>
+            <Button data-reaction-index={index} variant="ghost" size="icon" className={cn("size-9 rounded-full border border-white/20 bg-gradient-to-br text-lg shadow-sm ring-1 transition-all duration-200 hover:scale-105 active:scale-95", meta.bg, meta.glow, meta.ring, hovered === index ? "scale-110 ring-2" : "ring-0")} aria-label={`${copy.heart} ${emoji}`} aria-pressed={mine?.emoji === emoji}
+              onPointerEnter={() => { selected.current = index; setHovered(index); }} onFocus={() => setHovered(index)}
+              onClick={() => { if (held.current) return; suppressClick.current = true; close(); void react(emoji); }}>{emoji}</Button>
+          </motion.div>
+        </motion.div>;
+      })}
     </motion.div>}</AnimatePresence>, document.body)}
 
     <Drawer open={sheet} onOpenChange={setSheet} shouldScaleBackground={false}>
@@ -320,12 +331,13 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
                   {reaction && <div className="mt-2 inline-flex items-center rounded-full border border-border bg-background/80 px-1.5 py-0.5 text-[11px] shadow-sm">{reaction}</div>}
 
                   {selectedComment && (
-                    <div className={cn("absolute left-0 z-[70] flex w-max max-w-[220px] items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1 shadow-[0_12px_24px_rgba(15,23,42,0.18)] backdrop-blur-sm ring-1 ring-white/60", placeAbove ? "-translate-y-[calc(100%+12px)] top-0" : "top-full mt-2") }>
-                      {EMOJIS.map((emoji) => (
-                        <button key={emoji} type="button" className="grid size-7 place-items-center rounded-full text-base transition hover:scale-105 hover:bg-secondary active:scale-95" onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
+                    <div className={cn("absolute left-0 z-[70] flex w-max max-w-[220px] items-center gap-1.5 rounded-full border border-white/40 bg-white/90 p-1.5 shadow-[0_16px_32px_rgba(15,23,42,0.18)] backdrop-blur-xl ring-1 ring-white/70 dark:bg-slate-900/90", placeAbove ? "-translate-y-[calc(100%+14px)] top-0" : "top-full mt-2") }>
+                      {EMOJIS.map((emoji) => {
+                        const meta = REACTION_META[emoji];
+                        return <button key={emoji} type="button" className={cn("grid size-7 place-items-center rounded-full border border-white/20 bg-gradient-to-br text-base shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95", meta.bg, meta.glow, meta.ring)} onClick={() => reactToComment(c.id, emoji)} aria-label={`${copy.reactToComment} ${emoji}`}>
                           {emoji}
-                        </button>
-                      ))}
+                        </button>;
+                      })}
                     </div>
                   )}
 
