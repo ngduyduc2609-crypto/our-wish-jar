@@ -70,6 +70,45 @@ export type Database = {
           },
         ]
       }
+      activity_comments: {
+        Row: {
+          activity_id: string
+          content: string
+          created_at: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          activity_id: string
+          content: string
+          created_at?: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          activity_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_comments_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_comments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           action: string
@@ -102,6 +141,45 @@ export type Database = {
           },
         ]
       }
+      activity_reactions: {
+        Row: {
+          activity_id: string
+          created_at: string
+          emoji: string
+          id: string
+          member_id: string | null
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          emoji: string
+          id?: string
+          member_id?: string | null
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_reactions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_reactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_presence: {
         Row: {
           created_at: string
@@ -121,6 +199,84 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_presence_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_comments: {
+        Row: {
+          content: string
+          created_at: string
+          food_id: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          food_id: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          food_id?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_comments_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_comments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          food_id: string
+          id: string
+          member_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          food_id: string
+          id?: string
+          member_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          food_id?: string
+          id?: string
+          member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_reactions_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_reactions_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
@@ -263,6 +419,84 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          member_id: string
+          memory_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          member_id: string
+          memory_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          memory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_comments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_comments_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          member_id: string | null
+          memory_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          member_id?: string | null
+          memory_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          member_id?: string | null
+          memory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_reactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_reactions_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memories"
             referencedColumns: ["id"]
           },
         ]
