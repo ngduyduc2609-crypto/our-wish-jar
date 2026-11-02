@@ -770,7 +770,7 @@ a[role="button"],
 .control-3d:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.025); }
 .control-3d:not(:disabled):active { transform: translateY(3px) scale(0.97); box-shadow: 0 1px 0 var(--depth-highlight) inset, 0 1px 0 color-mix(in oklab, currentColor 16%, var(--color-border)); }
 .section-lift, .paper { transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, filter 220ms ease; }
-.section-lift:hover, article.paper:hover { transform: translateY(-2px); box-shadow: 0 1px 0 var(--depth-highlight) inset, 0 7px 0 color-mix(in oklab, var(--color-border) 70%, transparent), 0 18px 28px -14px var(--depth-shadow); }
+.section-lift:hover, article.paper:not(:has(.post-interactions :hover)):hover { transform: translateY(-2px); box-shadow: 0 1px 0 var(--depth-highlight) inset, 0 7px 0 color-mix(in oklab, var(--color-border) 70%, transparent), 0 18px 28px -14px var(--depth-shadow); }
 /* Nhấn vào khu vực cảm xúc/bình luận không làm cả thẻ nảy */
 .section-lift:active, article.paper:not(:has(.post-interactions :active)):active { transform: translateY(2px) scale(0.99); }
 .bottom-nav-3d { box-shadow: 0 -1px 0 var(--depth-highlight), 0 -10px 24px -20px var(--depth-shadow); }
