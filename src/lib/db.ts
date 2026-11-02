@@ -225,7 +225,6 @@ export function uniqueMemberReactions<T extends { member_id: string }>(rows: T[]
     if (seen.has(row.member_id)) continue;
     seen.add(row.member_id);
     unique.push(row);
-    if (unique.length >= 2) break;
   }
 
   return unique;
@@ -306,7 +305,7 @@ function sanitizePayload(table: string, values: Record<string, unknown>, memberI
     resolvedValues.added_by = validAddedBy ?? null;
   }
 
-  if (table === "wish_comments") {
+  if (table.endsWith("_comments")) {
     const content = String(resolvedValues.content ?? "").trim();
     if (!content) throw new Error("Nội dung bình luận không được để trống.");
     resolvedValues.content = content;
@@ -386,7 +385,7 @@ export async function toggleEntityReaction(
 
   if (selectError) throw selectError;
 
-  const rows = existingRows ?? [];
+  const rows = (existingRows ?? []) as Array<{ id: string; emoji: string }>;
   const sameEmojiRow = rows.find((row) => row.emoji === emoji);
 
   if (sameEmojiRow) {

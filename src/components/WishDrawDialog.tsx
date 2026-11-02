@@ -33,7 +33,7 @@ export function WishDrawDialog({
   const [wish, setWish] = useState<Wish | null>(null);
   const [phase, setPhase] = useState<Phase>("shake");
   const [round, setRound] = useState(0);
-  const [paperTone, setPaperTone] = useState<string>(PAPER_TONES[0]);
+  const [paperTone, setPaperTone] = useState<string>("wish-note-rose");
   const timers = useRef<number[]>([]);
   const lastId = useRef<string | null>(null);
 
