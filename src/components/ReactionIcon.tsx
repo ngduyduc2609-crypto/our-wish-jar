@@ -20,7 +20,7 @@ export function reactionLabel(emoji: string, language: "vi" | "zh" | "en") {
   return found ? found.label[language] : emoji;
 }
 
-type IconProps = { uid: string; className?: string };
+type IconProps = { uid: string; className?: string | undefined };
 
 function Face({ uid, from, to, children, className }: IconProps & { from: string; to: string; children?: React.ReactNode }) {
   return (
