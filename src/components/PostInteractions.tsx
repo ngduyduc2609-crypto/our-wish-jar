@@ -26,6 +26,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const language = useAppLanguage();
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const [sheet, setSheet] = useState(false);
   const [above, setAbove] = useState(true);
   const [hovered, setHovered] = useState<number | null>(null);
   const [position, setPosition] = useState({ left: 0, top: 0 });
