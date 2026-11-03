@@ -10,13 +10,12 @@ export const REACTIONS = [
   { emoji: "😮", label: { vi: "Wow", zh: "哇", en: "Wow" } },
   { emoji: "😭", label: { vi: "Buồn", zh: "难过", en: "Sad" } },
   { emoji: "😠", label: { vi: "Giận", zh: "生气", en: "Angry" } },
-  { emoji: "🤔", label: { vi: "Hmm", zh: "思考", en: "Thoughtful" } },
 ] as const;
 
 const ALIAS: Record<string, string> = { "🤣": "😂", "🥰": "😍", "😢": "😭", "😡": "😠" };
 
 export function reactionLabel(emoji: string, language: "vi" | "zh" | "en") {
-  const found = REACTIONS.find((r) => r.emoji === emoji || ALIAS[r.emoji] === emoji);
+  const found = REACTIONS.find((r) => r.emoji === (ALIAS[emoji] ?? emoji));
   return found ? found.label[language] : emoji;
 }
 

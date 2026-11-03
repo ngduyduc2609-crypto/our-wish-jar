@@ -13,3 +13,4 @@
 - Identity must come from a real Lovable Cloud auth session (Google or email/password) and members.user_id; never fake sign-in with localStorage — RLS rejects unauthenticated writes.
 - Owner columns (proposed_by/added_by/created_by) are filled from the signed-in member on insert only; tables have no user_id column.
 - Use shared PostInteractions and PostActionsMenu for all four content types; centralizing touch handling prevents duplicate writes and card-detail event conflicts.
+- Keep reaction hold thresholds in the browser-safe reaction-gesture module with rule tests; a single idempotent completion path handles trigger and document touch release to avoid lost or duplicate selections.
