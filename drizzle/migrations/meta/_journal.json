@@ -15,6 +15,13 @@
       "when": 1793517592925,
       "tag": "0001_entity_reactions_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793686102473,
+      "tag": "0002_entity_specific_interaction_notifications",
+      "breakpoints": true
     }
   ]
 }
