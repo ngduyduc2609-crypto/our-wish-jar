@@ -26,7 +26,7 @@ function Face({ uid, from, to, children, className }: IconProps & { from: string
       <defs>
         <radialGradient id={`${uid}-face`} cx="35%" cy="26%" r="95%">
           <stop offset="0%" stopColor={from} />
-          <stop offset="52%" stopColor="var(--reaction-face-mid)" />
+          <stop offset="52%" stopColor={from} />
           <stop offset="100%" stopColor={to} />
         </radialGradient>
         <radialGradient id={`${uid}-rim`} cx="50%" cy="35%" r="65%">
