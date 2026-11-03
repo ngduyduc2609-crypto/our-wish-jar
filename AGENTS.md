@@ -15,3 +15,4 @@
 - Use shared PostInteractions and PostActionsMenu for all four content types; centralizing touch handling prevents duplicate writes and card-detail event conflicts.
 - Keep reaction hold thresholds in the browser-safe reaction-gesture module with rule tests; a single idempotent completion path handles trigger and document touch release to avoid lost or duplicate selections.
 - Format notification titles in the pure notification-text module using entity-specific trigger kinds; this keeps localized messages testable and distinguishes wishes, food, activities, and memories.
+- Persist replies with nullable parent_id on each entity comment table, validate same-post parents in database triggers, and group through comment-threads; this preserves hierarchy after reload without changing author permissions.

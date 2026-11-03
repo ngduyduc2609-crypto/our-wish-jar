@@ -6,13 +6,16 @@
 
 .post-interactions { touch-action: pan-y; }
 .post-reaction-trigger, .post-reaction-popover { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.post-reaction-popover { will-change: transform, opacity; box-shadow: 0 9px 26px var(--depth-shadow), inset 0 2px 0 var(--depth-highlight); }
+.post-reaction-popover { --reaction-tray: oklch(1 0 0); will-change: transform, opacity; background: var(--reaction-tray); box-shadow: 0 9px 26px var(--depth-shadow), inset 0 2px 0 var(--depth-highlight); }
 .post-reaction-popover button { transform: none; animation: none; box-shadow: none; }
 .post-sheet-overlay { background: color-mix(in oklab, var(--foreground) 55%, transparent); backdrop-filter: blur(5px); }
 .post-comment-sheet { will-change: transform; }
 .post-comment-scroll { -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .post-comment-composer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-.post-reaction-popover { background: linear-gradient(160deg, var(--popover), color-mix(in oklab, var(--popover) 92%, var(--blush))); box-shadow: 0 12px 32px var(--depth-shadow), inset 0 2px 0 var(--depth-highlight); }
+.dark .post-reaction-popover { --reaction-tray: var(--popover); }
+.comment-thread-reply { margin-left: 42px; padding-top: 12px; }
+.comment-thread-reply::before { content: ""; position: absolute; pointer-events: none; left: -26px; top: -12px; width: 24px; height: 40px; border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); border-bottom-left-radius: 14px; }
+.comment-thread-reply:not(:last-child)::after { content: ""; position: absolute; pointer-events: none; left: -26px; top: 15px; bottom: -12px; border-left: 1.5px solid var(--border); }
 .post-reaction-popover .reaction-art { width: 36px; height: 36px; filter: drop-shadow(0 3px 2px var(--depth-shadow)); }
 .post-reaction-trigger svg { width: 20px; height: 20px; }
 .post-reaction-summary svg { width: 15px; height: 15px; }
