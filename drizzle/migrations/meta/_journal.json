@@ -22,6 +22,13 @@
       "when": 1793686102473,
       "tag": "0002_entity_specific_interaction_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793687083388,
+      "tag": "0003_threaded_comment_replies",
+      "breakpoints": true
     }
   ]
 }

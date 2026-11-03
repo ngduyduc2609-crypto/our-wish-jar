@@ -77,6 +77,7 @@ export type Database = {
           created_at: string
           id: string
           member_id: string
+          parent_id: string | null
         }
         Insert: {
           activity_id: string
@@ -84,6 +85,7 @@ export type Database = {
           created_at?: string
           id?: string
           member_id: string
+          parent_id?: string | null
         }
         Update: {
           activity_id?: string
@@ -91,6 +93,7 @@ export type Database = {
           created_at?: string
           id?: string
           member_id?: string
+          parent_id?: string | null
         }
         Relationships: [
           {
@@ -105,6 +108,13 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "activity_comments"
             referencedColumns: ["id"]
           },
         ]
@@ -213,6 +223,7 @@ export type Database = {
           food_id: string
           id: string
           member_id: string
+          parent_id: string | null
         }
         Insert: {
           content: string
@@ -220,6 +231,7 @@ export type Database = {
           food_id: string
           id?: string
           member_id: string
+          parent_id?: string | null
         }
         Update: {
           content?: string
@@ -227,6 +239,7 @@ export type Database = {
           food_id?: string
           id?: string
           member_id?: string
+          parent_id?: string | null
         }
         Relationships: [
           {
@@ -241,6 +254,13 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "food_comments"
             referencedColumns: ["id"]
           },
         ]
@@ -430,6 +450,7 @@ export type Database = {
           id: string
           member_id: string
           memory_id: string
+          parent_id: string | null
         }
         Insert: {
           content: string
@@ -437,6 +458,7 @@ export type Database = {
           id?: string
           member_id: string
           memory_id: string
+          parent_id?: string | null
         }
         Update: {
           content?: string
@@ -444,6 +466,7 @@ export type Database = {
           id?: string
           member_id?: string
           memory_id?: string
+          parent_id?: string | null
         }
         Relationships: [
           {
@@ -458,6 +481,13 @@ export type Database = {
             columns: ["memory_id"]
             isOneToOne: false
             referencedRelation: "memories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "memory_comments"
             referencedColumns: ["id"]
           },
         ]
@@ -552,6 +582,7 @@ export type Database = {
           created_at: string
           id: string
           member_id: string
+          parent_id: string | null
           wish_id: string
         }
         Insert: {
@@ -559,6 +590,7 @@ export type Database = {
           created_at?: string
           id?: string
           member_id: string
+          parent_id?: string | null
           wish_id: string
         }
         Update: {
@@ -566,6 +598,7 @@ export type Database = {
           created_at?: string
           id?: string
           member_id?: string
+          parent_id?: string | null
           wish_id?: string
         }
         Relationships: [
@@ -574,6 +607,13 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wish_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "wish_comments"
             referencedColumns: ["id"]
           },
           {
