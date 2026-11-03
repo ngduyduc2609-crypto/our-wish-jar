@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] Show six glossy reactions and an icon-only selected reaction button.
+- [ ] Persist threaded replies and display indented comments with curved connectors.
+- [ ] Verify saved replies, reply cancellation, and reaction interactions.
+- [x] Hide the Lovable badge on the published app.
+
 - [x] Refine reaction picker opening, focus, selection, and settled appearance.
 - [x] Add a member list when tapping reaction summaries across all four content types.
 - [x] Verify mobile hold/slide/cancel and notification creation from six interaction tables.

@@ -33,6 +33,7 @@ export type WishReaction = {
 };
 
 export type WishComment = {
+  parent_id: string | null;
   id: string;
   wish_id: string;
   member_id: string;
@@ -48,6 +49,7 @@ export type FoodReaction = {
 };
 
 export type FoodComment = {
+  parent_id: string | null;
   id: string;
   food_id: string;
   member_id: string;
@@ -63,6 +65,7 @@ export type ActivityReaction = {
 };
 
 export type ActivityComment = {
+  parent_id: string | null;
   id: string;
   activity_id: string;
   member_id: string;
@@ -78,6 +81,7 @@ export type MemoryReaction = {
 };
 
 export type MemoryComment = {
+  parent_id: string | null;
   id: string;
   memory_id: string;
   member_id: string;
@@ -413,12 +417,13 @@ export async function insertEntityComment(
   targetId: string,
   memberId: string,
   content: string,
+  parentId: string | null = null,
 ) {
   const table = `${entity}_comments` as const;
   const idKey = `${entity}_id` as const;
   const trimmed = content.trim();
   if (!trimmed) throw new Error("Nội dung bình luận không được để trống.");
-  const { data, error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, content: trimmed }).select().single();
+  const { data, error } = await db.from(table).insert({ [idKey]: targetId, member_id: memberId, content: trimmed, parent_id: parentId }).select().single();
   if (error) throw error;
   return data as WishComment;
 }

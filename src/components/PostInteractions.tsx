@@ -12,11 +12,12 @@ import { useAppLanguage } from "@/lib/language";
 import { deleteRow, insertEntityComment, toggleEntityReaction, uniqueMemberReactions, updateRow } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { REACTION_HOLD_MS, shouldCancelReactionHold } from "@/lib/reaction-gesture";
+import { groupCommentThreads } from "@/lib/comment-threads";
 
 type Reaction = { id: string; emoji: string; member_id: string };
-type Comment = { id: string; member_id: string; content: string; created_at: string };
+type Comment = { id: string; member_id: string; content: string; created_at: string; parent_id?: string | null };
 
-const PICKER_W = 352;
+const PICKER_W = 312;
 const PICKER_H = 60;
 
 export function PostInteractions({ entity, targetId, title, reactions, comments, memberName, onChanged }: {
@@ -71,7 +72,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     cancel: "Hủy",
     deleted: "Đã xóa bình luận",
     copied: "Đã sao chép",
-    replying: "Đang phản hồi",
+    replying: "Đang trả lời",
     mine: "Cảm xúc của bạn",
   } : language === "zh" ? {
     heart: "表情",
@@ -162,7 +163,8 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const deleteComment = async (commentId: string) => {
     try {
       await deleteRow(`${entity}_comments`, commentId);
-      setLocalComments((rows) => rows.filter((comment) => comment.id !== commentId));
+      setLocalComments((rows) => rows.filter((comment) => comment.id !== commentId).map((comment) => comment.parent_id === commentId ? { ...comment, parent_id: null } : comment));
+      setReplyTarget((target) => target?.id === commentId ? null : target);
       setCommentActionsFor(null);
       toast.success(copy.deleted);
       onChanged();
@@ -224,7 +226,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     sendBusy.current = true; setSending(true);
     try {
       const body = replyTarget ? `@${memberName(replyTarget.member_id)} ${content}` : content;
-      const comment = await insertEntityComment(entity, targetId, me.id, body);
+      const comment = await insertEntityComment(entity, targetId, me.id, body, replyTarget?.id ?? null);
       setLocalComments((rows) => [...rows, comment]);
       setDraft("");
       setReplyTarget(null);
@@ -296,7 +298,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
             </motion.span>
             {burst > 0 && mine && !reduced && <span key={`burst-${burst}`} className="reaction-sparkles" aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <i key={i} />)}</span>}
           </span>
-          <span className="text-[11px] font-medium">{mine ? reactionLabel(mine.emoji, language) : copy.heart}</span>
+          {!mine && <span className="text-[11px] font-medium">{copy.heart}</span>}
         </Button>
 
         <Button variant="ghost" size="sm" className="h-8 min-w-0 touch-pan-y gap-1.5 rounded-full px-2.5 py-1 text-muted-foreground" onClick={() => { close(); setSheet(true); }} aria-label={copy.comments}>
@@ -306,7 +308,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       </div>
     </div>
 
-    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[90] flex h-[60px] w-[352px] max-w-[calc(100vw-16px)] items-center justify-evenly rounded-full border border-border bg-popover p-1.5" style={position} initial={{ opacity: 0, y: reduced ? 0 : above ? 12 : -12, scale: reduced ? 1 : 0.7 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: reduced ? 0 : above ? 8 : -8, scale: reduced ? 1 : 0.92, transition: { duration: reduced ? 0 : 0.16 } }} transition={spring} onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 160); }}>
+    {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <motion.div ref={picker} role="dialog" aria-label={copy.heart} className="post-reaction-popover fixed z-[90] flex h-[60px] w-[312px] max-w-[calc(100vw-16px)] items-center justify-evenly rounded-full border border-border bg-popover p-1.5" style={position} initial={{ opacity: 0, y: reduced ? 0 : above ? 12 : -12, scale: reduced ? 1 : 0.7 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: reduced ? 0 : above ? 8 : -8, scale: reduced ? 1 : 0.92, transition: { duration: reduced ? 0 : 0.16 } }} transition={spring} onClick={(e) => e.stopPropagation()} onPointerEnter={clearClose} onPointerLeave={(e) => { if (e.pointerType === "mouse") closeTimer.current = setTimeout(close, 160); }}>
       {REACTIONS.map((reaction, index) => (
         <motion.div key={reaction.emoji} className="relative" initial={{ opacity: 0, y: reduced ? 0 : above ? 10 : -10, scale: reduced ? 1 : 0.6 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...spring, delay: reduced ? 0 : index * 0.024 }}>
           <AnimatePresence>{hovered === index && <motion.span className="reaction-focus-label absolute bottom-full left-1/2 mb-5 whitespace-nowrap rounded-full bg-foreground px-2.5 py-1 text-[11px] font-semibold text-background" initial={{ opacity: 0, x: "-50%", y: reduced ? 0 : 4 }} animate={{ opacity: 1, x: "-50%", y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>{reaction.label[language]}</motion.span>}</AnimatePresence>
@@ -351,11 +353,11 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
         </div>
 
         <div className="post-comment-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5">
-          {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : localComments.map((c) => {
+          {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : groupCommentThreads(localComments).map((thread) => <div key={thread.root.id} className="comment-thread">{[thread.root, ...thread.replies].map((c, index) => {
             const owner = me?.id === c.member_id;
             const selectedComment = commentActionsFor === c.id;
             const placeAbove = selectedComment ? getCommentMenuPlacement(c.id) : true;
-            return <div key={c.id} className="relative flex items-start gap-2.5" onContextMenu={(e) => { e.preventDefault(); setCommentActionsFor(c.id); }} onMouseDown={() => startCommentAction(c.id)} onMouseUp={stopCommentAction} onMouseLeave={stopCommentAction} onTouchStart={() => startCommentAction(c.id)} onTouchMove={stopCommentAction} onTouchCancel={stopCommentAction} onTouchEnd={stopCommentAction}>
+            return <div key={c.id} data-parent-id={c.parent_id ?? undefined} className={cn("relative flex items-start gap-2.5", index > 0 && "comment-thread-reply")} onContextMenu={(e) => { e.preventDefault(); setCommentActionsFor(c.id); }} onMouseDown={() => startCommentAction(c.id)} onMouseUp={stopCommentAction} onMouseLeave={stopCommentAction} onTouchStart={() => startCommentAction(c.id)} onTouchMove={stopCommentAction} onTouchCancel={stopCommentAction} onTouchEnd={stopCommentAction}>
               {selectedComment && <div className="post-sheet-overlay fixed inset-0 z-40" onClick={() => setCommentActionsFor(null)} />}
               <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium shadow-sm ring-1 ring-border/60" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
               <div className="relative min-w-0 flex-1">
@@ -363,7 +365,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
                   <p className="text-[11px] font-semibold text-foreground/80">{memberName(c.member_id)}</p>
                   {editingCommentId === c.id ? (
                     <div className="mt-2 space-y-2">
-                      <Input value={editDraft} onChange={(e) => setEditDraft(e.target.value)} className="min-w-[200px] rounded-full" aria-label={copy.edit} />
+                      <Input value={editDraft} onChange={(e) => setEditDraft(e.target.value)} className="w-full min-w-0 rounded-full" aria-label={copy.edit} />
                       <div className="flex items-center justify-end gap-2">
                         <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCommentId(null)}>{copy.cancel}</Button>
                         <Button type="button" size="sm" onClick={() => void saveEditedComment(c.id)}>{copy.save}</Button>
@@ -403,14 +405,15 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
                 </div>
               </div>
             </div>;
-          })}
+          })}</div>)}
         </div>
 
         <form className="post-comment-composer flex shrink-0 flex-wrap items-center gap-2 border-t border-border px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
           {replyTarget && (
-            <Button variant="secondary" type="button" className="h-auto w-full justify-start gap-1 rounded-full px-2.5 py-1 text-[10px] text-muted-foreground" onClick={() => setReplyTarget(null)}>
-              <Reply className="size-3" /> {copy.replying} {memberName(replyTarget.member_id)} <X className="size-3" />
-            </Button>
+            <div className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground" role="status">
+              <Reply className="size-3 shrink-0" /><span className="min-w-0 flex-1 break-words">{copy.replying} @{memberName(replyTarget.member_id)}</span>
+              <Button variant="ghost" size="icon" type="button" className="size-7 shrink-0" aria-label={copy.cancel} onClick={() => { setReplyTarget(null); composer.current?.focus(); }}><X className="size-3.5" /></Button>
+            </div>
           )}
           <Input ref={composer} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply}…` : copy.input) : copy.login} aria-label={copy.input} disabled={!me || sending} className="h-11 min-w-0 flex-1 rounded-full" />
           <Button type="submit" disabled={!me || !draft.trim() || sending} aria-label={copy.send} className="h-11 rounded-full"><Send /><span>{copy.send}</span></Button>
