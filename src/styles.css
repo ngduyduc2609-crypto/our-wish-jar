@@ -13,7 +13,9 @@
 .post-comment-scroll { -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .post-comment-composer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 .post-reaction-popover { background: linear-gradient(160deg, var(--popover), color-mix(in oklab, var(--popover) 92%, var(--blush))); box-shadow: 0 12px 32px var(--depth-shadow), inset 0 2px 0 var(--depth-highlight); }
-.reaction-art { filter: drop-shadow(0 3px 2px var(--depth-shadow)); }
+.post-reaction-popover .reaction-art { width: 36px; height: 36px; filter: drop-shadow(0 3px 2px var(--depth-shadow)); }
+.post-reaction-trigger svg { width: 20px; height: 20px; }
+.post-reaction-summary svg { width: 15px; height: 15px; }
 .reaction-option-focused { background: color-mix(in oklab, var(--accent) 40%, transparent); }
 .reaction-option-focused .reaction-art { filter: drop-shadow(0 4px 3px var(--depth-shadow)) drop-shadow(0 0 5px var(--blush)); }
 .reaction-focus-label { pointer-events: none; }

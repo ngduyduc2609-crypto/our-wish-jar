@@ -1,8 +1,8 @@
 # Roadmap
 
-- [ ] Refine reaction picker opening, focus, selection, and settled appearance.
-- [ ] Add a member list when tapping reaction summaries across all four content types.
-- [ ] Verify mobile hold/slide/cancel and notifications from six interaction tables.
+- [x] Refine reaction picker opening, focus, selection, and settled appearance.
+- [x] Add a member list when tapping reaction summaries across all four content types.
+- [x] Verify mobile hold/slide/cancel and notification creation from six interaction tables.
 - [ ] Verify long press on a physical iPhone (requires the user's device).
 
 - [x] Replace duplicated reactions with a shared floating, spring-animated picker across all four lists.

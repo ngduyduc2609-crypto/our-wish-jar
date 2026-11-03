@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAppLanguage } from "@/lib/language";
+import { describe } from "@/lib/notification-text";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/lib/identity";
@@ -27,21 +28,6 @@ export type Notification = {
 };
 
 const db = supabase as unknown as { from: (table: string) => any };
-
-const ACTION_TEXT: Record<string, Record<"vi" | "en" | "zh", string>> = {
-  wish: { vi: "vừa thêm một điều ước mới", en: "just added a new wish", zh: "刚刚添加了一个新愿望" },
-  food: { vi: "vừa thêm một quán/món mới", en: "just added a new place/dish", zh: "刚刚添加了一个新餐馆/美食" },
-  activity: { vi: "vừa thêm một hoạt động mới", en: "just added a new activity", zh: "刚刚添加了一个新活动" },
-  memory: { vi: "vừa lưu một kỷ niệm mới", en: "just saved a new memory", zh: "刚刚保存了一条新回忆" },
-  reaction: { vi: "vừa bày tỏ cảm xúc với một điều ước", en: "just reacted to a wish", zh: "刚刚对一个愿望表达了感受" },
-  comment: { vi: "vừa bình luận vào một điều ước", en: "just commented on a wish", zh: "刚刚评论了一个愿望" },
-};
-
-export function describe(item: Notification, actorName: string, language: "vi" | "en" | "zh") {
-  const action = ACTION_TEXT[item.kind]?.[language] ?? (language === "zh" ? "刚刚更新了内容" : language === "en" ? "just updated something" : "vừa cập nhật gì đó");
-  const subject = (item.subject ?? "").split("|")[0]?.trim();
-  return { title: `${actorName} ${action}`, subject: subject || null };
-}
 
 function timeAgo(iso: string, language: "vi" | "en" | "zh") {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -110,7 +96,7 @@ export function NotificationBell() {
       void supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me?.id, members]);
+  }, [me?.id, members, language]);
 
   const markAllRead = async () => {
     if (!me?.id || unread === 0) return;
