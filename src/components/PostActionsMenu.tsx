@@ -5,7 +5,7 @@ import { useAppLanguage } from "@/lib/language";
 
 export function PostActionsMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   const language = useAppLanguage();
-  return <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+  return <div className="post-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
     <DropdownMenu>
       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={language === "vi" ? "Tùy chọn" : language === "zh" ? "更多" : "More options"}><MoreHorizontal /></Button></DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
