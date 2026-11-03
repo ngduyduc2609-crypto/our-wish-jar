@@ -60,6 +60,8 @@ export const Route = createFileRoute("/wishes")({
         property: "og:description",
         content: "Danh sách điều ước của Thu Thủy và Duy Đức, có thả cảm xúc và bình luận.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: WishesPage,

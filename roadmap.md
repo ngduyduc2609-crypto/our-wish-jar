@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] Refine reaction picker opening, focus, selection, and settled appearance.
+- [ ] Add a member list when tapping reaction summaries across all four content types.
+- [ ] Verify mobile hold/slide/cancel and notifications from six interaction tables.
+- [ ] Verify long press on a physical iPhone (requires the user's device).
+
 - [x] Replace duplicated reactions with a shared floating, spring-animated picker across all four lists.
 - [x] Add swipe-dismiss comment sheets and compact owner-only action menus.
 - [x] Fix and verify reaction/comment persistence, tap toggles, and touch interactions.
