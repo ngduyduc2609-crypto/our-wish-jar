@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 .post-interactions { touch-action: pan-y; }
+svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.12 40); --reaction-teeth: oklch(0.99 0.01 85); }
 .post-reaction-trigger, .post-reaction-popover { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .post-reaction-popover { --reaction-tray: oklch(1 0 0); will-change: transform, opacity; background: var(--reaction-tray); box-shadow: 0 9px 26px var(--depth-shadow), inset 0 2px 0 var(--depth-highlight); }
 .post-reaction-popover button { transform: none; animation: none; box-shadow: none; }

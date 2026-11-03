@@ -1,8 +1,8 @@
 # Roadmap
 
-- [ ] Show six glossy reactions and an icon-only selected reaction button.
-- [ ] Persist threaded replies and display indented comments with curved connectors.
-- [ ] Verify saved replies, reply cancellation, and reaction interactions.
+- [x] Show six glossy reactions and an icon-only selected reaction button.
+- [x] Persist threaded replies and display indented comments with curved connectors.
+- [x] Verify saved replies, reply cancellation, and reaction interactions.
 - [x] Hide the Lovable badge on the published app.
 
 - [x] Refine reaction picker opening, focus, selection, and settled appearance.
