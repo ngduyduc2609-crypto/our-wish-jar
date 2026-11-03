@@ -5,14 +5,13 @@ import { cn } from "@/lib/utils";
 export const REACTIONS = [
   { emoji: "👍", label: { vi: "Thích", zh: "赞", en: "Like" } },
   { emoji: "❤️", label: { vi: "Yêu", zh: "爱心", en: "Love" } },
-  { emoji: "😍", label: { vi: "Mê", zh: "着迷", en: "Care" } },
   { emoji: "😂", label: { vi: "Haha", zh: "哈哈", en: "Haha" } },
   { emoji: "😮", label: { vi: "Wow", zh: "哇", en: "Wow" } },
   { emoji: "😭", label: { vi: "Buồn", zh: "难过", en: "Sad" } },
-  { emoji: "😠", label: { vi: "Giận", zh: "生气", en: "Angry" } },
+  { emoji: "😡", label: { vi: "Phẫn nộ", zh: "生气", en: "Angry" } },
 ] as const;
 
-const ALIAS: Record<string, string> = { "🤣": "😂", "🥰": "😍", "😢": "😭", "😡": "😠" };
+const ALIAS: Record<string, string> = { "🤣": "😂", "🥰": "😍", "😢": "😭", "😠": "😡" };
 
 export function reactionLabel(emoji: string, language: "vi" | "zh" | "en") {
   const found = REACTIONS.find((r) => r.emoji === (ALIAS[emoji] ?? emoji));
@@ -169,7 +168,7 @@ export function ReactionIcon({ emoji, className }: { emoji: string; className?: 
       return <WowIcon uid={uid} className={className} />;
     case "😭":
       return <SadIcon uid={uid} className={className} />;
-    case "😠":
+    case "😡":
       return <AngryIcon uid={uid} className={className} />;
     case "🤔":
       return <ThinkIcon uid={uid} className={className} />;
