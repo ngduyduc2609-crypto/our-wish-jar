@@ -26,10 +26,16 @@ function Face({ uid, from, to, children, className }: IconProps & { from: string
       <defs>
         <radialGradient id={`${uid}-face`} cx="35%" cy="26%" r="95%">
           <stop offset="0%" stopColor={from} />
+          <stop offset="52%" stopColor="var(--reaction-face-mid)" />
           <stop offset="100%" stopColor={to} />
+        </radialGradient>
+        <radialGradient id={`${uid}-rim`} cx="50%" cy="35%" r="65%">
+          <stop offset="60%" stopColor="var(--reaction-shade)" stopOpacity="0" />
+          <stop offset="100%" stopColor="var(--reaction-shade)" stopOpacity="0.25" />
         </radialGradient>
       </defs>
       <circle cx="32" cy="32" r="29" fill={`url(#${uid}-face)`} />
+      <circle cx="32" cy="32" r="29" fill={`url(#${uid}-rim)`} />
       <circle cx="32" cy="32" r="28.5" fill="none" stroke="rgba(120,53,15,0.18)" strokeWidth="1.5" />
       <ellipse cx="24" cy="17" rx="11" ry="6.5" fill="rgba(255,255,255,0.35)" />
       {children}
@@ -98,6 +104,7 @@ function HahaIcon({ uid, className }: IconProps) {
       <path d="M15 26c2.5-3.5 8.5-3.5 11 0.5" stroke={INK} strokeWidth="3.2" strokeLinecap="round" fill="none" />
       <path d="M38 26.5c2.5-4 8.5-4 11-0.5" stroke={INK} strokeWidth="3.2" strokeLinecap="round" fill="none" />
       <path d="M18 36c1.5 12 7 17.5 14 17.5S43 48 44.5 36z" fill="#8a3a1c" />
+      <path d="M19 36h24l-1.5 4H20.5z" fill="var(--reaction-teeth)" />
       <path d="M23 47.5c3.5 3.4 14.5 3.4 18-0.2l-1.2 3.2c-4.5 3.6-11.5 3.6-15.6 0z" fill="#f2748c" />
     </Face>
   );
