@@ -21,14 +21,21 @@ export function reactionLabel(emoji: string, language: "vi" | "zh" | "en") {
 type P = { u: string };
 const INK = "#5a2a0a";
 
-/** Khối cầu 3D: gradient nhiều lớp, bóng đáy, viền tối, điểm sáng gương. */
-function Sphere({ u, light, mid, dark, children }: P & { light: string; mid: string; dark: string; children?: React.ReactNode }) {
+/** Khối cầu 3D mềm: gradient dịu, bóng đáy rất nhẹ, viền mờ, điểm sáng gương. */
+function Sphere({
+  u,
+  light,
+  mid,
+  dark,
+  shade = 0.12,
+  children,
+}: P & { light: string; mid: string; dark: string; shade?: number; children?: React.ReactNode }) {
   return (
     <>
       <defs>
-        <radialGradient id={`${u}-b`} cx="38%" cy="30%" r="78%">
+        <radialGradient id={`${u}-b`} cx="38%" cy="30%" r="74%">
           <stop offset="0%" stopColor={light} />
-          <stop offset="45%" stopColor={mid} />
+          <stop offset="60%" stopColor={mid} />
           <stop offset="100%" stopColor={dark} />
         </radialGradient>
         <radialGradient id={`${u}-s`} cx="50%" cy="50%" r="50%">
@@ -37,14 +44,14 @@ function Sphere({ u, light, mid, dark, children }: P & { light: string; mid: str
         </radialGradient>
         <linearGradient id={`${u}-g`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#000" stopOpacity="0" />
-          <stop offset="100%" stopColor="#000" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#000" stopOpacity={shade} />
         </linearGradient>
       </defs>
-      <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.14" />
+      <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.08" />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-b)`} />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-g)`} />
-      <circle cx="32" cy="31" r="27.4" fill="none" stroke={dark} strokeOpacity="0.28" strokeWidth="1" />
-      <path d="M12 42c4 8 11.5 13 20 13s16-5 20-13" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="32" cy="31" r="27.6" fill="none" stroke={dark} strokeOpacity="0.15" strokeWidth="0.9" />
+      <path d="M12 42c4 8 11.5 13 20 13s16-5 20-13" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="1.6" strokeLinecap="round" />
       <ellipse cx="22" cy="14.5" rx="11" ry="6" fill={`url(#${u}-s)`} transform="rotate(-22 22 14.5)" />
       <circle cx="44" cy="12" r="1.8" fill="#fff" opacity="0.7" />
       {children}
@@ -66,7 +73,7 @@ const Eye = ({ x, y, r = 4 }: { x: number; y: number; r?: number }) => (
   </g>
 );
 
-const YELLOW = { light: "#fff6b8", mid: "#ffd23f", dark: "#e88a0c" };
+const YELLOW = { light: "#fff8c9", mid: "#ffd94f", dark: "#f6a623" };
 
 function Like({ u }: P) {
   return (
