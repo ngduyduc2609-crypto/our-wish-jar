@@ -180,25 +180,14 @@ function Sad({ u }: P) {
 
 function Angry({ u }: P) {
   return (
-    <>
-      <defs>
-        <linearGradient id={`${u}-r`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ff3b2f" />
-          <stop offset="55%" stopColor="#ff8a3d" />
-          <stop offset="100%" stopColor="#ffc93f" />
-        </linearGradient>
-      </defs>
-      <Sphere u={u} light="#ffd27a" mid="#ff9a3c" dark="#d8411c">
-        <circle className="rx-rage" cx="32" cy="31" r="28" fill={`url(#${u}-r)`} opacity="0.75" />
-        <ellipse cx="22" cy="14.5" rx="10" ry="5" fill="#fff" opacity="0.35" transform="rotate(-22 22 14.5)" />
-        <g className="rx-face">
-          <path d="M12 21l12 5M52 21l-12 5" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
-          <Eye x={22} y={31} r={3.6} />
-          <Eye x={42} y={31} r={3.6} />
-          <path d="M23 48c3.5-4.6 14.5-4.6 18 0" stroke={INK} strokeWidth="3.4" strokeLinecap="round" fill="none" />
-        </g>
-      </Sphere>
-    </>
+    <Sphere u={u} light="#ffb99f" mid="#ff7e5e" dark="#f45c42" shade={0.05}>
+      <g className="rx-face">
+        <path d="M12 21l12 5M52 21l-12 5" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
+        <Eye x={22} y={31} r={3.6} />
+        <Eye x={42} y={31} r={3.6} />
+        <path d="M23 48c3.5-4.6 14.5-4.6 18 0" stroke={INK} strokeWidth="3.4" strokeLinecap="round" fill="none" />
+      </g>
+    </Sphere>
   );
 }
 
