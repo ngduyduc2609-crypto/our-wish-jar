@@ -1231,7 +1231,7 @@ button:not(:disabled):hover {
 }
 
 /* Mobile: không hiện menu copy/chọn chữ khi giữ chạm nút & khu tương tác */
-button, [role="button"], a, nav, header, .post-interactions, .post-interactions *, .reaction-icon, svg, img {
+button, [role="button"], a, nav, header, .post-interactions, .post-interactions *, .post-comment-sheet *, .reaction-icon, svg, img {
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
 input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
