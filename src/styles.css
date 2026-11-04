@@ -33,7 +33,7 @@ svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.1
 @keyframes reaction-spark { from { opacity: 0.9; transform: translate(-50%, -50%) scale(0.4); } to { opacity: 0; transform: translate(var(--spark-x, 0px), var(--spark-y, -18px)) scale(0.2); } }
 @media (prefers-reduced-motion: reduce) { .reaction-sparkles { display: none; } }
 /* 3D reaction motion: idle in tray, lively when focused or just chosen */
-.rx-icon .rx-body, .rx-icon .rx-face, .rx-icon .rx-thumb, .rx-icon .rx-heart, .rx-icon .rx-tear, .rx-icon .rx-mouth, .rx-icon .rx-rage { transform-box: fill-box; transform-origin: center; }
+.rx-icon .rx-body, .rx-icon .rx-face, .rx-icon .rx-thumb, .rx-icon .rx-heart, .rx-icon .rx-tear, .rx-icon .rx-mouth { transform-box: fill-box; transform-origin: center; }
 .post-reaction-popover .rx-icon .rx-body { animation: rx-float 2.4s ease-in-out infinite; }
 .post-reaction-popover [data-reaction-index="1"] .rx-body { animation-delay: -.4s; }
 .post-reaction-popover [data-reaction-index="2"] .rx-body { animation-delay: -.8s; }
@@ -61,7 +61,6 @@ svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.1
 @keyframes rx-gasp { 0%,100% { transform: scale(.75, .8); } 50% { transform: scale(1.1, 1.15); } }
 @keyframes rx-rise { 0%,100% { transform: translateY(1px); } 50% { transform: translateY(-2px); } }
 @keyframes rx-droop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
-@keyframes rx-boil { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
 @keyframes rx-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-1px) rotate(-2deg); } 75% { transform: translateX(1px) rotate(2deg); } }
 @keyframes rx-chosen { 0% { transform: scale(.3) rotate(-25deg); } 60% { transform: scale(1.25) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
 @media (prefers-reduced-motion: reduce) { .rx-icon * { animation: none !important; } }
