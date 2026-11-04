@@ -32,6 +32,39 @@ svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.1
 .reaction-sparkles i:nth-child(6) { --spark-x: -13px; --spark-y: -12px; background: var(--honey); }
 @keyframes reaction-spark { from { opacity: 0.9; transform: translate(-50%, -50%) scale(0.4); } to { opacity: 0; transform: translate(var(--spark-x, 0px), var(--spark-y, -18px)) scale(0.2); } }
 @media (prefers-reduced-motion: reduce) { .reaction-sparkles { display: none; } }
+/* 3D reaction motion: idle in tray, lively when focused or just chosen */
+.rx-icon .rx-body, .rx-icon .rx-face, .rx-icon .rx-thumb, .rx-icon .rx-heart, .rx-icon .rx-tear, .rx-icon .rx-mouth, .rx-icon .rx-rage { transform-box: fill-box; transform-origin: center; }
+.post-reaction-popover .rx-icon .rx-body { animation: rx-float 2.4s ease-in-out infinite; }
+.post-reaction-popover [data-reaction-index="1"] .rx-body { animation-delay: -.4s; }
+.post-reaction-popover [data-reaction-index="2"] .rx-body { animation-delay: -.8s; }
+.post-reaction-popover [data-reaction-index="3"] .rx-body { animation-delay: -1.2s; }
+.post-reaction-popover [data-reaction-index="4"] .rx-body { animation-delay: -1.6s; }
+.post-reaction-popover [data-reaction-index="5"] .rx-body { animation-delay: -2s; }
+.rx-icon .rx-tear { opacity: .9; }
+.rx-icon .rx-rage { transform-origin: bottom; transform: scaleY(.35); }
+.reaction-option-focused .rx-like .rx-thumb, .post-reaction-trigger .rx-like .rx-thumb { animation: rx-thumb .7s cubic-bezier(.3,1.6,.5,1) infinite; transform-origin: 30% 90%; }
+.reaction-option-focused .rx-love .rx-heart, .post-reaction-trigger .rx-love .rx-heart { animation: rx-beat .9s ease-in-out infinite; }
+.reaction-option-focused .rx-haha .rx-face { animation: rx-laugh .45s ease-in-out infinite; }
+.reaction-option-focused .rx-haha .rx-tear { animation: rx-drip 1s ease-in infinite; }
+.reaction-option-focused .rx-wow .rx-mouth { animation: rx-gasp 1s ease-in-out infinite; }
+.reaction-option-focused .rx-wow .rx-face { animation: rx-rise 1s ease-in-out infinite; }
+.reaction-option-focused .rx-sad .rx-tear { animation: rx-drip 1.2s ease-in infinite; }
+.reaction-option-focused .rx-sad .rx-face { animation: rx-droop 1.2s ease-in-out infinite; }
+.reaction-option-focused .rx-angry .rx-rage { animation: rx-boil 1.1s ease-in-out infinite; }
+.reaction-option-focused .rx-angry .rx-body { animation: rx-shake .18s linear infinite; }
+.post-reaction-trigger .rx-icon .rx-body { animation: rx-chosen .6s cubic-bezier(.3,1.7,.5,1) both; }
+@keyframes rx-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-2.5px) rotate(-3deg); } }
+@keyframes rx-thumb { 0%,100% { transform: rotate(0); } 40% { transform: rotate(-16deg) scale(1.06); } }
+@keyframes rx-beat { 0%,100% { transform: scale(1); } 20% { transform: scale(1.14); } 40% { transform: scale(.96); } 60% { transform: scale(1.08); } }
+@keyframes rx-laugh { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-2px) rotate(3deg); } }
+@keyframes rx-drip { 0% { transform: translateY(-3px) scale(.6); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(7px) scale(1); opacity: 0; } }
+@keyframes rx-gasp { 0%,100% { transform: scale(.75, .8); } 50% { transform: scale(1.1, 1.15); } }
+@keyframes rx-rise { 0%,100% { transform: translateY(1px); } 50% { transform: translateY(-2px); } }
+@keyframes rx-droop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
+@keyframes rx-boil { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+@keyframes rx-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-1px) rotate(-2deg); } 75% { transform: translateX(1px) rotate(2deg); } }
+@keyframes rx-chosen { 0% { transform: scale(.3) rotate(-25deg); } 60% { transform: scale(1.25) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .rx-icon * { animation: none !important; } }
 
 @theme inline {
   --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;

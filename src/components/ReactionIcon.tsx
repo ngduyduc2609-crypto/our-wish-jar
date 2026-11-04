@@ -155,7 +155,6 @@ function Sad({ u }: P) {
         <Eye x={21} y={30} r={3.8} />
         <Eye x={43} y={30} r={3.8} />
         <path d="M22 48c4-5.6 16-5.6 20 0" stroke={INK} strokeWidth="3.4" strokeLinecap="round" fill="none" />
-        <path className="rx-tear" d="M19 35c-2.8 4.4-2.8 8.4.6 8.6s3.4-4 .-.6-8.6z" fill="#59b8ff" />
         <path className="rx-tear" d="M19.6 35c-2.6 4.4-2.6 8.6.8 8.6 3.4 0 3.2-4.2-.8-8.6z" fill="#59b8ff" stroke="#2f8bd8" strokeWidth="0.6" />
       </g>
     </Sphere>
