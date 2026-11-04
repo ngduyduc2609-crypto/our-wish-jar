@@ -43,7 +43,8 @@ function Sphere({ u, light, mid, dark, children }: P & { light: string; mid: str
       <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.14" />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-b)`} />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-g)`} />
-      <circle cx="32" cy="31" r="27.3" fill="none" stroke={dark} strokeOpacity="0.55" strokeWidth="1.4" />
+      <circle cx="32" cy="31" r="27.4" fill="none" stroke={dark} strokeOpacity="0.28" strokeWidth="1" />
+      <path d="M12 42c4 8 11.5 13 20 13s16-5 20-13" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.6" strokeLinecap="round" />
       <ellipse cx="22" cy="14.5" rx="11" ry="6" fill={`url(#${u}-s)`} transform="rotate(-22 22 14.5)" />
       <circle cx="44" cy="12" r="1.8" fill="#fff" opacity="0.7" />
       {children}
@@ -150,12 +151,21 @@ function Wow({ u }: P) {
 function Sad({ u }: P) {
   return (
     <Sphere u={u} {...YELLOW}>
+      <defs>
+        <linearGradient id={`${u}-w`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#bfe6ff" />
+          <stop offset="100%" stopColor="#3a9bf0" />
+        </linearGradient>
+      </defs>
       <g className="rx-face">
-        <path d="M13 22c3.4.4 7-1 9-3.6M51 22c-3.4.4-7-1-9-3.6" stroke={INK} strokeWidth="2.8" strokeLinecap="round" fill="none" />
-        <Eye x={21} y={30} r={3.8} />
-        <Eye x={43} y={30} r={3.8} />
-        <path d="M22 48c4-5.6 16-5.6 20 0" stroke={INK} strokeWidth="3.4" strokeLinecap="round" fill="none" />
-        <path className="rx-tear" d="M19.6 35c-2.6 4.4-2.6 8.6.8 8.6 3.4 0 3.2-4.2-.8-8.6z" fill="#59b8ff" stroke="#2f8bd8" strokeWidth="0.6" />
+        <path d="M14 19.5c3.6-.2 6.6-1.8 8.4-4.4M50 19.5c-3.6-.2-6.6-1.8-8.4-4.4" stroke={INK} strokeWidth="2.6" strokeLinecap="round" fill="none" />
+        <path d="M14.5 27.5c2.6 2.4 7 2.4 9.6 0M39.9 27.5c2.6 2.4 7 2.4 9.6 0" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />
+        <path d="M23 47.5c0-6 4-9.5 9-9.5s9 3.5 9 9.5c0 2.4-2 3.5-4 3H27c-2 .5-4-.6-4-3z" fill="#6d1f0c" />
+        <path d="M27 48.6c2.8-2.4 7.2-2.4 10 0z" fill="#ff6f8a" />
+        <path className="rx-stream" d="M15.5 29.5c-2.2 0-3.4 3-3.6 8.5-.2 7 .6 15 3.4 17.5 2.4-1.8 3.2-9 3.2-16.5 0-6-1-9.5-3-9.5z" fill={`url(#${u}-w)`} opacity="0.92" />
+        <path className="rx-stream rx-stream-r" d="M48.5 29.5c2.2 0 3.4 3 3.6 8.5.2 7-.6 15-3.4 17.5-2.4-1.8-3.2-9-3.2-16.5 0-6 1-9.5 3-9.5z" fill={`url(#${u}-w)`} opacity="0.92" />
+        <path d="M14.6 33c-.6 3-.7 7-.3 10" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+        <path d="M47.6 33c-.6 3-.7 7-.3 10" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.1" strokeLinecap="round" fill="none" />
       </g>
     </Sphere>
   );

@@ -1229,3 +1229,13 @@ button:not(:disabled):hover {
 @media (prefers-reduced-motion: reduce) {
   .draw-jar, .draw-paper, .draw-paper-content, .shuffle-card, .shuffle-emoji { animation: none !important; transition: none !important; }
 }
+
+/* Mobile: không hiện menu copy/chọn chữ khi giữ chạm nút & khu tương tác */
+button, [role="button"], a, nav, header, .post-interactions, .post-interactions *, .post-comment-sheet *, .reaction-icon, svg, img {
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.rx-stream { transform-box: fill-box; transform-origin: 50% 0%; animation: rx-stream 1.1s ease-in-out infinite; }
+.rx-stream-r { animation-delay: .35s; }
+@keyframes rx-stream { 0%,100% { transform: scaleY(.9); opacity: .85 } 50% { transform: scaleY(1.06); opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .rx-stream { animation: none; } }
