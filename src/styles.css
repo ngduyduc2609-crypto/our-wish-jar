@@ -41,7 +41,6 @@ svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.1
 .post-reaction-popover [data-reaction-index="4"] .rx-body { animation-delay: -1.6s; }
 .post-reaction-popover [data-reaction-index="5"] .rx-body { animation-delay: -2s; }
 .rx-icon .rx-tear { opacity: .9; }
-.rx-icon .rx-rage { transform-origin: bottom; transform: scaleY(.35); }
 .reaction-option-focused .rx-like .rx-thumb, .post-reaction-trigger .rx-like .rx-thumb { animation: rx-thumb .7s cubic-bezier(.3,1.6,.5,1) infinite; transform-origin: 30% 90%; }
 .reaction-option-focused .rx-love .rx-heart, .post-reaction-trigger .rx-love .rx-heart { animation: rx-beat .9s ease-in-out infinite; }
 .reaction-option-focused .rx-haha .rx-face { animation: rx-laugh .45s ease-in-out infinite; }
