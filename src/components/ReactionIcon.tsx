@@ -21,14 +21,21 @@ export function reactionLabel(emoji: string, language: "vi" | "zh" | "en") {
 type P = { u: string };
 const INK = "#5a2a0a";
 
-/** Khối cầu 3D: gradient nhiều lớp, bóng đáy, viền tối, điểm sáng gương. */
-function Sphere({ u, light, mid, dark, children }: P & { light: string; mid: string; dark: string; children?: React.ReactNode }) {
+/** Khối cầu 3D mềm: gradient dịu, bóng đáy rất nhẹ, viền mờ, điểm sáng gương. */
+function Sphere({
+  u,
+  light,
+  mid,
+  dark,
+  shade = 0.12,
+  children,
+}: P & { light: string; mid: string; dark: string; shade?: number; children?: React.ReactNode }) {
   return (
     <>
       <defs>
-        <radialGradient id={`${u}-b`} cx="38%" cy="30%" r="78%">
+        <radialGradient id={`${u}-b`} cx="38%" cy="30%" r="74%">
           <stop offset="0%" stopColor={light} />
-          <stop offset="45%" stopColor={mid} />
+          <stop offset="60%" stopColor={mid} />
           <stop offset="100%" stopColor={dark} />
         </radialGradient>
         <radialGradient id={`${u}-s`} cx="50%" cy="50%" r="50%">
@@ -37,14 +44,14 @@ function Sphere({ u, light, mid, dark, children }: P & { light: string; mid: str
         </radialGradient>
         <linearGradient id={`${u}-g`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#000" stopOpacity="0" />
-          <stop offset="100%" stopColor="#000" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#000" stopOpacity={shade} />
         </linearGradient>
       </defs>
-      <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.14" />
+      <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.08" />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-b)`} />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-g)`} />
-      <circle cx="32" cy="31" r="27.4" fill="none" stroke={dark} strokeOpacity="0.28" strokeWidth="1" />
-      <path d="M12 42c4 8 11.5 13 20 13s16-5 20-13" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="32" cy="31" r="27.6" fill="none" stroke={dark} strokeOpacity="0.15" strokeWidth="0.9" />
+      <path d="M12 42c4 8 11.5 13 20 13s16-5 20-13" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="1.6" strokeLinecap="round" />
       <ellipse cx="22" cy="14.5" rx="11" ry="6" fill={`url(#${u}-s)`} transform="rotate(-22 22 14.5)" />
       <circle cx="44" cy="12" r="1.8" fill="#fff" opacity="0.7" />
       {children}
@@ -66,25 +73,25 @@ const Eye = ({ x, y, r = 4 }: { x: number; y: number; r?: number }) => (
   </g>
 );
 
-const YELLOW = { light: "#fff6b8", mid: "#ffd23f", dark: "#e88a0c" };
+const YELLOW = { light: "#fff8c9", mid: "#ffd94f", dark: "#f6a623" };
 
 function Like({ u }: P) {
   return (
     <>
       <defs>
         <radialGradient id={`${u}-b`} cx="35%" cy="28%" r="80%">
-          <stop offset="0%" stopColor="#8fd3ff" />
-          <stop offset="50%" stopColor="#2f8bf0" />
-          <stop offset="100%" stopColor="#0b4fb3" />
+          <stop offset="0%" stopColor="#a8ddff" />
+          <stop offset="50%" stopColor="#4a9df5" />
+          <stop offset="100%" stopColor="#1e6fd0" />
         </radialGradient>
         <linearGradient id={`${u}-t`} x1="0" y1="0" x2="0.3" y2="1">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor="#d5e8ff" />
+          <stop offset="100%" stopColor="#dcecff" />
         </linearGradient>
       </defs>
-      <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.14" />
+      <ellipse cx="32" cy="60" rx="17" ry="2.6" fill="#000" opacity="0.08" />
       <circle cx="32" cy="31" r="28" fill={`url(#${u}-b)`} />
-      <circle cx="32" cy="31" r="27.3" fill="none" stroke="#0a4296" strokeOpacity="0.5" strokeWidth="1.4" />
+      <circle cx="32" cy="31" r="27.6" fill="none" stroke="#1e6fd0" strokeOpacity="0.22" strokeWidth="0.9" />
       <ellipse cx="22" cy="14.5" rx="10" ry="5.5" fill="#fff" opacity="0.4" transform="rotate(-22 22 14.5)" />
       <g className="rx-thumb">
         <path d="M17 30h6.5v16H17a2.5 2.5 0 0 1-2.5-2.5v-11A2.5 2.5 0 0 1 17 30z" fill="#0d3f8f" opacity="0.35" transform="translate(1 1.6)" />
@@ -101,15 +108,15 @@ function Love({ u }: P) {
     <>
       <defs>
         <radialGradient id={`${u}-b`} cx="35%" cy="28%" r="80%">
-          <stop offset="0%" stopColor="#ffb3c1" />
-          <stop offset="45%" stopColor="#ff3d6b" />
-          <stop offset="100%" stopColor="#b80d3c" />
+          <stop offset="0%" stopColor="#ffc6d1" />
+          <stop offset="45%" stopColor="#ff5c7c" />
+          <stop offset="100%" stopColor="#ef4467" />
         </radialGradient>
       </defs>
-      <ellipse cx="32" cy="60" rx="15" ry="2.4" fill="#000" opacity="0.14" />
+      <ellipse cx="32" cy="60" rx="15" ry="2.4" fill="#000" opacity="0.08" />
       <g className="rx-heart">
         <path d="M32 56C18.5 45.5 6 35.5 6 22.5 6 13 13.2 6 21.8 6c4.6 0 8.4 2.2 10.2 5.6C33.8 8.2 37.6 6 42.2 6 50.8 6 58 13 58 22.5 58 35.5 45.5 45.5 32 56z" fill={`url(#${u}-b)`} />
-        <path d="M32 56C18.5 45.5 6 35.5 6 22.5" fill="none" stroke="#8c0a2e" strokeOpacity="0.35" strokeWidth="2" />
+        <path d="M32 56C18.5 45.5 6 35.5 6 22.5" fill="none" stroke="#ef4467" strokeOpacity="0.2" strokeWidth="1.4" />
         <ellipse cx="19" cy="17" rx="7.5" ry="4.5" fill="#fff" opacity="0.6" transform="rotate(-30 19 17)" />
         <circle cx="44" cy="14" r="2.2" fill="#fff" opacity="0.55" />
       </g>
@@ -173,25 +180,14 @@ function Sad({ u }: P) {
 
 function Angry({ u }: P) {
   return (
-    <>
-      <defs>
-        <linearGradient id={`${u}-r`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ff3b2f" />
-          <stop offset="55%" stopColor="#ff8a3d" />
-          <stop offset="100%" stopColor="#ffc93f" />
-        </linearGradient>
-      </defs>
-      <Sphere u={u} light="#ffd27a" mid="#ff9a3c" dark="#d8411c">
-        <circle className="rx-rage" cx="32" cy="31" r="28" fill={`url(#${u}-r)`} opacity="0.75" />
-        <ellipse cx="22" cy="14.5" rx="10" ry="5" fill="#fff" opacity="0.35" transform="rotate(-22 22 14.5)" />
-        <g className="rx-face">
-          <path d="M12 21l12 5M52 21l-12 5" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
-          <Eye x={22} y={31} r={3.6} />
-          <Eye x={42} y={31} r={3.6} />
-          <path d="M23 48c3.5-4.6 14.5-4.6 18 0" stroke={INK} strokeWidth="3.4" strokeLinecap="round" fill="none" />
-        </g>
-      </Sphere>
-    </>
+    <Sphere u={u} light="#ffb99f" mid="#ff7e5e" dark="#f45c42" shade={0.05}>
+      <g className="rx-face">
+        <path d="M12 21l12 5M52 21l-12 5" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
+        <Eye x={22} y={31} r={3.6} />
+        <Eye x={42} y={31} r={3.6} />
+        <path d="M23 48c3.5-4.6 14.5-4.6 18 0" stroke={INK} strokeWidth="3.4" strokeLinecap="round" fill="none" />
+      </g>
+    </Sphere>
   );
 }
 
