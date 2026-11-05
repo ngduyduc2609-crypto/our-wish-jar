@@ -13,6 +13,7 @@ import { deleteRow, insertEntityComment, toggleEntityReaction, uniqueMemberReact
 import { cn } from "@/lib/utils";
 import { REACTION_HOLD_MS, shouldCancelReactionHold } from "@/lib/reaction-gesture";
 import { groupCommentThreads } from "@/lib/comment-threads";
+import { useCommentViewport } from "@/hooks/use-comment-viewport";
 
 type Reaction = { id: string; emoji: string; member_id: string };
 type Comment = { id: string; member_id: string; content: string; created_at: string; parent_id?: string | null };
@@ -29,6 +30,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [sheet, setSheet] = useState(false);
+  const viewportArea = useCommentViewport(sheet);
   const [peopleSheet, setPeopleSheet] = useState(false);
   const [peopleFilter, setPeopleFilter] = useState<string | null>(null);
   const [burst, setBurst] = useState(0);
@@ -55,6 +57,9 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const busy = useRef(false);
   const sendBusy = useRef(false);
   const composer = useRef<HTMLInputElement>(null);
+  const commentHold = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commentStart = useRef<{ x: number; y: number } | null>(null);
+  const commentHeld = useRef(false);
   const copy = language === "vi" ? {
     heart: "Cảm xúc",
     comments: "Bình luận",
@@ -121,7 +126,13 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const clearClose = () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
   const close = () => { setOpen(false); setHovered(null); selected.current = null; };
 
-  useEffect(() => () => { clearHold(); clearClose(); }, []);
+  useEffect(() => () => { clearHold(); clearClose(); if (commentHold.current) clearTimeout(commentHold.current); }, []);
+  useEffect(() => {
+    if (!sheet) {
+      setCommentActionsFor(null);
+      if (commentHold.current) clearTimeout(commentHold.current);
+    }
+  }, [sheet]);
 
   const show = () => {
     clearClose();
@@ -143,21 +154,28 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     setHovered(index);
   };
 
-  const startCommentAction = (commentId: string) => {
-    clearHold();
-    hold.current = setTimeout(() => {
+  const startCommentAction = (commentId: string, x: number, y: number) => {
+    stopCommentAction();
+    commentHeld.current = false;
+    commentStart.current = { x, y };
+    commentHold.current = setTimeout(() => {
+      commentHeld.current = true;
       setCommentActionsFor(commentId);
     }, 350);
   };
 
-  const stopCommentAction = () => { clearHold(); };
+  const stopCommentAction = () => {
+    if (commentHold.current) clearTimeout(commentHold.current);
+    commentHold.current = null;
+    commentStart.current = null;
+  };
 
   const replyToComment = (comment: Comment) => {
     setReplyTarget(comment);
     setDraft("");
     setCommentActionsFor(null);
     setSheet(true);
-    requestAnimationFrame(() => composer.current?.focus());
+    composer.current?.focus({ preventScroll: true });
   };
 
   const deleteComment = async (commentId: string) => {
@@ -267,12 +285,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const unique = uniqueMemberReactions(localReactions);
   const mine = unique.find((r) => r.member_id === me?.id);
   const spring = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 420, damping: 24 };
-  const getCommentMenuPlacement = (commentId: string) => {
-    if (typeof document === "undefined") return true;
-    const node = document.getElementById(`comment-bubble-${commentId}`);
-    if (!node) return true;
-    return node.getBoundingClientRect().top > 180;
-  };
+  const actionComment = localComments.find((comment) => comment.id === commentActionsFor);
 
   return <div className="post-interactions mt-3 border-t border-border pt-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
     <div className="flex items-center justify-between gap-2">
@@ -345,27 +358,29 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       </DrawerContent>
     </Drawer>
 
-    <Drawer open={sheet} onOpenChange={setSheet} shouldScaleBackground={false}>
-      <DrawerContent className="post-comment-sheet mx-auto h-[75svh] max-h-[85svh] max-w-lg rounded-t-3xl" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+    <Drawer open={sheet} onOpenChange={setSheet} shouldScaleBackground={false} repositionInputs={false}>
+      <DrawerContent style={viewportArea} className="post-comment-sheet post-comment-keyboard-sheet mx-auto h-[75dvh] max-w-lg rounded-t-3xl" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0"><DrawerTitle>{copy.comments} · {localComments.length}</DrawerTitle><DrawerDescription className="mt-1 truncate">{title}</DrawerDescription></div>
           <DrawerClose asChild><Button variant="ghost" size="icon" aria-label={copy.close}><X /></Button></DrawerClose>
         </div>
 
-        <div className="post-comment-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5">
+        <div className="post-comment-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4" onScroll={stopCommentAction}>
           {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : groupCommentThreads(localComments).map((thread) => <div key={thread.root.id} className="comment-thread">{[thread.root, ...thread.replies].map((c, index) => {
-            const owner = me?.id === c.member_id;
             const selectedComment = commentActionsFor === c.id;
-            const placeAbove = selectedComment ? getCommentMenuPlacement(c.id) : true;
-            return <div key={c.id} data-parent-id={c.parent_id ?? undefined} className={cn("relative flex items-start gap-2.5", index > 0 && "comment-thread-reply")} onContextMenu={(e) => { e.preventDefault(); setCommentActionsFor(c.id); }} onMouseDown={() => startCommentAction(c.id)} onMouseUp={stopCommentAction} onMouseLeave={stopCommentAction} onTouchStart={() => startCommentAction(c.id)} onTouchMove={stopCommentAction} onTouchCancel={stopCommentAction} onTouchEnd={stopCommentAction}>
-              {selectedComment && <div className="post-sheet-overlay fixed inset-0 z-40" onClick={() => setCommentActionsFor(null)} />}
+            return <div key={c.id} data-parent-id={c.parent_id ?? undefined} className={cn("relative flex items-start gap-2.5", index > 0 && "comment-thread-reply")}>
               <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium shadow-sm ring-1 ring-border/60" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
               <div className="relative min-w-0 flex-1">
-                <div id={`comment-bubble-${c.id}`} className={cn("relative inline-block max-w-full rounded-[18px] bg-muted px-3 py-2 shadow-sm", selectedComment && "z-50 ring-1 ring-primary/20")}>
+                <div id={`comment-bubble-${c.id}`} data-vaul-no-drag className={cn("relative inline-block max-w-full rounded-[18px] bg-muted px-3 py-2 shadow-sm", selectedComment && "ring-1 ring-primary/20")}
+                  onContextMenu={(e) => { e.preventDefault(); stopCommentAction(); setCommentActionsFor(c.id); }}
+                  onPointerDown={(e) => { e.stopPropagation(); if (!e.isPrimary || e.button !== 0 || (e.target instanceof Element && e.target.closest("button,input,textarea"))) return; startCommentAction(c.id, e.clientX, e.clientY); }}
+                  onPointerMove={(e) => { const start = commentStart.current; if (start && shouldCancelReactionHold(start, { x: e.clientX, y: e.clientY })) stopCommentAction(); }}
+                  onPointerUp={(e) => { e.stopPropagation(); stopCommentAction(); }} onPointerCancel={stopCommentAction} onPointerLeave={stopCommentAction}
+                  onClickCapture={(e) => { if (commentHeld.current) { e.preventDefault(); e.stopPropagation(); commentHeld.current = false; } }}>
                   <p className="text-[11px] font-semibold text-foreground/80">{memberName(c.member_id)}</p>
                   {editingCommentId === c.id ? (
                     <div className="mt-2 space-y-2">
-                      <Input value={editDraft} onChange={(e) => setEditDraft(e.target.value)} className="w-full min-w-0 rounded-full" aria-label={copy.edit} />
+                      <Input value={editDraft} onChange={(e) => setEditDraft(e.target.value)} className="w-full min-w-0 rounded-full text-base md:text-sm" aria-label={copy.edit} />
                       <div className="flex items-center justify-end gap-2">
                         <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCommentId(null)}>{copy.cancel}</Button>
                         <Button type="button" size="sm" onClick={() => void saveEditedComment(c.id)}>{copy.save}</Button>
@@ -375,28 +390,6 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
                     <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">{c.content}</p>
                   )}
 
-                  {selectedComment && (
-                    <div className={cn("absolute left-0 z-[70] w-[190px]", placeAbove ? "top-0 -translate-y-[calc(100%+12px)]" : "top-full mt-2")}>
-                      <div className="flex min-w-[190px] flex-col rounded-2xl border border-border/80 bg-popover p-1.5 shadow-lg">
-                        <Button variant="ghost" type="button" className="justify-start gap-2 rounded-xl px-2.5 py-2 text-sm" onClick={() => replyToComment(c)}>
-                          <Reply className="size-3.5" /> {copy.reply}
-                        </Button>
-                        {owner && (
-                          <Button variant="ghost" type="button" className="justify-start gap-2 rounded-xl px-2.5 py-2 text-sm" onClick={() => editComment(c)}>
-                            <Edit3 className="size-3.5" /> {copy.edit}
-                          </Button>
-                        )}
-                        {owner && (
-                          <Button variant="ghost" type="button" className="justify-start gap-2 rounded-xl px-2.5 py-2 text-sm text-destructive" onClick={() => void deleteComment(c.id)}>
-                            <Trash2 className="size-3.5" /> {copy.delete}
-                          </Button>
-                        )}
-                        <Button variant="ghost" type="button" className="justify-start gap-2 rounded-xl px-2.5 py-2 text-sm" onClick={() => void copyCommentContent(c)}>
-                          <Copy className="size-3.5" /> {copy.copy}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -408,15 +401,25 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
           })}</div>)}
         </div>
 
-        <form className="post-comment-composer flex shrink-0 flex-wrap items-center gap-2 border-t border-border px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
+        {actionComment && <div className="absolute inset-0 z-[70] flex items-end">
+          <div className="post-sheet-overlay absolute inset-0" onClick={() => setCommentActionsFor(null)} />
+          <div data-vaul-no-drag role="group" aria-label={copy.comments} className="relative w-full rounded-t-2xl border-t border-border bg-popover px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 pb-2"><span className="truncate text-sm font-semibold">{memberName(actionComment.member_id)}</span><Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label={copy.close} onClick={() => setCommentActionsFor(null)}><X /></Button></div>
+            <Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => replyToComment(actionComment)}><Reply className="size-4" />{copy.reply}</Button>
+            {me?.id === actionComment.member_id && <><Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button variant="ghost" className="h-11 w-full justify-start gap-3 text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
+            <Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => void copyCommentContent(actionComment)}><Copy className="size-4" />{copy.copy}</Button>
+          </div>
+        </div>}
+
+        <form data-vaul-no-drag className="post-comment-composer grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-border px-3 pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
           {replyTarget && (
-            <div className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground" role="status">
+            <div className="col-span-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 text-xs text-muted-foreground" role="status">
               <Reply className="size-3 shrink-0" /><span className="min-w-0 flex-1 break-words">{copy.replying} @{memberName(replyTarget.member_id)}</span>
-              <Button variant="ghost" size="icon" type="button" className="size-7 shrink-0" aria-label={copy.cancel} onClick={() => { setReplyTarget(null); composer.current?.focus(); }}><X className="size-3.5" /></Button>
+              <Button variant="ghost" size="icon" type="button" className="size-8 shrink-0" aria-label={copy.cancel} onClick={() => { setReplyTarget(null); composer.current?.focus({ preventScroll: true }); }}><X className="size-3.5" /></Button>
             </div>
           )}
-          <Input ref={composer} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply}…` : copy.input) : copy.login} aria-label={copy.input} disabled={!me || sending} className="h-11 min-w-0 flex-1 rounded-full" />
-          <Button type="submit" disabled={!me || !draft.trim() || sending} aria-label={copy.send} className="h-11 rounded-full"><Send /><span>{copy.send}</span></Button>
+          <Input ref={composer} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply}…` : copy.input) : copy.login} aria-label={copy.input} disabled={!me || sending} className="h-11 min-w-0 rounded-full text-base md:text-sm" />
+          <Button type="submit" size="icon" disabled={!me || !draft.trim() || sending} aria-label={copy.send} className="size-11 shrink-0 rounded-full"><Send /></Button>
         </form>
       </DrawerContent>
     </Drawer>
