@@ -367,16 +367,15 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
 
         <div className="post-comment-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4" onScroll={stopCommentAction}>
           {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : groupCommentThreads(localComments).map((thread) => <div key={thread.root.id} className="comment-thread">{[thread.root, ...thread.replies].map((c, index) => {
-            const owner = me?.id === c.member_id;
             const selectedComment = commentActionsFor === c.id;
             return <div key={c.id} data-parent-id={c.parent_id ?? undefined} className={cn("relative flex items-start gap-2.5", index > 0 && "comment-thread-reply")}>
               <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium shadow-sm ring-1 ring-border/60" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
               <div className="relative min-w-0 flex-1">
                 <div id={`comment-bubble-${c.id}`} data-vaul-no-drag className={cn("relative inline-block max-w-full rounded-[18px] bg-muted px-3 py-2 shadow-sm", selectedComment && "ring-1 ring-primary/20")}
                   onContextMenu={(e) => { e.preventDefault(); stopCommentAction(); setCommentActionsFor(c.id); }}
-                  onPointerDown={(e) => { if (!e.isPrimary || e.button !== 0 || (e.target instanceof Element && e.target.closest("button,input,textarea"))) return; startCommentAction(c.id, e.clientX, e.clientY); }}
+                  onPointerDown={(e) => { e.stopPropagation(); if (!e.isPrimary || e.button !== 0 || (e.target instanceof Element && e.target.closest("button,input,textarea"))) return; startCommentAction(c.id, e.clientX, e.clientY); }}
                   onPointerMove={(e) => { const start = commentStart.current; if (start && shouldCancelReactionHold(start, { x: e.clientX, y: e.clientY })) stopCommentAction(); }}
-                  onPointerUp={stopCommentAction} onPointerCancel={stopCommentAction} onPointerLeave={stopCommentAction}
+                  onPointerUp={(e) => { e.stopPropagation(); stopCommentAction(); }} onPointerCancel={stopCommentAction} onPointerLeave={stopCommentAction}
                   onClickCapture={(e) => { if (commentHeld.current) { e.preventDefault(); e.stopPropagation(); commentHeld.current = false; } }}>
                   <p className="text-[11px] font-semibold text-foreground/80">{memberName(c.member_id)}</p>
                   {editingCommentId === c.id ? (
