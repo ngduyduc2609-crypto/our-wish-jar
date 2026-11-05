@@ -11,8 +11,11 @@ svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.1
 .post-reaction-popover button { transform: none; animation: none; box-shadow: none; }
 .post-sheet-overlay { background: color-mix(in oklab, var(--foreground) 55%, transparent); backdrop-filter: blur(5px); }
 .post-comment-sheet { will-change: transform; }
+.post-comment-keyboard-sheet { margin-top: 0; overflow: hidden; }
+.post-comment-keyboard-sheet > [class*="mx-auto"] { flex-shrink: 0; margin-top: 10px; height: 5px; width: 40px; }
+.post-comment-keyboard-sheet input { font-size: 16px; }
 .post-comment-scroll { -webkit-overflow-scrolling: touch; touch-action: pan-y; }
-.post-comment-composer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.post-comment-composer { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 .dark .post-reaction-popover { --reaction-tray: var(--popover); }
 .comment-thread-reply { margin-left: 42px; padding-top: 12px; }
 .comment-thread-reply::before { content: ""; position: absolute; pointer-events: none; left: -26px; top: -12px; width: 24px; height: 40px; border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); border-bottom-left-radius: 14px; }
@@ -1227,11 +1230,35 @@ button:not(:disabled):hover {
   .draw-jar, .draw-paper, .draw-paper-content, .shuffle-card, .shuffle-emoji { animation: none !important; transition: none !important; }
 }
 
-/* Mobile: không hiện menu copy/chọn chữ khi giữ chạm nút & khu tương tác */
-button, [role="button"], a, nav, header, .post-interactions, .post-interactions *, .post-comment-sheet *, .reaction-icon, svg, img {
+/* Disable native selection and callouts everywhere, including portalled sheets. */
+html, body, body * {
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
-input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+/* Editable fields retain a caret; native menus are suppressed at document level. */
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: none; }
+.rx-icon {
+  --rx-ink: oklch(0.36 0.075 48);
+  --rx-mouth: oklch(0.37 0.085 33);
+  --rx-white: oklch(1 0 0);
+  --rx-shadow: oklch(0.35 0.04 55);
+  --rx-cheek: oklch(0.77 0.12 24);
+  --rx-yellow-light: oklch(0.98 0.085 95);
+  --rx-yellow-mid: oklch(0.9 0.14 88);
+  --rx-yellow-edge: oklch(0.85 0.145 82);
+  --rx-blue-light: oklch(0.94 0.045 235);
+  --rx-blue-mid: oklch(0.77 0.13 245);
+  --rx-blue-edge: oklch(0.69 0.14 250);
+  --rx-hand-edge: oklch(0.91 0.03 240);
+  --rx-pink-light: oklch(0.94 0.06 10);
+  --rx-pink-mid: oklch(0.76 0.17 13);
+  --rx-pink-edge: oklch(0.69 0.17 18);
+  --rx-red-light: oklch(0.88 0.10 32);
+  --rx-red-mid: oklch(0.77 0.15 30);
+  --rx-red-edge: oklch(0.74 0.15 30);
+  --rx-tear-light: oklch(0.94 0.055 225);
+  --rx-tear-mid: oklch(0.77 0.12 240);
+  --rx-tear-edge: oklch(0.68 0.13 248);
+}
 .rx-stream { transform-box: fill-box; transform-origin: 50% 0%; animation: rx-stream 1.1s ease-in-out infinite; }
 .rx-stream-r { animation-delay: .35s; }
 @keyframes rx-stream { 0%,100% { transform: scaleY(.9); opacity: .85 } 50% { transform: scaleY(1.06); opacity: 1 } }

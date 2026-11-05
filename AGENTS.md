@@ -16,3 +16,6 @@
 - Keep reaction hold thresholds in the browser-safe reaction-gesture module with rule tests; a single idempotent completion path handles trigger and document touch release to avoid lost or duplicate selections.
 - Format notification titles in the pure notification-text module using entity-specific trigger kinds; this keeps localized messages testable and distinguishes wishes, food, activities, and memories.
 - Persist replies with nullable parent_id on each entity comment table, validate same-post parents in database triggers, and group through comment-threads; this preserves hierarchy after reload without changing author permissions.
+- Keep comment sheet keyboard positioning in useCommentViewport with pure commentViewport calculations; disable Vaul input repositioning there to avoid competing offsets.
+- Use a single pointer hold path on comment bubbles and an in-sheet action layer; this avoids drag conflicts, duplicate touch/mouse activation, and clipped menus.
+- Suppress native selection/context events once in the root while leaving editable controls caret-capable; portalled content must receive the same protection.
