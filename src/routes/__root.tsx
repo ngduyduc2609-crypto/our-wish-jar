@@ -170,6 +170,16 @@ function AppLayout() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const suppressNativeMenu = (event: Event) => event.preventDefault();
+    document.addEventListener("contextmenu", suppressNativeMenu, true);
+    document.addEventListener("selectstart", suppressNativeMenu, true);
+    return () => {
+      document.removeEventListener("contextmenu", suppressNativeMenu, true);
+      document.removeEventListener("selectstart", suppressNativeMenu, true);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <IdentityProvider>
