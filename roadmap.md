@@ -30,3 +30,7 @@
 - [x] Redesign wish-note placement and add an interactive jar shake/shuffle.
 - [x] Refine streak flame states, depth, and milestone feedback.
 - [x] Verify authentication and responsive interaction flows.
+- [ ] Suppress native long-press selection menus throughout the app.
+- [ ] Fix mobile reply composer visibility and comment hold actions.
+- [ ] Refine all six 3D reaction shapes and materials without changing their identities.
+- [ ] Verify comments, replies, holds, and reaction artwork on mobile and desktop.
