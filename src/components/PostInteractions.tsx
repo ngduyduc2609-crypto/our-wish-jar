@@ -160,6 +160,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     commentStart.current = { x, y };
     commentHold.current = setTimeout(() => {
       commentHeld.current = true;
+      try { navigator.vibrate?.(12); } catch { /* unsupported */ }
       setCommentActionsFor(commentId);
     }, 350);
   };
@@ -243,7 +244,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     if (!me || !content || sendBusy.current) return;
     sendBusy.current = true; setSending(true);
     try {
-      const body = replyTarget ? `@${memberName(replyTarget.member_id)} ${content}` : content;
+      const body = content;
       const comment = await insertEntityComment(entity, targetId, me.id, body, replyTarget?.id ?? null);
       setLocalComments((rows) => [...rows, comment]);
       setDraft("");
@@ -403,7 +404,8 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
 
         {actionComment && <div className="absolute inset-0 z-[70] flex items-end">
           <div className="post-sheet-overlay absolute inset-0" onClick={() => setCommentActionsFor(null)} />
-          <div data-vaul-no-drag role="group" aria-label={copy.comments} className="relative w-full rounded-t-2xl border-t border-border bg-popover px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+                    <div data-vaul-no-drag role="group" aria-label={copy.comments} className="comment-action-panel relative w-full rounded-t-2xl border-t border-border bg-popover px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+            <div className="comment-focus-bubble absolute bottom-[calc(100%+12px)] left-3 right-12 max-h-[38vh] overflow-hidden rounded-[18px] bg-muted px-3 py-2 shadow-lg ring-1 ring-primary/20"><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 line-clamp-6 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 pb-2"><span className="truncate text-sm font-semibold">{memberName(actionComment.member_id)}</span><Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label={copy.close} onClick={() => setCommentActionsFor(null)}><X /></Button></div>
             <Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => replyToComment(actionComment)}><Reply className="size-4" />{copy.reply}</Button>
             {me?.id === actionComment.member_id && <><Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button variant="ghost" className="h-11 w-full justify-start gap-3 text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
@@ -414,7 +416,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
         <form data-vaul-no-drag className="post-comment-composer grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-border px-3 pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
           {replyTarget && (
             <div className="col-span-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 text-xs text-muted-foreground" role="status">
-              <Reply className="size-3 shrink-0" /><span className="min-w-0 flex-1 break-words">{copy.replying} @{memberName(replyTarget.member_id)}</span>
+              <Reply className="size-3 shrink-0" /><span className="min-w-0 flex-1 break-words">{copy.replying} {memberName(replyTarget.member_id)}</span>
               <Button variant="ghost" size="icon" type="button" className="size-8 shrink-0" aria-label={copy.cancel} onClick={() => { setReplyTarget(null); composer.current?.focus({ preventScroll: true }); }}><X className="size-3.5" /></Button>
             </div>
           )}
