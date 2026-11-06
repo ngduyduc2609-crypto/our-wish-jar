@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Copy, Edit3, Heart, MessageCircle, Reply, Send, Trash2, X } from "lucide-react";
@@ -287,6 +287,15 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const mine = unique.find((r) => r.member_id === me?.id);
   const spring = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 420, damping: 24 };
   const actionComment = localComments.find((comment) => comment.id === commentActionsFor);
+  const [focusRect, setFocusRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!commentActionsFor) { setFocusRect(null); return; }
+    const bubble = document.getElementById(`comment-bubble-${commentActionsFor}`);
+    const sheetEl = bubble?.closest(".post-comment-sheet");
+    if (!bubble || !sheetEl) { setFocusRect(null); return; }
+    const b = bubble.getBoundingClientRect(); const r = sheetEl.getBoundingClientRect();
+    setFocusRect({ top: b.top - r.top, left: b.left - r.left, width: b.width });
+  }, [commentActionsFor]);
 
   return <div className="post-interactions mt-3 border-t border-border pt-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
     <div className="flex items-center justify-between gap-2">
@@ -404,8 +413,9 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
 
         {actionComment && <div className="absolute inset-0 z-[70] flex items-end">
           <div className="post-sheet-overlay absolute inset-0" onClick={() => setCommentActionsFor(null)} />
+          {focusRect && <div className="comment-focus-bubble comment-lifted pointer-events-none absolute z-[2] max-h-[38vh] overflow-hidden rounded-[18px] bg-muted px-3 py-2 ring-1 ring-primary/25" style={{ top: Math.max(8, focusRect.top), left: focusRect.left, width: focusRect.width }}><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 line-clamp-6 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>}
                     <div data-vaul-no-drag role="group" aria-label={copy.comments} className="comment-action-panel relative w-full rounded-t-2xl border-t border-border bg-popover px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-            <div className="comment-focus-bubble absolute bottom-[calc(100%+12px)] left-3 right-12 max-h-[38vh] overflow-hidden rounded-[18px] bg-muted px-3 py-2 shadow-lg ring-1 ring-primary/20"><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 line-clamp-6 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>
+            
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 pb-2"><span className="truncate text-sm font-semibold">{memberName(actionComment.member_id)}</span><Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label={copy.close} onClick={() => setCommentActionsFor(null)}><X /></Button></div>
             <Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => replyToComment(actionComment)}><Reply className="size-4" />{copy.reply}</Button>
             {me?.id === actionComment.member_id && <><Button variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button variant="ghost" className="h-11 w-full justify-start gap-3 text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
