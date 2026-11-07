@@ -2,13 +2,12 @@ export const COMMENT_MENU_W = 220;
 const GAP = 8;
 const EDGE = 8;
 
-/** Place the comment action menu beside the selected bubble: below by default, flipped above when there is no room, clamped inside the sheet. */
+/** Place the action menu below the held comment (above when no room). When neither side fits, the lifted comment shifts so comment and menu never overlap. */
 export function commentMenuPosition(bubble: { top: number; bottom: number; left: number }, area: { width: number; height: number }, menuHeight: number) {
-  const fitsBelow = bubble.bottom + GAP + menuHeight <= area.height - EDGE;
-  const fitsAbove = bubble.top - GAP - menuHeight >= EDGE;
-  const above = !fitsBelow && fitsAbove;
-  const raw = above ? bubble.top - GAP - menuHeight : bubble.bottom + GAP;
-  const menuTop = Math.max(EDGE, Math.min(raw, area.height - menuHeight - EDGE));
+  const h = bubble.bottom - bubble.top;
   const menuLeft = Math.max(EDGE, Math.min(bubble.left, area.width - COMMENT_MENU_W - EDGE));
-  return { menuTop, menuLeft, above };
+  if (bubble.bottom + GAP + menuHeight <= area.height - EDGE) return { bubbleTop: bubble.top, menuTop: bubble.bottom + GAP, menuLeft, above: false };
+  if (bubble.top - GAP - menuHeight >= EDGE) return { bubbleTop: bubble.top, menuTop: bubble.top - GAP - menuHeight, menuLeft, above: true };
+  const bubbleTop = Math.max(EDGE, area.height - EDGE - menuHeight - GAP - h);
+  return { bubbleTop, menuTop: bubbleTop + h + GAP, menuLeft, above: false };
 }

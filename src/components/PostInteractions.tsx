@@ -295,7 +295,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const mine = unique.find((r) => r.member_id === me?.id);
   const spring = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 420, damping: 24 };
   const actionComment = localComments.find((comment) => comment.id === commentActionsFor);
-  const [focusRect, setFocusRect] = useState<{ top: number; left: number; width: number; menuTop: number; menuLeft: number; above: boolean } | null>(null);
+  const [focusRect, setFocusRect] = useState<{ top: number; left: number; width: number; bubbleTop: number; menuTop: number; menuLeft: number; above: boolean } | null>(null);
   const actionCount = actionComment ? (me?.id === actionComment.member_id ? 4 : 2) : 0;
   useLayoutEffect(() => {
     if (!commentActionsFor) { setFocusRect(null); return; }
@@ -303,7 +303,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     const sheetEl = bubble?.closest(".post-comment-sheet");
     if (!bubble || !sheetEl) { setFocusRect(null); return; }
     const b = bubble.getBoundingClientRect(); const r = sheetEl.getBoundingClientRect();
-    const place = commentMenuPosition({ top: b.top - r.top, bottom: b.bottom - r.top, left: b.left - r.left }, { width: r.width, height: r.height }, actionCount * 44 + 12);
+    const place = commentMenuPosition({ top: b.top - r.top, bottom: b.bottom - r.top, left: b.left - r.left }, { width: r.width, height: r.height }, actionCount * 44 + 14 + 2);
     setFocusRect({ top: b.top - r.top, left: b.left - r.left, width: b.width, ...place });
   }, [commentActionsFor, actionCount]);
   useEffect(() => {
@@ -430,11 +430,11 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
         {actionComment && <div className={cn("comment-actions-layer absolute inset-0 z-[70]", actionsClosing && "is-closing")}>
           <div className="post-sheet-overlay absolute inset-0" onClick={closeActions} onContextMenu={(e) => e.preventDefault()} />
           {focusRect && <>
-            <div className="comment-focus-bubble comment-lifted pointer-events-none absolute z-[2] max-h-[38vh] overflow-hidden rounded-[18px] bg-muted px-3 py-2" style={{ top: focusRect.top, left: focusRect.left, width: focusRect.width }}><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 line-clamp-6 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>
-            <div data-vaul-no-drag role="menu" aria-label={copy.comments} className={cn("comment-action-panel absolute z-[3] w-[220px] rounded-2xl border border-border bg-popover p-1.5 shadow-xl", focusRect.above && "is-above")} style={{ top: focusRect.menuTop, left: focusRect.menuLeft }}>
-              <Button role="menuitem" variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => replyToComment(actionComment)}><Reply className="size-4" />{copy.reply}</Button>
-              {me?.id === actionComment.member_id && <><Button role="menuitem" variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button role="menuitem" variant="ghost" className="h-11 w-full justify-start gap-3 text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
-              <Button role="menuitem" variant="ghost" className="h-11 w-full justify-start gap-3" onClick={() => void copyCommentContent(actionComment)}><Copy className="size-4" />{copy.copy}</Button>
+            <div className="comment-focus-bubble comment-lifted pointer-events-none absolute z-[2] overflow-hidden rounded-[18px] bg-muted px-3 py-2" style={{ top: focusRect.bubbleTop, left: focusRect.left, width: focusRect.width }}><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>
+            <div data-vaul-no-drag role="menu" aria-label={copy.comments} className={cn("comment-action-panel absolute z-[3] flex w-[220px] flex-col overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-xl", focusRect.above && "is-above")} style={{ top: focusRect.menuTop, left: focusRect.menuLeft }}>
+              <Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => replyToComment(actionComment)}><Reply className="size-4" />{copy.reply}</Button>
+              {me?.id === actionComment.member_id && <><Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
+              <Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => void copyCommentContent(actionComment)}><Copy className="size-4" />{copy.copy}</Button>
             </div>
           </>}
         </div>}
