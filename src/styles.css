@@ -1279,3 +1279,5 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
 @media (prefers-reduced-motion: reduce) { .rx-stream { animation: none; } }
 
 @keyframes comment-bubble-pop { from { transform: scale(1); box-shadow: none; } 55% { transform: scale(1.045); } to { transform: scale(1.03); } }
+.comment-action-panel .comment-menu-item { transform: none !important; box-shadow: none; animation: none; }
+.comment-action-panel .comment-menu-item:active { background: var(--accent); }
