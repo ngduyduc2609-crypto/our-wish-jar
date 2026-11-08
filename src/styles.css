@@ -25,7 +25,7 @@ svg { --reaction-face-mid: oklch(0.84 0.16 80); --reaction-shade: oklch(0.42 0.1
 .comment-actions-layer.is-closing .comment-action-panel, .comment-actions-layer.is-closing .comment-focus-bubble { animation: comment-menu-in 180ms ease-in reverse both; }
 @media (prefers-reduced-motion: reduce) { .comment-action-panel, .comment-focus-bubble, .post-sheet-overlay, .comment-actions-layer.is-closing > * { animation: none !important; } .comment-holding { transform: none; } }
 .post-comment-sheet { will-change: transform; }
-.post-comment-keyboard-sheet { margin-top: 0; overflow: hidden; }
+.post-comment-keyboard-sheet { margin-top: 0; overflow: hidden; overflow: clip; }
 .post-comment-keyboard-sheet > [class*="mx-auto"] { flex-shrink: 0; margin-top: 10px; height: 5px; width: 40px; }
 .post-comment-keyboard-sheet input { font-size: 16px; }
 .post-comment-scroll { -webkit-overflow-scrolling: touch; touch-action: pan-y; }
