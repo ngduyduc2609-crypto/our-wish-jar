@@ -385,7 +385,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
     </Drawer>
 
     <Drawer open={sheet} onOpenChange={setSheet} shouldScaleBackground={false} repositionInputs={false}>
-      <DrawerContent style={viewportArea} className="post-comment-sheet post-comment-keyboard-sheet mx-auto h-[75dvh] max-w-lg rounded-t-3xl" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <DrawerContent style={viewportArea} className="post-comment-sheet post-comment-keyboard-sheet mx-auto h-[75dvh] max-w-lg rounded-t-3xl" onScroll={(e) => { if (e.target === e.currentTarget && e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0; }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
         <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0"><DrawerTitle>{copy.comments} · {localComments.length}</DrawerTitle><DrawerDescription className="mt-1 truncate">{title}</DrawerDescription></div>
           <DrawerClose asChild><Button variant="ghost" size="icon" aria-label={copy.close}><X /></Button></DrawerClose>
