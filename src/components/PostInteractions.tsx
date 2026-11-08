@@ -429,14 +429,14 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
 
         {actionComment && <div className={cn("comment-actions-layer absolute inset-0 z-[70]", actionsClosing && "is-closing")}>
           <div className="post-sheet-overlay absolute inset-0" onClick={closeActions} onContextMenu={(e) => e.preventDefault()} />
-          {focusRect && <>
-            <div className="comment-focus-bubble comment-lifted pointer-events-none absolute z-[2] overflow-hidden rounded-[18px] bg-muted px-3 py-2" style={{ top: focusRect.bubbleTop, left: focusRect.left, width: focusRect.width }}><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>
-            <div data-vaul-no-drag role="menu" aria-label={copy.comments} className={cn("comment-action-panel absolute z-[3] flex w-[220px] flex-col overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-xl", focusRect.above && "is-above")} style={{ top: focusRect.menuTop, left: focusRect.menuLeft }}>
+          {focusRect && <div className={cn("comment-focus-stack absolute inset-x-0 z-[2] flex gap-2 overflow-y-auto overscroll-contain", focusRect.above ? "flex-col-reverse" : "flex-col")} style={{ top: Math.max(8, focusRect.above ? focusRect.menuTop : focusRect.bubbleTop), maxHeight: "calc(100% - 16px)" }} onClick={(e) => { if (e.target === e.currentTarget) closeActions(); }}>
+            <div className="comment-focus-bubble comment-lifted pointer-events-none relative shrink-0 overflow-hidden rounded-[18px] bg-muted px-3 py-2" style={{ marginLeft: focusRect.left, width: focusRect.width }}><p className="text-[11px] font-semibold text-foreground/80">{memberName(actionComment.member_id)}</p><p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">{actionComment.content}</p></div>
+            <div data-vaul-no-drag role="menu" aria-label={copy.comments} className={cn("comment-action-panel relative flex w-[220px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-xl", focusRect.above && "is-above")} style={{ marginLeft: focusRect.menuLeft }}>
               <Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => replyToComment(actionComment)}><Reply className="size-4" />{copy.reply}</Button>
               {me?.id === actionComment.member_id && <><Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
               <Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => void copyCommentContent(actionComment)}><Copy className="size-4" />{copy.copy}</Button>
             </div>
-          </>}
+          </div>}
         </div>}
 
         <form data-vaul-no-drag className="post-comment-composer grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-border px-3 pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
