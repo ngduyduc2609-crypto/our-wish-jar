@@ -436,7 +436,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
               {me?.id === actionComment.member_id && <><Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => editComment(actionComment)}><Edit3 className="size-4" />{copy.edit}</Button><Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl text-destructive" onClick={() => void deleteComment(actionComment.id)}><Trash2 className="size-4" />{copy.delete}</Button></>}
               <Button role="menuitem" variant="ghost" className="comment-menu-item h-11 w-full shrink-0 justify-start gap-3 rounded-xl" onClick={() => void copyCommentContent(actionComment)}><Copy className="size-4" />{copy.copy}</Button>
             </div>
-          </>}
+          </div>}
         </div>}
 
         <form data-vaul-no-drag className="post-comment-composer grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-border px-3 pt-3" onSubmit={(e) => { e.preventDefault(); void send(); }}>
