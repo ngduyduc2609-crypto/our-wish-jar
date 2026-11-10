@@ -19,3 +19,5 @@
 - Keep comment sheet keyboard positioning in useCommentViewport with pure commentViewport calculations; disable Vaul input repositioning there to avoid competing offsets.
 - Use a single pointer hold path on comment bubbles and an in-sheet action layer; this avoids drag conflicts, duplicate touch/mouse activation, and clipped menus.
 - Suppress native selection/context events once in the root while leaving editable controls caret-capable; portalled content must receive the same protection.
+- Resolve interaction and notification refresh keys through interaction-cache; invalidate only the changed entity data to avoid unrelated mobile refetches.
+- Coalesce visual viewport events into one animation-frame update and skip unchanged dimensions; keyboard transitions must not trigger redundant renders.

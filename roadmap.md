@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Reduce redundant interaction refetches across all four lists and notification updates.
+- [x] Coalesce mobile keyboard viewport updates and reduce continuous mobile repaint work.
+- [x] Verify signed-in mobile comment/reaction flows and request counts, including delayed comment saves and reload persistence.
+
 - [x] Show six glossy reactions and an icon-only selected reaction button.
 - [x] Persist threaded replies and display indented comments with curved connectors.
 - [x] Verify saved replies, reply cancellation, and reaction interactions.

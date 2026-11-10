@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Copy, Edit3, Heart, MessageCircle, Reply, Send, Trash2, X } from "lucide-react";
@@ -15,6 +16,7 @@ import { commentMenuPosition } from "@/lib/comment-menu";
 import { COMMENT_HOLD_MS, REACTION_HOLD_MS, shouldCancelReactionHold } from "@/lib/reaction-gesture";
 import { groupCommentThreads } from "@/lib/comment-threads";
 import { useCommentViewport } from "@/hooks/use-comment-viewport";
+import { interactionQueryKey } from "@/lib/interaction-cache";
 
 type Reaction = { id: string; emoji: string; member_id: string };
 type Comment = { id: string; member_id: string; content: string; created_at: string; parent_id?: string | null };
@@ -22,11 +24,15 @@ type Comment = { id: string; member_id: string; content: string; created_at: str
 const PICKER_W = 312;
 const PICKER_H = 60;
 
-export function PostInteractions({ entity, targetId, title, reactions, comments, memberName, onChanged }: {
+export function PostInteractions({ entity, targetId, title, reactions, comments, memberName }: {
   entity: "wish" | "food" | "activity" | "memory"; targetId: string; title: string;
   reactions: Reaction[]; comments: Comment[]; memberName: (id: string | null) => string; onChanged: () => void;
 }) {
   const { me, members, track } = useIdentity();
+  const queryClient = useQueryClient();
+  const refreshInteraction = (action: "reaction" | "comment") => {
+    void queryClient.invalidateQueries({ queryKey: interactionQueryKey(entity, action), exact: true });
+  };
   const language = useAppLanguage();
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -40,6 +46,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
   const [position, setPosition] = useState({ left: 0, top: 0 });
   const [localReactions, setLocalReactions] = useState(reactions);
   const [localComments, setLocalComments] = useState(comments);
+  const threads = useMemo(() => sheet ? groupCommentThreads(localComments) : [], [sheet, localComments]);
   const [draft, setDraft] = useState("");
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null);
   const [commentActionsFor, setCommentActionsFor] = useState<string | null>(null);
@@ -194,7 +201,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       setReplyTarget((target) => target?.id === commentId ? null : target);
       setCommentActionsFor(null);
       toast.success(copy.deleted);
-      onChanged();
+      refreshInteraction("comment");
     } catch {
       toast.error(copy.error);
     }
@@ -214,7 +221,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       setLocalComments((rows) => rows.map((row) => row.id === commentId ? { ...row, content: updated.content } : row));
       setEditingCommentId(null);
       setEditDraft("");
-      onChanged();
+      refreshInteraction("comment");
     } catch {
       toast.error(copy.error);
     }
@@ -244,22 +251,31 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
       const added = await toggleEntityReaction(entity, targetId, me.id, emoji);
       if (added) void track("thả cảm xúc " + emoji, title);
     } catch { setLocalReactions(previous); toast.error(copy.error); }
-    finally { busy.current = false; setReacting(false); onChanged(); }
+    finally { busy.current = false; setReacting(false); refreshInteraction("reaction"); }
   }
 
   async function send() {
     const content = draft.trim();
     if (!me || !content || sendBusy.current) return;
     sendBusy.current = true; setSending(true);
+    const parentId = replyTarget?.id ?? null;
+    const previousReply = replyTarget;
+    const temporaryId = `pending-${crypto.randomUUID()}`;
+    setLocalComments((rows) => [...rows, { id: temporaryId, member_id: me.id, content, parent_id: parentId, created_at: new Date().toISOString() }]);
+    setDraft("");
+    setReplyTarget(null);
     try {
       const body = content;
-      const comment = await insertEntityComment(entity, targetId, me.id, body, replyTarget?.id ?? null);
-      setLocalComments((rows) => [...rows, comment]);
-      setDraft("");
-      setReplyTarget(null);
+      const comment = await insertEntityComment(entity, targetId, me.id, body, parentId);
+      setLocalComments((rows) => rows.map((row) => row.id === temporaryId ? comment : row));
       void track("bình luận", title);
-    } catch { toast.error(copy.error); }
-    finally { sendBusy.current = false; setSending(false); onChanged(); }
+    } catch {
+      setLocalComments((rows) => rows.filter((row) => row.id !== temporaryId));
+      setDraft((current) => current || content);
+      setReplyTarget((current) => current ?? previousReply);
+      toast.error(copy.error);
+    }
+    finally { sendBusy.current = false; setSending(false); refreshInteraction("comment"); }
   }
 
   const finishHeld = () => {
@@ -392,14 +408,14 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
         </div>
 
         <div className="post-comment-scroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4" onScroll={() => { stopCommentAction(); if (commentActionsFor) closeActions(); }}>
-          {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : groupCommentThreads(localComments).map((thread) => <div key={thread.root.id} className="comment-thread">{[thread.root, ...thread.replies].map((c, index) => {
+          {localComments.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{copy.empty}</p> : threads.map((thread) => <div key={thread.root.id} className="comment-thread">{[thread.root, ...thread.replies].map((c, index) => {
             const selectedComment = commentActionsFor === c.id;
             return <div key={c.id} data-parent-id={c.parent_id ?? undefined} className={cn("relative flex items-start gap-2.5", index > 0 && "comment-thread-reply")}>
               <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-medium shadow-sm ring-1 ring-border/60" aria-label={memberName(c.member_id)}>{members.find((m) => m.id === c.member_id)?.emoji ?? memberName(c.member_id).split(/\s+/).map((p) => p[0]).slice(0, 2).join("")}</span>
               <div className="relative min-w-0 flex-1">
                 <div id={`comment-bubble-${c.id}`} data-vaul-no-drag className={cn("relative inline-block max-w-full rounded-[18px] bg-muted px-3 py-2 shadow-sm", selectedComment && "opacity-0", holdingComment === c.id && "comment-holding")}
                   onContextMenu={(e) => { e.preventDefault(); stopCommentAction(); setActionsClosing(false); setCommentActionsFor(c.id); }}
-                  onPointerDown={(e) => { e.stopPropagation(); if (!e.isPrimary || e.button !== 0 || (e.target instanceof Element && e.target.closest("button,input,textarea"))) return; startCommentAction(c.id, e.clientX, e.clientY); }}
+                  onPointerDown={(e) => { e.stopPropagation(); if (c.id.startsWith("pending-") || !e.isPrimary || e.button !== 0 || (e.target instanceof Element && e.target.closest("button,input,textarea"))) return; startCommentAction(c.id, e.clientX, e.clientY); }}
                   onPointerMove={(e) => { const start = commentStart.current; if (start && shouldCancelReactionHold(start, { x: e.clientX, y: e.clientY })) stopCommentAction(); }}
                   onPointerUp={(e) => { e.stopPropagation(); stopCommentAction(); }} onPointerCancel={stopCommentAction} onPointerLeave={stopCommentAction}
                   onClickCapture={(e) => { if (commentHeld.current) { e.preventDefault(); e.stopPropagation(); commentHeld.current = false; } }}>
@@ -446,7 +462,7 @@ export function PostInteractions({ entity, targetId, title, reactions, comments,
               <Button variant="ghost" size="icon" type="button" className="size-8 shrink-0" aria-label={copy.cancel} onClick={() => { setReplyTarget(null); composer.current?.focus({ preventScroll: true }); }}><X className="size-3.5" /></Button>
             </div>
           )}
-          <Input ref={composer} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply}…` : copy.input) : copy.login} aria-label={copy.input} disabled={!me || sending} className="h-11 min-w-0 rounded-full text-base md:text-sm" />
+          <Input ref={composer} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={me ? (replyTarget ? `${copy.reply}…` : copy.input) : copy.login} aria-label={copy.input} disabled={!me} className="h-11 min-w-0 rounded-full text-base md:text-sm" />
           <Button type="submit" size="icon" disabled={!me || !draft.trim() || sending} aria-label={copy.send} className="size-11 shrink-0 rounded-full"><Send /></Button>
         </form>
       </DrawerContent>
