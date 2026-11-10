@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { useAppLanguage } from "@/lib/language";
 import { describe } from "@/lib/notification-text";
+import { notificationQueryKeys } from "@/lib/interaction-cache";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/lib/identity";
@@ -87,7 +88,11 @@ export function NotificationBell() {
             }
           }
           void queryClient.invalidateQueries({ queryKey: ["notifications", me.id] });
-          void queryClient.invalidateQueries();
+          for (const queryKey of notificationQueryKeys(item.kind)) {
+            void queryClient.invalidateQueries({ queryKey, exact: true });
+          }
+          void queryClient.invalidateQueries({ queryKey: ["log"] });
+          void queryClient.invalidateQueries({ queryKey: ["presence"] });
         },
       )
       .subscribe();

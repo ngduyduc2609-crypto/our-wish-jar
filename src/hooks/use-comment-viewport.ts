@@ -6,15 +6,24 @@ export function useCommentViewport(open: boolean) {
   useEffect(() => {
     if (!open) { setArea(null); return; }
     const viewport = window.visualViewport;
-    const update = () => setArea(commentViewport(window.innerHeight, viewport?.height ?? window.innerHeight, viewport?.offsetTop ?? 0));
+    let frame: number | null = null;
+    const update = () => {
+      const next = commentViewport(window.innerHeight, viewport?.height ?? window.innerHeight, viewport?.offsetTop ?? 0);
+      setArea((current) => current?.height === next.height && current.bottom === next.bottom ? current : next);
+    };
+    const scheduleUpdate = () => {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => { frame = null; update(); });
+    };
     update();
-    viewport?.addEventListener("resize", update);
-    viewport?.addEventListener("scroll", update);
-    window.addEventListener("resize", update);
+    viewport?.addEventListener("resize", scheduleUpdate);
+    viewport?.addEventListener("scroll", scheduleUpdate);
+    window.addEventListener("resize", scheduleUpdate);
     return () => {
-      viewport?.removeEventListener("resize", update);
-      viewport?.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      if (frame !== null) cancelAnimationFrame(frame);
+      viewport?.removeEventListener("resize", scheduleUpdate);
+      viewport?.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
     };
   }, [open]);
   return area ?? undefined;

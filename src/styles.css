@@ -1281,3 +1281,10 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
 @keyframes comment-bubble-pop { from { transform: scale(1); box-shadow: none; } 55% { transform: scale(1.045); } to { transform: scale(1.03); } }
 .comment-action-panel .comment-menu-item { transform: none !important; box-shadow: none; animation: none; }
 .comment-action-panel .comment-menu-item:active { background: var(--accent); }
+
+/* Preserve the mobile artwork without repainting animated filters every frame. */
+@media (hover: none) and (pointer: coarse) {
+  .wish-note { animation-name: wish-float; will-change: auto; }
+  .streak-flame { animation-name: flame-dance; }
+  .post-reaction-trigger .rx-stream, .post-reaction-summary .rx-stream { animation: none; }
+}
